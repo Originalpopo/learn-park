@@ -24,9 +24,9 @@
 .brand .me { width: 66px; height: 66px; flex: none; margin: -8px 0; display: block; filter: drop-shadow(0 4px 3px rgba(43, 38, 32, .2)); }
 .brand .name { font-family: var(--display); font-size: 1.2rem; line-height: 1.1; }
 .brand .sub { font-size: .75rem; color: var(--muted); }
-.lv { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px 0 6px; border-radius: 999px; background: var(--ink); color: #fff; font-family: var(--display); }
+.lv { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px 0 6px; border-radius: 999px; background: var(--card); color: var(--ink); border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); font-family: var(--display); }
 .lv .badge-lv { width: 36px; height: 36px; border-radius: 50%; background: var(--yellow); color: var(--ink); display: grid; place-items: center; font-size: .95rem; }
-.lv .meter { width: 86px; height: 8px; border-radius: 4px; background: #4A443B; overflow: hidden; }
+.lv .meter { width: 86px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
 .lv .meter i { display: block; height: 100%; background: var(--yellow); border-radius: 4px; }
 .lv .exp { font-size: .85rem; white-space: nowrap; }
 
@@ -51,11 +51,11 @@
 .kid .shadow { position: absolute; left: 22%; right: 22%; bottom: 8%; height: 8%; border-radius: 50%; background: #000; opacity: .12; }
 .bubble { z-index: 5;
   position: absolute; left: 50%; bottom: calc(70% + 10px); transform: translateX(-50%);   /* tail tip just above the skater's cap */
-  background: var(--card); border: 3px solid var(--ink); border-radius: 20px; padding: 8px 16px;
-  font-family: var(--display); font-size: 1.05rem; width: max-content; max-width: 92%; text-align: center; box-shadow: 0 4px 0 var(--ink);
+  background: var(--card); border: 2px solid var(--line); border-radius: 20px; padding: 8px 16px;
+  font-family: var(--display); font-size: 1.05rem; width: max-content; max-width: 92%; text-align: center; box-shadow: 0 4px 0 var(--line);
   transition: opacity .25s, transform .25s;
 }
-.bubble::after { content: ""; position: absolute; left: 50%; bottom: -12px; width: 18px; height: 18px; background: var(--card); border-right: 3px solid var(--ink); border-bottom: 3px solid var(--ink); transform: translateX(-50%) rotate(45deg); }
+.bubble::after { content: ""; position: absolute; left: 50%; bottom: -12px; width: 18px; height: 18px; background: var(--card); border-right: 2px solid var(--line); border-bottom: 2px solid var(--line); transform: translateX(-50%) rotate(45deg); }
 .bubble { animation: float 3s ease-in-out infinite; }
 @keyframes float { 50% { transform: translateX(-50%) translateY(-4px); } }
 .bubble.pop { animation: pop .35s cubic-bezier(.3, 1.6, .5, 1), float 3s ease-in-out .35s infinite; }
@@ -89,7 +89,7 @@
    The base picture holds the plaza; every stop is its own layer on top, so locked ones can turn grey. */
 /* chapters sit side by side in a swipe slider (no frames); under it, arrows around the current chapter's name */
 .chap-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: -8px; }
-.chap-nav .arrow { width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--ink); background: var(--card); font-family: var(--display); font-size: 1.6rem; line-height: 1; display: grid; place-items: center; padding: 0 0 4px; box-shadow: 0 3px 0 var(--ink); flex: none; }
+.chap-nav .arrow { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); color: var(--ink); font-family: var(--display); font-size: 1.6rem; line-height: 1; display: grid; place-items: center; padding: 0 0 4px; box-shadow: 0 4px 0 var(--line); flex: none; }
 .chap-nav .arrow:disabled { opacity: .3; box-shadow: none; }
 .chap-nav .chap-name { min-width: 190px; text-align: center; font-family: var(--display); font-size: 1.15rem; line-height: 1.3; }
 .chap-nav .chap-name small { display: block; font-family: var(--body, inherit); font-size: .8rem; color: var(--muted); }
@@ -104,10 +104,10 @@
 .park .layer.soon img { filter: grayscale(1) brightness(1.06) contrast(.8); }   /* sits exactly over the coloured base, so no see-through */
 .park .layer:active img { transform: translateY(2px); }
 .park .badge { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: auto; padding: 0; border: 0; background: none; cursor: pointer; }
-.park .badge b { min-width: 34px; height: 30px; padding: 0 8px; border-radius: 999px; border: 3px solid var(--ink); color: #fff; font-family: var(--display); font-weight: 500; font-size: .95rem; display: grid; place-items: center; box-shadow: 0 2px 0 var(--ink); }
+.park .badge b { min-width: 34px; height: 30px; padding: 0 8px; border-radius: 999px; border: 2px solid #fff; color: #fff; font-family: var(--display); font-weight: 500; font-size: .95rem; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(43, 38, 32, .2); }
 .park .badge.soon b { background: #E5E0EE !important; color: #8A8499; border-color: #B4ADC4; box-shadow: none; display: flex; gap: 3px; }
 .park .badge.soon b img { width: 15px; height: 15px; }
-.park .badge .go { background: var(--yellow); color: var(--ink); border: 3px solid var(--ink); border-radius: 12px; padding: 0 10px; font-family: var(--display); font-size: .9rem; white-space: nowrap; box-shadow: 0 3px 0 var(--ink); animation: bob 1.8s ease-in-out infinite; }
+.park .badge .go { background: var(--yellow); color: var(--ink); border-radius: 12px; padding: 1px 10px; font-family: var(--display); font-size: .9rem; white-space: nowrap; box-shadow: 0 3px 0 var(--yellow-deep); animation: bob 1.8s ease-in-out infinite; }
 /* not built yet: a faded number in a dashed outline (a lock would suggest the lesson exists) */
 .park .badge.todo b, .park .pop .no.todo { background: rgba(255, 255, 255, .7) !important; color: #B4ADC4; border: 2px dashed #B4ADC4; box-shadow: none; }
 /* the child's skater waits beside the stop to play next, rolling back and forth */
@@ -128,7 +128,7 @@
 @keyframes roll { 50% { transform: translateX(-12%) rotate(-3deg); } }
 /* the card that opens over a tapped stop */
 .park .pop { position: absolute; z-index: 60; transform: translateX(-50%);   /* top is set in px by openPop */
-   width: min(240px, 70%); background: var(--card); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 5px 0 var(--ink); padding: 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+   width: min(240px, 70%); background: var(--card); border: 2px solid var(--line); border-radius: 18px; box-shadow: 0 4px 0 var(--line), 0 10px 24px rgba(43, 38, 32, .12); padding: 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .park .pop[hidden] { display: none; }
 .park .pop .no { min-width: 40px; height: 28px; padding: 0 8px; border-radius: 999px; color: #fff; font-family: var(--display); font-weight: 500; display: grid; place-items: center; }
 .park .pop .tt { font-family: var(--display); font-size: 1.05rem; line-height: 1.3; }

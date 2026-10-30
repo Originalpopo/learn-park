@@ -90,8 +90,8 @@ mark { background: linear-gradient(transparent 45%, var(--yellow) 45%); color: i
 .btn.ghost:active { box-shadow: 0 1px 0 var(--line); }
 .btn:disabled { opacity: .35; pointer-events: none; }
 /* round arrow button (back), the same look as the chapter arrows on the home page */
-.arrow-btn { width: 52px; height: 52px; border-radius: 50%; border: 3px solid var(--ink); background: var(--card); color: var(--ink); font-family: var(--display); font-size: 1.8rem; line-height: 1; display: grid; place-items: center; padding: 0 0 4px; box-shadow: 0 3px 0 var(--ink); cursor: pointer; flex: none; }
-.arrow-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.arrow-btn { width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); color: var(--ink); font-family: var(--display); font-size: 1.8rem; line-height: 1; display: grid; place-items: center; padding: 0 0 4px; box-shadow: 0 4px 0 var(--line); cursor: pointer; flex: none; }
+.arrow-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
 .arrow-btn:disabled { opacity: .3; box-shadow: none; pointer-events: none; }
 .round { width: 52px; min-height: 52px; padding: 0; font-size: 1.5rem; }   /* the +/− stepper buttons in the play tab */
 .link { border: 0; background: none; text-decoration: underline; color: var(--muted); min-height: 40px; }
@@ -129,7 +129,7 @@ mark { background: linear-gradient(transparent 45%, var(--yellow) 45%); color: i
 .stage { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; align-items: flex-end; min-width: 0; }
 .fig { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .cap { font-family: var(--display); font-size: 1.05rem; display: flex; align-items: center; gap: 4px; }
-.ava { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-family: var(--display); font-size: 1.15rem; border: 3px solid var(--ink); }
+.ava { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-family: var(--display); font-size: 1.15rem; border: 3px solid #fff; }
 .who-row { display: inline-flex; gap: 6px; align-items: center; vertical-align: middle; }
 .plus { font-family: var(--display); font-size: 1.6rem; color: var(--muted); }
 .say { display: flex; flex-direction: column; gap: 14px; min-width: 0; font-size: 1.15rem; }

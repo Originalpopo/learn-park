@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>จำนวนคละ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<style>
+/* 6.2 only: mixed numbers (whole number + proper fraction), the two conversions, cake builder and matching game */
+.mixed { display: inline-flex; align-items: center; vertical-align: middle; font-family: var(--display); font-weight: 500; }
+.mixed .w { font-size: 1.75em; line-height: 1; margin-right: .04em; }
+.mx-anat { display: flex; gap: 18px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+.mx-anat .part { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.mx-anat .big { font-family: var(--display); font-size: 4.2rem; line-height: 1; min-height: 1.3em; display: flex; align-items: center; }
+.mx-anat .big .frac { font-size: 2.6rem; }
+.lbl { font-size: 1rem; background: var(--yellow-soft); border-radius: 12px; padding: 4px 12px; text-align: center; }
+.rulebox { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.arrow-note { font-size: 1rem; background: var(--yellow-soft); border-radius: 12px; padding: 4px 12px; }
+.calc { font-family: var(--display); font-size: clamp(1.6rem, 4.2vw, 2.2rem); }
+.kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+.kind { border-radius: 22px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.kind h3 { font-size: 1.15rem; }
+.kind .ex { font-size: 1.5rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.kind.a { background: #FDEBDD; }
+.kind.b { background: #E8F3FB; }
+
+.cutter { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; align-items: center; }
+.ctrls { display: flex; flex-direction: column; gap: 14px; }
+.ctrl { display: flex; align-items: center; gap: 12px; justify-content: space-between; background: var(--bg); border-radius: 20px; padding: 10px 12px 10px 18px; }
+.ctrl .lab { font-family: var(--display); white-space: nowrap; }
+.ctrl .val { font-family: var(--display); font-size: 1.6rem; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.readout { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 2.4rem; }
+.readout .op { color: var(--muted); font-family: var(--display); }
+.pie-zone { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center; min-width: 0; }
+
+.match { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.fcard { background: var(--card); border: 3px solid var(--ink); border-radius: 24px; padding: 14px 30px; box-shadow: 0 6px 0 var(--ink); font-size: 3rem; }
+.fcard.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+.choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 560px; }
+.choices .opt { font-size: 1.6rem; }
+.msg { min-height: 1.6em; text-align: center; font-size: 1.05rem; }
+.msg.bad { color: var(--bad); }
+.msg.good { color: var(--good); }
+.sort-progress { text-align: center; color: var(--muted); font-size: .95rem; }
+
+@media (max-width: 760px) {
+  .cutter { grid-template-columns: 1fr; }
+}
+@media (max-width: 440px) {
+  .kinds { grid-template-columns: 1fr; }
+  .choices .opt { font-size: 1.3rem; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script>
+(() => {
+const { frac, fade, pie, piesSeg, ri, pick, shuffle, sfx, addExp, G, B, O } = L;
+const $ = s => document.querySelector(s);
+
+/* a mixed number: whole number beside a proper fraction (just the whole number when there is no remainder) */
+const mix = (w, n, d) => n ? `<span class="mixed"><span class="w">${w}</span>${frac(n, d)}</span>` : `<span class="mixed"><span class="w">${w}</span></span>`;
+const toMixed = (n, d) => [Math.floor(n / d), n % d];
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => `<div class="fig">${piesSeg(4, [[4, G], [3, O]], { anim: 'filled' })}<div class="cap">เค้กที่เหลือบนโต๊ะ</div></div>`,
+    say: () => `<h2>เค้กเต็ม 1 ก้อน กับอีก 3 ชิ้น</h2>
+      <p>แก้วตาตัดเค้กก้อนละ <mark>4 ชิ้นเท่าๆ กัน</mark></p>
+      <p>บนโต๊ะมีเค้กเต็มอยู่ 1 ก้อน กับอีก 3 ชิ้น</p>
+      <p class="hint">จะเขียนเป็นตัวเลขยังไงดีนะ</p>`
+  },
+  {
+    vis: () => `<div class="mx-anat">
+        <div class="part"><span class="big">1</span><span class="lbl">เค้กเต็ม 1 ก้อน</span></div>
+        <div class="part"><span class="big">${frac(3, 4)}</span><span class="lbl">อีก 3 ชิ้น จากก้อนที่ตัด 4 ชิ้น</span></div>
+      </div>`,
+    say: () => `<h2>เขียนว่า ${mix(1, 3, 4)}</h2>
+      <p>อ่านว่า <b>หนึ่งเศษสามส่วนสี่</b></p>
+      <p>เขียนจำนวนเต็มก้อนไว้ข้างหน้า แล้วตามด้วยเศษส่วนของชิ้นที่เหลือ</p>
+      <p class="callout">เลขแบบนี้เรียกว่า <b>จำนวนคละ</b></p>`
+  },
+  {
+    vis: () => `
+      <div class="fig">${piesSeg(2, [[4, G], [1, O]], { cls: 'sm', anim: 'filled' })}<div class="cap">${mix(2, 1, 2)}</div></div>
+      <div class="fig">${piesSeg(8, [[8, G], [5, O]], { cls: 'sm', anim: 'filled', step: .05, delay0: .4 })}<div class="cap">${mix(1, 5, 8)}</div></div>
+      <div class="fig">${piesSeg(3, [[9, G], [1, O]], { cls: 'sm', anim: 'filled', delay0: .9 })}<div class="cap">${mix(3, 1, 3)}</div></div>`,
+    say: () => `<h2>จำนวนคละ</h2>
+      <p>คือ <mark>จำนวนนับ</mark> กับ <mark>เศษส่วนแท้</mark> เขียนอยู่ด้วยกัน</p>
+      <p>${mix(2, 1, 2)} อ่านว่า สองเศษหนึ่งส่วนสอง</p>
+      <p>${mix(1, 5, 8)} อ่านว่า หนึ่งเศษห้าส่วนแปด</p>
+      <p>${mix(3, 1, 3)} อ่านว่า สามเศษหนึ่งส่วนสาม</p>`
+  },
+  {
+    vis: () => `<div class="fig">${piesSeg(4, [[7, O]], { anim: 'filled', step: .12 })}<div class="cap">นับได้ 7 ชิ้น</div></div>`,
+    say: () => `<h2>นับเป็นชิ้นก็ได้</h2>
+      <p>เค้กชุดเดิม ถ้านับทีละชิ้น ชิ้นละ ${frac(1, 4)} ก้อน จะได้ <b>7 ชิ้น</b> คือ ${frac(7, 4)} ซึ่งเป็นเศษเกิน</p>
+      <div class="eq">${fade(frac(7, 4), .3)}${fade('<span class="op">=</span>', .6)}${fade(mix(1, 3, 4), .8)}</div>
+      <p class="callout">เค้กเท่าเดิม แค่เขียนได้ 2 แบบ</p>`
+  },
+  {
+    vis: () => `<div class="fig">${piesSeg(4, [[8, G], [3, O]], { anim: 'filled', step: .1 })}<div class="cap">11 ชิ้น จัดใส่จานจานละ 4 ชิ้น</div></div>`,
+    say: () => `<h2>เปลี่ยน ${frac(11, 4)} เป็นจำนวนคละ</h2>
+      <p>มีเค้ก 11 ชิ้น ชิ้นละ ${frac(1, 4)} ก้อน</p>
+      <p>จัดใส่จาน จานละ 4 ชิ้นจะได้ 1 ก้อนเต็ม ได้ <b>2 ก้อนเต็ม</b> เหลือ <b>3 ชิ้น</b></p>
+      <div class="eq">${fade(frac(11, 4), .3)}${fade('<span class="op">=</span>', .6)}${fade(mix(2, 3, 4), .8)}</div>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <span class="calc">11 ÷ 4 = 2 เศษ 3</span>
+        <span class="arrow-note">ผลหาร 2 = จำนวนก้อนเต็ม</span>
+        <span class="arrow-note">เศษ 3 = ตัวเศษ (ชิ้นที่เหลือ)</span>
+        <span class="arrow-note">ตัวส่วน 4 เหมือนเดิม</span>
+        <div class="eq">${frac(11, 4)}<span class="op">=</span>${mix(2, 3, 4)}</div>
+      </div>`,
+    say: () => `<h2>วิธีลัด: ใช้การหาร</h2>
+      <p>เอา <mark>ตัวเศษ หารด้วย ตัวส่วน</mark></p>
+      <p>ผลหารเป็นจำนวนนับข้างหน้า เศษที่เหลือเป็นตัวเศษ ตัวส่วนไม่เปลี่ยน</p>
+      <p class="hint">เพราะ 4 ชิ้นรวมกันได้ 1 ก้อนพอดี การหารด้วย 4 จึงบอกว่าได้กี่ก้อนเต็ม</p>`
+  },
+  {
+    vis: () => `<div class="fig">${piesSeg(3, [[6, G], [1, O]], { anim: 'filled', step: .12 })}<div class="cap">${mix(2, 1, 3)}</div></div>`,
+    say: () => `<h2>เปลี่ยน ${mix(2, 1, 3)} เป็นเศษเกิน</h2>
+      <p>เค้กเต็ม 2 ก้อน ตัดก้อนละ 3 ชิ้น ได้ <b>6 ชิ้น</b></p>
+      <p>รวมกับอีก 1 ชิ้น เป็น <b>7 ชิ้น</b></p>
+      <div class="eq">${fade(mix(2, 1, 3), .3)}${fade('<span class="op">=</span>', .6)}${fade(frac(7, 3), .8)}</div>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <span class="calc">(2 × 3) + 1 = 7</span>
+        <span class="arrow-note">จำนวนนับ × ตัวส่วน = ชิ้นในก้อนเต็ม</span>
+        <span class="arrow-note">บวกตัวเศษ = ชิ้นทั้งหมด</span>
+        <span class="arrow-note">ตัวส่วน 3 เหมือนเดิม</span>
+        <div class="eq">${mix(2, 1, 3)}<span class="op">=</span>${frac(7, 3)}</div>
+      </div>`,
+    say: () => `<h2>วิธีลัด: คูณแล้วบวก</h2>
+      <p>เอา <mark>จำนวนนับ คูณ ตัวส่วน</mark> แล้ว <mark>บวกตัวเศษ</mark> ได้ตัวเศษใหม่</p>
+      <p>ตัวส่วนยังเหมือนเดิม</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>เศษเกิน → จำนวนคละ</h3><span>ตัวเศษ ÷ ตัวส่วน</span><div class="ex">${frac(11, 4)}<span>=</span>${mix(2, 3, 4)}</div><span class="hint">ผลหารอยู่หน้า เศษเป็นตัวเศษ</span></div>
+        <div class="kind b"><h3>จำนวนคละ → เศษเกิน</h3><span>จำนวนนับ × ตัวส่วน + ตัวเศษ</span><div class="ex">${mix(2, 1, 3)}<span>=</span>${frac(7, 3)}</div><span class="hint">ตัวส่วนเหมือนเดิม</span></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p><b>จำนวนคละ</b> = จำนวนนับ กับ เศษส่วนแท้</p>
+      <p>เศษเกินกับจำนวนคละ บอกจำนวนเค้กเท่ากัน เปลี่ยนไปมาได้</p>
+      <p class="hint">ไปลองจัดเค้กเองในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+// builder: pick slices per cake, tap slices; shows the amount both as a fraction and as a mixed number
+const play = { d: 4, n: 7, pop: -1 };
+function cutterHTML() {
+  const { d, n } = play, [w, r] = toMixed(n, d);
+  const k = Math.min(3, Math.floor(n / d) + 1);
+  let h = '';
+  for (let p = 0; p < k; p++) {
+    const c = Math.max(0, Math.min(d, n - p * d));
+    const fills = Array.from({ length: d }, (_, i) => i < c ? (c === d ? G : O) : null);
+    h += pie(d, fills, { tap: p * d, anim: play.pop - p * d, cls: p > 0 && c === 0 ? 'ghosty' : '' });
+  }
+  let out, line;
+  if (n === 0) { out = frac(0, d); line = 'แตะชิ้นเค้กเพื่อระบายสี'; }
+  else if (n < d) { out = frac(n, d); line = `ยังไม่ครบ 1 ก้อน เป็นเศษส่วนแท้ (ยังเขียนเป็นจำนวนคละไม่ได้)`; }
+  else if (!r) { out = `${frac(n, d)}<span class="op">=</span>${mix(w, 0, d)}`; line = `${n} ÷ ${d} = ${w} ลงตัว · เค้กเต็ม ${w} ก้อนพอดี`; }
+  else { out = `${frac(n, d)}<span class="op">=</span>${mix(w, r, d)}`; line = `${n} ÷ ${d} = ${w} เศษ ${r} · เต็ม ${w} ก้อน เหลือ ${r} ชิ้น`; }
+  return `
+    <div class="pie-zone">${h}</div>
+    <div class="ctrls">
+      <div class="readout">${out}</div>
+      <p class="hint">${line}</p>
+      <div class="ctrl"><span class="lab">ตัดก้อนละ</span><span class="stepper"><button class="btn ghost round" data-act="d-" aria-label="ลดจำนวนชิ้น">−</button><span class="val">${d}</span><button class="btn ghost round" data-act="d+" aria-label="เพิ่มจำนวนชิ้น">+</button></span><span class="lab">ชิ้น</span></div>
+      <div class="ctrl"><span class="lab">ระบาย</span><span class="stepper"><button class="btn ghost round" data-act="n-" aria-label="ลดชิ้นที่ระบาย">−</button><span class="val">${n}</span><button class="btn ghost round" data-act="n+" aria-label="เพิ่มชิ้นที่ระบาย">+</button></span><span class="lab">ชิ้น</span></div>
+    </div>`;
+}
+
+// matching game: 8 cards; even rounds show an improper fraction (pick the mixed number), odd rounds the reverse
+function mixedSet() {
+  const d = pick([2, 3, 4, 5, 6, 8]), w = ri(1, 3), r = ri(1, d - 1);
+  return { d, w, r, n: w * d + r };
+}
+// wrong but believable answers for a mixed number w r/d
+function mixedWrong({ d, w, r }) {
+  const c = [[w + 1, r, d], [w, d - r, d], [w > 1 ? w - 1 : w + 2, r, d], [w, r === 1 ? 2 : r - 1, d], [w, r, d + 1], [w + 2, r, d]];
+  return c.filter(([a, b, e]) => a > 0 && b > 0 && b < e && !(a === w && b === r && e === d));
+}
+function fracWrong({ d, w, r, n }) {
+  return [[w + r, d], [n + d, d], [n - 1, d], [w * d, d], [n, d + 1]].filter(([a, e]) => a > 0 && !(a === n && e === d));
+}
+function dedupe(list) { const seen = new Set(); return list.filter(x => { const k = x.join('/'); return seen.has(k) ? false : seen.add(k); }); }
+
+let match = null;
+function newMatch() {
+  const rounds = [], seen = new Set();
+  while (rounds.length < 8) {
+    const m = mixedSet(), k = m.n + '/' + m.d;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    const toMix = rounds.length % 2 === 0;
+    const wrong = dedupe(toMix ? mixedWrong(m) : fracWrong(m)).slice(0, 2);
+    const right = toMix ? [m.w, m.r, m.d] : [m.n, m.d];
+    const show = x => toMix ? mix(...x) : frac(...x);
+    rounds.push({ m, toMix, card: toMix ? frac(m.n, m.d) : mix(m.w, m.r, m.d),
+      opts: shuffle([{ html: show(right), ok: true }, ...wrong.map(x => ({ html: show(x), ok: false }))]) });
+  }
+  return { rounds: shuffle(rounds), i: 0, got: 0, miss: false, hint: false, msg: '', msgCls: '', busy: false };
+}
+function matchHTML() {
+  const s = match;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">จับคู่ครบ 8 ใบแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} ใบ</p>
+      <button class="btn" data-act="match-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const q = s.rounds[s.i], { m } = q;
+  return `<div class="match">
+      <p>${q.toMix ? 'เศษเกินนี้ เท่ากับจำนวนคละข้อใด' : 'จำนวนคละนี้ เท่ากับเศษเกินข้อใด'}</p>
+      <div class="fcard" id="fcard">${q.card}</div>
+      ${s.hint ? piesSeg(m.d, [[m.w * m.d, G], [m.r, O]], { cls: 'sm' }) : '<button class="link" data-act="hint">ดูภาพช่วย</button>'}
+      <div class="choices">${q.opts.map((o, i) => `<button class="opt" data-pick="${i}">${o.html}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">ใบที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+
+function playHTML() {
+  if (!match) match = newMatch();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>จัดเค้กเอง</h2><p>เลือกว่าจะตัดก้อนละกี่ชิ้น แล้วแตะชิ้นเค้ก ดูว่าเขียนเป็นเศษเกินและจำนวนคละได้อย่างไร</p></div>
+      <div class="cutter" id="cutter">${cutterHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>จับคู่ให้ถูก</h2><p>เลือกคำตอบที่บอกจำนวนเค้กเท่ากับการ์ด</p></div>
+      <div id="match">${matchHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawCutter = () => { const el = $('#cutter'); if (el) el.innerHTML = cutterHTML(); };
+const drawMatch = () => { const el = $('#match'); if (el) el.innerHTML = matchHTML(); };
+
+function setN(n) {
+  n = Math.max(0, Math.min(play.d * 3, n));
+  play.pop = n > play.n ? n - 1 : -1;
+  play.n = n; drawCutter();
+}
+function answerMatch(i) {
+  const s = match;
+  if (s.busy || s.i >= s.rounds.length) return;
+  const q = s.rounds[s.i], { m } = q;
+  if (q.opts[i].ok) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true;
+    s.msg = pick(['เก่งมาก!', 'ถูกต้อง!', 'ใช่เลย!', 'เยี่ยม!']); s.msgCls = 'good';
+    drawMatch();
+    setTimeout(() => {
+      s.i++; s.miss = false; s.hint = false; s.busy = false;
+      if (s.i >= s.rounds.length) sfx.win();
+      drawMatch();
+    }, 700);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = q.toMix
+      ? `${m.n} ÷ ${m.d} = ${m.w} เศษ ${m.r} ลองใหม่นะ`
+      : `(${m.w} × ${m.d}) + ${m.r} = ${m.n} ลองใหม่นะ`;
+    s.msgCls = 'bad';
+    drawMatch();
+    $('#fcard').classList.add('shake');
+  }
+}
+function playClick(e) {
+  const g = e.target.closest('[data-g]');
+  if (g) { const gi = +g.dataset.g; sfx.tap(); setN(gi + 1 === play.n ? gi : gi + 1); return; }
+  const p = e.target.closest('[data-pick]');
+  if (p) { answerMatch(+p.dataset.pick); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  switch (a.dataset.act) {
+    case 'd-': case 'd+': {
+      const d = Math.max(2, Math.min(8, play.d + (a.dataset.act === 'd+' ? 1 : -1)));
+      if (d !== play.d) { play.d = d; play.n = Math.min(play.n, d * 3); play.pop = -1; sfx.tap(); drawCutter(); }
+      break;
+    }
+    case 'n-': sfx.tap(); setN(play.n - 1); break;
+    case 'n+': sfx.tap(); setN(play.n + 1); break;
+    case 'hint': match.hint = true; drawMatch(); break;
+    case 'match-again': match = newMatch(); drawMatch(); break;
+  }
+}
+
+/* ---------- 3. quiz ---------- */
+function opts(right, wrong, show) {
+  return shuffle([{ html: show(right), ok: true }, ...dedupe(wrong).slice(0, 3).map(x => ({ html: show(x), ok: false }))]);
+}
+function qA() {
+  const m = mixedSet(), col = pick([B, O]);
+  return {
+    ask: 'ภาพนี้แสดงจำนวนคละใด',
+    pic: piesSeg(m.d, [[m.w * m.d, G], [m.r, col]]),
+    opts: opts([m.w, m.r, m.d], mixedWrong(m), x => mix(...x)),
+    explain: `เค้กเต็ม <b>${m.w} ก้อน</b> กับอีก <b>${m.r} ชิ้น</b> จากก้อนที่ตัด ${m.d} ชิ้น จึงเป็น ${mix(m.w, m.r, m.d)}`,
+    review: `ภาพเต็ม ${m.w} ก้อน กับอีก ${m.r} ชิ้น (ก้อนละ ${m.d}) → ${mix(m.w, m.r, m.d)}`
+  };
+}
+function qB() {
+  const m = mixedSet();
+  return {
+    ask: `เขียน ${frac(m.n, m.d)} เป็นจำนวนคละได้เท่าใด`,
+    pic: '',
+    opts: opts([m.w, m.r, m.d], mixedWrong(m), x => mix(...x)),
+    explain: `${m.n} ÷ ${m.d} = ${m.w} เศษ ${m.r} ผลหาร ${m.w} อยู่ข้างหน้า เศษ ${m.r} เป็นตัวเศษ ตัวส่วนยังเป็น ${m.d} ได้ ${mix(m.w, m.r, m.d)}`,
+    after: piesSeg(m.d, [[m.w * m.d, G], [m.r, O]], { cls: 'sm' }),
+    review: `${frac(m.n, m.d)} = ${mix(m.w, m.r, m.d)} (${m.n} ÷ ${m.d} = ${m.w} เศษ ${m.r})`
+  };
+}
+function qC() {
+  const m = mixedSet();
+  return {
+    ask: `เขียน ${mix(m.w, m.r, m.d)} เป็นเศษเกินได้เท่าใด`,
+    pic: '',
+    opts: opts([m.n, m.d], fracWrong(m), x => frac(...x)),
+    explain: `(${m.w} × ${m.d}) + ${m.r} = ${m.n} ตัวส่วนยังเป็น ${m.d} ได้ ${frac(m.n, m.d)}`,
+    after: piesSeg(m.d, [[m.w * m.d, G], [m.r, O]], { cls: 'sm' }),
+    review: `${mix(m.w, m.r, m.d)} = ${frac(m.n, m.d)} ((${m.w} × ${m.d}) + ${m.r} = ${m.n})`
+  };
+}
+function qD() {
+  const m = mixedSet(), d = pick([3, 4, 5, 6, 8]);
+  const proper = [ri(1, d - 1), d], improper = [ri(d + 1, 2 * d), d];
+  return {
+    ask: 'ข้อใดเป็น <mark>จำนวนคละ</mark>',
+    pic: '',
+    opts: shuffle([
+      { html: mix(m.w, m.r, m.d), ok: true },
+      { html: frac(...proper), ok: false },
+      { html: frac(...improper), ok: false },
+      { html: `<span class="mixed"><span class="w">${ri(2, 9)}</span></span>`, ok: false }
+    ]),
+    explain: `${mix(m.w, m.r, m.d)} มีจำนวนนับ ${m.w} อยู่กับเศษส่วนแท้ ${frac(m.r, m.d)} จึงเป็นจำนวนคละ ข้ออื่นเป็นเศษส่วนแท้ เศษเกิน หรือจำนวนนับอย่างเดียว`,
+    review: `จำนวนคละ = จำนวนนับ กับเศษส่วนแท้ เช่น ${mix(m.w, m.r, m.d)}`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/6.2',
+  storyLabel: 'ดูเรื่องเค้ก',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD()])
+});
+})();
+</script>
+</body>
+</html>

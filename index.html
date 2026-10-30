@@ -245,7 +245,7 @@ const stars = ready.reduce((s, r) => s + best(r.id), 0);
 const passed = ready.filter(r => best(r.id) > 0).length;
 
 $('#hero-btns').innerHTML = `
-  <a class="btn" href="${next.t.file}">เล่นด่าน ${next.t.no} →</a>
+  <a class="btn" href="${next.t.file}">เล่นด่าน ${next.t.no}</a>
   <a class="btn ghost" href="#map">ดูแผนที่ด่าน</a>`;
 
 $('#stats').innerHTML = [
@@ -314,7 +314,7 @@ function openPop(w, i) {
   pop.classList.toggle('below', below);
   pop.innerHTML = `<b class="no" style="background:${w.ch.color}">${t.no}</b><div class="tt">${t.title}</div>
     ${t.file
-      ? `<div class="ms">${[0, 1, 2].map(k => star(k < s)).join('')}</div><a class="btn" href="${t.file}">เล่นด่านนี้ →</a>`
+      ? `<div class="ms">${[0, 1, 2].map(k => star(k < s)).join('')}</div><a class="btn" href="${t.file}">เล่นด่านนี้</a>`
       : `<div class="soon">${LOCK} ยังไม่เปิด เร็วๆ นี้</div>`}`;
   pop.hidden = false;
 }

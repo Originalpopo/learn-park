@@ -11,7 +11,7 @@ const COURSES = [{
   chapters: [
     { no: 6, title: 'เศษส่วน', color: 'var(--red)', topics: [
       { no: '6.1', title: 'เศษส่วนแท้ เศษเกิน', file: 'math/p4/6-1.html' },
-      { no: '6.2', title: 'จำนวนคละ' },
+      { no: '6.2', title: 'จำนวนคละ', file: 'math/p4/6-2.html' },
       { no: '6.3', title: 'เศษส่วนที่เท่ากับจำนวนนับ' },
       { no: '6.4', title: 'เศษส่วนที่เท่ากัน' },
       { no: '6.5', title: 'เศษส่วนอย่างต่ำ' },
@@ -202,7 +202,7 @@ function lesson(cfg) {
       <div class="story-nav">
         <button class="btn ghost" data-act="prev" ${st === 0 ? 'disabled' : ''}>← ย้อน</button>
         <div class="dots">${STORY.map((_, i) => `<button class="dot${i === st ? ' on' : ''}" data-step="${i}" aria-label="ไปขั้นที่ ${i + 1}"></button>`).join('')}</div>
-        ${last ? '<button class="btn" data-act="goplay">ไปลองเล่น →</button>' : '<button class="btn" data-act="next">ต่อไป →</button>'}
+        ${last ? '<button class="btn" data-act="goplay">ไปลองเล่น</button>' : '<button class="btn" data-act="next">ต่อไป</button>'}
       </div>`;
   }
 
@@ -233,7 +233,7 @@ function lesson(cfg) {
     if (picked != null) {
       const ok = q.opts[picked].ok;
       fb = `<div class="fb ${ok ? 'good' : 'bad'}"><b class="t">${ok ? pick(['ถูกต้อง เก่งมาก!', 'ใช่เลย!', 'เยี่ยมมาก!']) : 'ยังไม่ใช่ ลองดูวิธีคิดนะ'}</b><p>${q.explain}</p>${!ok && q.after ? q.after : ''}</div>
-        <div class="qfoot"><button class="btn" data-act="qnext">${z.i === z.qs.length - 1 ? 'ดูผล →' : 'ข้อต่อไป →'}</button></div>`;
+        <div class="qfoot"><button class="btn" data-act="qnext">${z.i === z.qs.length - 1 ? 'ดูผล' : 'ข้อต่อไป'}</button></div>`;
     }
     view.innerHTML = `
       <section class="card">

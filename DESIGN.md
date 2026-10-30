@@ -56,7 +56,7 @@ A round pencil button sits at the bottom right on every screen size: iPad, phone
 - Built lesson, not reached yet: grey stop with a lock badge.
 - Lesson not built yet: grey stop with a faded number in a dashed outline. No lock.
 - Every built lesson shows its best result as 3 small stars above its number: filled ones are earned, empty ones are still to win. Lessons not built yet have no stars.
-- The newest lesson to play has its stars bobbing up and down, and the skater waits beside it. There is no "เริ่มตรงนี้" label.
+- The newest lesson to play has its stars and number bobbing up and down together, and the skater waits beside it. There is no "เริ่มตรงนี้" label.
 - Cards close when the page scrolls or its width changes.
 
 ## Motion

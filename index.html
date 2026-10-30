@@ -110,7 +110,7 @@
 .park .badge .mini { display: flex; gap: 1px; filter: drop-shadow(0 1px 1px rgba(43, 38, 32, .25)); }   /* best stars of a built lesson; the next one bobs */
 .park .badge .mini svg { width: 17px; height: 17px; fill: #fff; stroke: #C9BFA6; stroke-width: 1.5; }
 .park .badge .mini svg.on { fill: var(--yellow); stroke: var(--yellow-deep); }
-.park .badge .mini.bob { animation: bob 1.8s ease-in-out infinite; }
+.park .badge.next .mini, .park .badge.next b { animation: bob 1.8s ease-in-out infinite; }   /* the next lesson's stars and number bob together */
 /* not built yet: a faded number in a dashed outline (a lock would suggest the lesson exists) */
 .park .badge.todo b, .park .pop .no.todo { background: rgba(255, 255, 255, .7) !important; color: #B4ADC4; border: 2px dashed #B4ADC4; box-shadow: none; }
 /* the child's skater waits beside the stop to play next, rolling back and forth */
@@ -280,7 +280,7 @@ function drawWorld({ c, ch, zone, park }) {
     layers += `<button class="layer ${grey ? 'soon' : ''}" data-i="${i}" style="${pct(L.l, L.t)};width:${L.w}%;z-index:${z + 1}" aria-label="ด่าน ${t.no} ${t.title}">
         <img src="${PARK(`${zone}-${i + 1}`)}" alt=""></button>`;
     badges += `<button class="badge ${st === 'soon' ? 'todo' : grey ? 'soon' : st}" data-i="${i}" style="${pct(L.l + L.w / 2, L.t + 1)}" tabindex="-1" aria-hidden="true">
-        ${t.file ? `<span class="mini${st === 'next' ? ' bob' : ''}">${[0, 1, 2].map(k => star(k < best(id))).join('')}</span>` : ''}
+        ${t.file ? `<span class="mini">${[0, 1, 2].map(k => star(k < best(id))).join('')}</span>` : ''}
         <b style="background:${ch.color}">${st === 'locked' ? LOCK : ''}${t.no}</b></button>`;
     // the child's skater stands on the floor spot just in front of the stop to play next
     if (st === 'next') ride = `<span class="ride" style="${pct(L.gx, L.gy)};width:max(34px, ${(lay.tile * 1.5).toFixed(2)}%)"><img src="${heroImg()}" alt=""></span>`;

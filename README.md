@@ -29,5 +29,5 @@ Pushing to `main` builds `_site/` with `node build.js` and deploys it to GitHub 
 ## Credits
 
 - 3D skate park models: [Kenney "Mini Skate"](https://kenney.nl/assets/mini-skate), CC0
-- Park map pictures: painted with an image AI in the Kenney style
-- Sun, cloud, stars, trophy, lock: [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji), MIT
+- Park map pictures and the trophy: painted with an image AI in the Kenney style
+- Sun, cloud, stars, lock: [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji), MIT

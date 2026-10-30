@@ -90,10 +90,10 @@ mark { background: linear-gradient(transparent 45%, var(--yellow) 45%); color: i
 .btn.ghost:active { box-shadow: 0 1px 0 var(--line); }
 .btn:disabled { opacity: .35; pointer-events: none; }
 /* round arrow button (back), the same look as the chapter arrows on the home page */
-.round { width: 52px; height: 52px; border-radius: 50%; border: 3px solid var(--ink); background: var(--card); color: var(--ink); font-family: var(--display); font-size: 1.8rem; line-height: 1; display: grid; place-items: center; padding: 0 0 4px; box-shadow: 0 3px 0 var(--ink); cursor: pointer; flex: none; }
-.round:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
-.round:disabled { opacity: .3; box-shadow: none; pointer-events: none; }
-.round { width: 52px; min-height: 52px; padding: 0; font-size: 1.5rem; }
+.arrow-btn { width: 52px; height: 52px; border-radius: 50%; border: 3px solid var(--ink); background: var(--card); color: var(--ink); font-family: var(--display); font-size: 1.8rem; line-height: 1; display: grid; place-items: center; padding: 0 0 4px; box-shadow: 0 3px 0 var(--ink); cursor: pointer; flex: none; }
+.arrow-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.arrow-btn:disabled { opacity: .3; box-shadow: none; pointer-events: none; }
+.round { width: 52px; min-height: 52px; padding: 0; font-size: 1.5rem; }   /* the +/− stepper buttons in the play tab */
 .link { border: 0; background: none; text-decoration: underline; color: var(--muted); min-height: 40px; }
 
 .card { background: var(--card); border-radius: 28px; border: 2px solid var(--line); padding: clamp(18px, 3vw, 32px); }

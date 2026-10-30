@@ -12,7 +12,7 @@ const COURSES = [{
     { no: 6, title: 'เศษส่วน', color: 'var(--red)', topics: [
       { no: '6.1', title: 'เศษส่วนแท้ เศษเกิน', file: 'math/p4/6-1.html' },
       { no: '6.2', title: 'จำนวนคละ', file: 'math/p4/6-2.html' },
-      { no: '6.3', title: 'เศษส่วนที่เท่ากับจำนวนนับ' },
+      { no: '6.3', title: 'เศษส่วนที่เท่ากับจำนวนนับ', file: 'math/p4/6-3.html' },
       { no: '6.4', title: 'เศษส่วนที่เท่ากัน' },
       { no: '6.5', title: 'เศษส่วนอย่างต่ำ' },
       { no: '6.6', title: 'การเปรียบเทียบและเรียงลำดับ' },
@@ -200,7 +200,7 @@ function lesson(cfg) {
         <div class="say"><div class="step-no">ขั้นที่ ${st + 1} จาก ${STORY.length}</div>${s.say()}</div>
       </section>
       <div class="story-nav">
-        <button class="round" data-act="prev" aria-label="ย้อน" ${st === 0 ? 'disabled' : ''}>‹</button>
+        <button class="arrow-btn" data-act="prev" aria-label="ย้อน" ${st === 0 ? 'disabled' : ''}>‹</button>
         <div class="dots">${STORY.map((_, i) => `<button class="dot${i === st ? ' on' : ''}" data-step="${i}" aria-label="ไปขั้นที่ ${i + 1}"></button>`).join('')}</div>
         ${last ? '<button class="btn" data-act="goplay">ไปลองเล่น</button>' : '<button class="btn" data-act="next">ต่อไป</button>'}
       </div>`;

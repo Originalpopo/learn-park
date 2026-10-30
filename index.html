@@ -92,7 +92,6 @@
 
 /* level map */
 .map-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.map-head h2 { font-size: clamp(1.6rem, 4.4vw, 2.2rem); }
 /* worlds: each chapter is one zone of the skate park (ramps / rails / bowl), drawn as a painted park picture.
    The base picture holds the plaza; every stop is its own layer on top, so locked ones can turn grey. */
 /* chapters sit side by side in a swipe slider (no frames); under it, arrows around the current chapter's name */
@@ -105,7 +104,7 @@
 .slider::-webkit-scrollbar { display: none; }
 .world { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; position: relative; padding: 4px 2px 8px; }
 .park { position: relative; max-width: 820px; margin: calc(min(100%, 820px) * -.02) auto calc(min(100%, 820px) * -.06); }   /* trim the empty paper above and below the island */
-.park > img.base, .park > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.park > img.base { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .park .layer { position: absolute; display: block; height: auto; padding: 0; border: 0; background: none; cursor: pointer; }
 .park .over { position: absolute; inset: 0; pointer-events: none; }
 .park .layer img { width: 100%; height: auto; display: block; }
@@ -197,7 +196,7 @@
   <section class="stats" id="stats"></section>
 
   <section class="map-head" id="map">
-    <div><div class="eyebrow">คณิตศาสตร์ ป.4 · เทอม 2 · ตามหนังสือเรียน</div><h2>แผนที่ด่าน</h2></div>
+    <div class="eyebrow">คณิตศาสตร์ ป.4 · เทอม 2 · ตามหนังสือเรียน</div>
   </section>
   <div class="slider" id="worlds"></div>
   <div class="chap-nav">
@@ -221,12 +220,8 @@ const IMG = n => `shared/img/${n}.png`;
 const SK = n => IMG('skate/' + n);
 const PARK = n => `shared/img/park/${n}.webp`;
 
-const THEMES = {
-  ramps: { name: 'โซนทางลาด', route: '#E8823A' },
-  rails: { name: 'โซนราวเหล็ก', route: '#4A7FCF' },
-  bowl: { name: 'โซนชามสเก็ต', route: '#8C6FD6' }
-};
-const CHAPTER_THEME = { 6: 'ramps', 7: 'rails', 8: 'bowl' };
+// which park zone each chapter plays in
+const CHAPTER_ZONE = { 6: 'ramps', 7: 'rails', 8: 'bowl' };
 
 /* the child's skater: the boy in the cap (no choice of character) */
 const heroImg = () => SK('boy');
@@ -260,17 +255,17 @@ const LOCK = `<img src="${IMG('locked')}" alt="">`;
 const worlds = [];
 const slider = $('#worlds');
 COURSES.forEach(c => c.chapters.forEach(ch => {
-  const zone = CHAPTER_THEME[ch.no] || 'ramps', th = THEMES[zone];
+  const zone = CHAPTER_ZONE[ch.no] || 'ramps';
   const readyN = ch.topics.filter(t => t.file).length;
   const sec = document.createElement('section');
   sec.className = `world ${zone}`;
   sec.setAttribute('aria-label', `บทที่ ${ch.no} ${ch.title}`);
   sec.innerHTML = '<div class="park"></div>';
   slider.appendChild(sec);
-  worlds.push({ c, ch, zone, th, sec, park: sec.querySelector('.park'), sub: `${th.name} · เปิดแล้ว ${readyN}/${ch.topics.length} ด่าน` });
+  worlds.push({ c, ch, zone, sec, park: sec.querySelector('.park'), sub: `เปิดแล้ว ${readyN}/${ch.topics.length} ด่าน` });
 }));
 
-function drawWorld({ c, ch, zone, th, park }) {
+function drawWorld({ c, ch, zone, park }) {
   const lay = window.PARK_LAYOUT[zone], n = ch.topics.length;
   const pct = (x, y) => `left:${x}%;top:${y}%`;
   let layers = '', badges = '', ride = '';
@@ -285,17 +280,11 @@ function drawWorld({ c, ch, zone, th, park }) {
         ${st === 'next' ? '<span class="go">เริ่มตรงนี้!</span>' : ''}
         ${i === n - 1 ? `<img class="prize" src="${IMG('trophy')}" alt="">` : ''}
         <b style="background:${ch.color}">${st === 'soon' ? LOCK : ''}${t.no}</b></button>`;
-    // the child's skater waits just in front-left of the stop to play next
-    if (st === 'next') ride = `<span class="ride" style="${pct(L.gx - lay.tile * 1.3, L.gy + lay.tile * .5 * lay.aspect)};width:max(34px, ${(lay.tile * 1.5).toFixed(2)}%)"><img src="${heroImg()}" alt=""></span>`;
+    // the child's skater stands on the floor spot just in front of the stop to play next
+    if (st === 'next') ride = `<span class="ride" style="${pct(L.gx, L.gy)};width:max(34px, ${(lay.tile * 1.5).toFixed(2)}%)"><img src="${heroImg()}" alt=""></span>`;
   });
-  // painted route between the stops, in the order they are played
-  const pts = lay.stops.slice(0, n).map(L => `${L.gx},${L.gy}`).join(' ');
   park.style.aspectRatio = lay.aspect;
   park.innerHTML = `<img class="base" src="${PARK(zone + '-base')}" alt="">
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <polyline points="${pts}" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity=".75" vector-effect="non-scaling-stroke"/>
-      <polyline points="${pts}" fill="none" stroke="${th.route}" stroke-width="4" stroke-dasharray="10 8" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
-    </svg>
     ${layers}<div class="over" style="z-index:${n + 2}">${ride}${badges}</div><div class="pop" hidden></div>`;
 }
 const drawWorlds = () => worlds.forEach(drawWorld);

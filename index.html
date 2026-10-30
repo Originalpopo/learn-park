@@ -15,7 +15,6 @@
 <link rel="stylesheet" href="shared/core.css">
 <style>
 /* Home as a game: a little skate park with the child's chosen skater, then a winding level map, one park zone per chapter. */
-:root { --sky: #FFF3C9; }
 .app { gap: 22px; }
 
 /* top bar */
@@ -42,20 +41,11 @@
 .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
 .hero-btns .btn { min-height: 62px; font-size: 1.15rem; }
 .scene-wrap { position: relative; min-width: 0; }
-/* hero scene: a little skate park. Park pieces and skaters are renders of Kenney "Mini Skate" (CC0),
-   sun/clouds/stars are Fluent Emoji (MIT); all placed in % of a 520x440 stage */
-.scene { position: relative; width: 100%; aspect-ratio: 520 / 440; touch-action: manipulation; }
-.scene .sky { position: absolute; left: 9.6%; top: 2.3%; width: 80.8%; height: 95.5%; border-radius: 50%; background: var(--sky); }
-.sticker { position: absolute; display: block; height: auto; pointer-events: none; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 6px 4px rgba(43, 38, 32, .16)); }
-.s-sun { right: 7%; top: 5%; width: 17%; }
-.s-cl1 { left: 8%; top: 15%; width: 19%; }
-.s-cl2 { left: 47%; top: 4%; width: 13%; }
-.s-pipe { left: 3%; top: 30%; width: 36%; }
-.s-ramp { left: 62%; top: 42%; width: 32%; }
-.s-rail { left: 10%; top: 66%; width: 28%; }
-.s-bench { left: 70%; top: 72%; width: 19%; }
-.s-tw1 { left: 4%; top: 30%; width: 7%; } .s-tw2 { left: 88%; top: 34%; width: 6%; }
-.kid { position: absolute; left: 31%; top: 31%; width: 38%; padding: 0; border: 0; background: none; cursor: pointer; }
+/* hero scene: one painted title picture (tools/incoming/hero.webp, background made see-through) with an empty
+   middle, where the child's skater (a Kenney "Mini Skate" render) stands as a button */
+.scene { position: relative; width: 100%; aspect-ratio: 1; touch-action: manipulation; }
+.scene .art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.kid { position: absolute; left: 32%; top: 30%; width: 36%; padding: 0; border: 0; background: none; cursor: pointer; }
 .kid img { width: 100%; height: auto; display: block; filter: drop-shadow(0 8px 4px rgba(43, 38, 32, .2)); }
 .kid .shadow { position: absolute; left: 22%; right: 22%; bottom: 8%; height: 8%; border-radius: 50%; background: #000; opacity: .12; }
 .bubble { z-index: 5;
@@ -69,17 +59,10 @@
 .tap-hint { z-index: 5; position: absolute; right: 4%; bottom: 3%; font-size: .85rem; color: var(--muted); background: var(--card); border-radius: 999px; padding: 2px 12px; border: 2px solid var(--line); }
 
 /* scene animation */
-.cloud { animation: drift 14s ease-in-out infinite alternate; }
-.cloud.c2 { animation-duration: 18s; animation-delay: -6s; }
-@keyframes drift { from { transform: translateX(-18px); } to { transform: translateX(22px); } }
 .bob { animation: bob 2.6s ease-in-out infinite; }
-.bob.slow { animation-duration: 4s; }
 @keyframes bob { 50% { transform: translateY(-8px); } }
 .kid.jump img { animation: jump .6s cubic-bezier(.3, 1.5, .5, 1); }
 @keyframes jump { 40% { transform: translateY(-34%) rotate(-8deg); } }
-.twinkle { animation: twinkle 2.2s ease-in-out infinite; }
-.twinkle.t2 { animation-delay: -.8s; } .twinkle.t3 { animation-delay: -1.5s; }
-@keyframes twinkle { 50% { transform: scale(.5); opacity: .4; } }
 
 
 /* stats */
@@ -177,16 +160,7 @@
     <div class="scene-wrap">
       <div class="bubble" id="bubble">สวัสดี! วันนี้ไปผจญภัยกัน</div>
       <div class="scene">
-        <div class="sky"></div>
-        <img class="sticker s-sun bob slow" src="shared/img/sun.png" alt="">
-        <img class="sticker s-cl1 cloud" src="shared/img/cloud.png" alt="">
-        <img class="sticker s-cl2 cloud c2" src="shared/img/cloud.png" alt="">
-        <img class="sticker s-pipe" src="shared/img/skate/half-pipe.png" alt="">
-        <img class="sticker s-ramp" src="shared/img/skate/ramp-rail.png" alt="">
-        <img class="sticker s-rail" src="shared/img/skate/rail-curve.png" alt="">
-        <img class="sticker s-bench" src="shared/img/skate/bench.png" alt="">
-        <img class="sticker s-tw1 twinkle" src="shared/img/glowing-star.png" alt="">
-        <img class="sticker s-tw2 twinkle t2" src="shared/img/glowing-star.png" alt="">
+        <img class="art" src="shared/img/hero.webp" alt="">
         <button class="kid" id="kid" aria-label="ตัวละครของเรา แตะเพื่อฟังคำแนะนำ"><span class="shadow"></span><img class="bob" src="shared/img/skate/boy.png" alt=""></button>
       </div>
       <span class="tap-hint">แตะตัวเราดูสิ</span>

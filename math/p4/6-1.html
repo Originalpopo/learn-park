@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ขนมเค้กเศษส่วน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<style>
+/* 6.1 only: fraction anatomy, the two kinds, cake cutter and sorting baskets */
+.anat { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: center; font-family: var(--display); }
+.anat .num { font-size: 3rem; line-height: 1; text-align: center; min-width: 1.4em; }
+.anat .bar { height: 5px; background: var(--ink); border-radius: 3px; }
+.anat .lbl { font-family: var(--body); font-size: 1rem; background: var(--yellow-soft); border-radius: 12px; padding: 4px 12px; justify-self: start; }
+.kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+.kind { border-radius: 22px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.kind h3 { font-size: 1.25rem; }
+.kind .ex { display: flex; gap: 10px; font-size: 1.6rem; flex-wrap: wrap; justify-content: center; }
+.kind.p { background: #E8F3FB; }
+.kind.i { background: #FDEBDD; }
+.rulebox { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.arrow-note { font-size: 1rem; background: var(--yellow-soft); border-radius: 12px; padding: 4px 12px; }
+
+.cutter { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; align-items: center; }
+.ctrls { display: flex; flex-direction: column; gap: 14px; }
+.ctrl { display: flex; align-items: center; gap: 12px; justify-content: space-between; background: var(--bg); border-radius: 20px; padding: 10px 12px 10px 18px; }
+.ctrl .lab { font-family: var(--display); white-space: nowrap; }
+.ctrl .val { font-family: var(--display); font-size: 1.6rem; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.readout { display: flex; align-items: center; gap: 16px; }
+.readout .xl { font-size: 3.4rem; }
+.badge { display: inline-block; font-family: var(--display); border-radius: 999px; padding: 4px 14px; font-size: 1rem; }
+.badge.p { background: #DCEEFA; }
+.badge.i { background: #FCE0CC; }
+.badge.z { background: var(--line); }
+.pie-zone { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center; min-width: 0; }
+
+.sort-grid { display: grid; grid-template-columns: 1fr 1.2fr 1fr; grid-template-areas: "p c i"; gap: 14px; align-items: stretch; }
+.basket {
+  border: 3px dashed var(--line); border-radius: 26px; background: var(--bg); min-height: 180px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px; text-align: center;
+  transition: transform .1s;
+}
+.basket:active { transform: scale(.97); }
+.basket.p { grid-area: p; border-color: var(--blue); background: #EEF6FC; }
+.basket.i { grid-area: i; border-color: var(--orange); background: #FDF1E7; }
+.bk-title { font-family: var(--display); font-size: 1.3rem; }
+.bk-rule { font-size: .95rem; color: var(--muted); }
+.bk-count { font-family: var(--display); font-size: 1.1rem; background: var(--card); border-radius: 999px; padding: 2px 14px; }
+.sort-card { grid-area: c; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 12px; }
+.fcard {
+  background: var(--card); border: 3px solid var(--ink); border-radius: 24px; padding: 14px 30px;
+  box-shadow: 0 6px 0 var(--ink); font-size: 3.4rem; transition: transform .35s ease-in, opacity .35s;
+}
+.fcard.go-p { transform: translateX(-140%) rotate(-14deg) scale(.6); opacity: 0; }
+.fcard.go-i { transform: translateX(140%) rotate(14deg) scale(.6); opacity: 0; }
+.fcard.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+.msg { min-height: 1.6em; text-align: center; margin-top: 12px; font-size: 1.05rem; }
+.msg.bad { color: var(--bad); }
+.msg.good { color: var(--good); }
+.sort-progress { text-align: center; color: var(--muted); font-size: .95rem; }
+
+@media (max-width: 760px) {
+  .cutter { grid-template-columns: 1fr; }
+  .sort-grid { grid-template-columns: 1fr 1fr; grid-template-areas: "c c" "p i"; }
+  .basket { min-height: 130px; }
+}
+@media (max-width: 440px) {
+  .kinds { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script>
+(() => {
+const { frac, fade, ava, pie, piesSeg, ri, pick, shuffle, sfx, addExp, G, B, O, Y } = L;
+const $ = s => document.querySelector(s);
+
+/* ---------- 1. story ---------- */
+/* [name, color, initial]: the initial is the first consonant, so ใบบัว → บ (not the vowel ใ) */
+const KIDS = { khun: ['ขุน', G, 'ข'], bua: ['ใบบัว', B, 'บ'], kla: ['ต้นกล้า', O, 'ต'] };
+const kid = k => `<span class="who-row">${ava(KIDS[k][2], KIDS[k][1])}<span>${KIDS[k][0]}</span></span>`;
+
+const STORY = [
+  {
+    vis: () => `<div class="fig">${pie(8, Array(8).fill(null), { cls: 'big', anim: 'all', step: .12 })}<div class="cap">เค้ก 1 ก้อน</div></div>`,
+    say: () => `<h2>เค้ก 1 ก้อน</h2>
+      <p>แก้วตาตัดเค้กออกเป็น <mark>8 ชิ้นเท่าๆ กัน</mark></p>
+      <p class="hint">ทุกชิ้นต้องเท่ากัน เราถึงจะเรียกแต่ละชิ้นเป็นเศษส่วนได้</p>`
+  },
+  {
+    vis: () => `<div class="fig">${pie(8, [Y], { cls: 'big', anim: 'filled' })}<div class="cap">ชิ้นสีเหลือง 1 ชิ้น</div></div>`,
+    say: () => `<h2>1 ชิ้น คือ ${frac(1, 8)} ก้อน</h2>
+      <p>อ่านว่า <b>เศษหนึ่งส่วนแปด</b></p>
+      <div class="anat">
+        <span class="num">1</span><span class="lbl">ตัวเศษ = ได้กี่ชิ้น</span>
+        <span class="bar"></span><span></span>
+        <span class="num">8</span><span class="lbl">ตัวส่วน = ตัดทั้งก้อนเป็นกี่ชิ้น</span>
+      </div>`
+  },
+  {
+    vis: () => `
+      <div class="fig">${pie(8, Array(4).fill(G), { anim: 'filled' })}<div class="cap">${kid('khun')}</div></div>
+      <div class="fig">${pie(8, Array(3).fill(B), { anim: 'filled', delay0: .5 })}<div class="cap">${kid('bua')}</div></div>
+      <div class="fig">${pie(8, Array(5).fill(O), { anim: 'filled', delay0: .9 })}<div class="cap">${kid('kla')}</div></div>`,
+    say: () => `<h2>แบ่งเค้กให้ 3 คน</h2>
+      <p>เค้กแต่ละก้อนตัดเป็น 8 ชิ้น แต่ละคนได้ไม่เท่ากัน</p>
+      <p>${kid('khun')} ได้ ${frac(4, 8)} ก้อน</p>
+      <p>${kid('bua')} ได้ ${frac(3, 8)} ก้อน</p>
+      <p>${kid('kla')} ได้ ${frac(5, 8)} ก้อน</p>`
+  },
+  {
+    vis: () => `<div class="fig">${piesSeg(8, [[4, G], [3, B]], { cls: 'big', anim: 'filled' })}<div class="cap">${kid('khun')}<span class="plus">+</span>${kid('bua')}</div></div>`,
+    say: () => `<h2>ขุนกับใบบัวรวมกัน</h2>
+      <p>เอาชิ้นของสองคนมาวางในจานเดียวกัน</p>
+      <div class="eq">${fade(frac(4, 8, { nc: G }), .3)}${fade('<span class="op">+</span>', .6)}${fade(frac(3, 8, { nc: B }), .7)}${fade('<span class="op">=</span>', 1)}${fade(frac(7, 8), 1.1)}</div>
+      <p class="callout">ได้ 7 ชิ้น ยังขาดอีก 1 ชิ้นถึงจะครบ 1 ก้อน</p>`
+  },
+  {
+    vis: () => `<div class="fig">${piesSeg(8, [[5, O], [3, B]], { cls: 'big', anim: 'filled' })}<div class="cap">${kid('kla')}<span class="plus">+</span>${kid('bua')}</div></div>`,
+    say: () => `<h2>ต้นกล้ากับใบบัวรวมกัน</h2>
+      <div class="eq">${fade(frac(5, 8, { nc: O }), .3)}${fade('<span class="op">+</span>', .6)}${fade(frac(3, 8, { nc: B }), .7)}${fade('<span class="op">=</span>', 1)}${fade(frac(8, 8), 1.1)}${fade('<span class="op">=</span>', 1.4)}${fade('1', 1.5)}</div>
+      <p class="callout">8 ชิ้นจาก 8 ชิ้น คือเค้ก <b>ครบ 1 ก้อนพอดี</b></p>`
+  },
+  {
+    vis: () => `<div class="fig">${piesSeg(8, [[5, O], [4, G]], { anim: 'filled' })}<div class="cap">${kid('kla')}<span class="plus">+</span>${kid('khun')}</div></div>`,
+    say: () => `<h2>ต้นกล้ากับขุนรวมกัน</h2>
+      <div class="eq">${fade(frac(5, 8, { nc: O }), .3)}${fade('<span class="op">+</span>', .6)}${fade(frac(4, 8, { nc: G }), .7)}${fade('<span class="op">=</span>', 1)}${fade(frac(9, 8), 1.1)}</div>
+      <p class="callout">9 ชิ้นใส่จานเดียวไม่พอ ต้องใช้เค้ก <b>ก้อนที่ 2</b> อีก 1 ชิ้น</p>
+      <p class="hint">${frac(9, 8)} จึงมากกว่า 1 ก้อน</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="eq">${frac(5, 8, { nc: O })}<span class="op">+</span>${frac(4, 8, { nc: G })}<span class="op">=</span>${frac('5 + 4', 8)}<span class="op">=</span>${frac(9, 8)}</div>
+        <span class="arrow-note">ตัวบน: บวกกัน 5 + 4 = 9</span>
+        <span class="arrow-note">ตัวล่าง: 8 เหมือนเดิม</span>
+      </div>`,
+    say: () => `<h2>วิธีบวกเศษส่วน</h2>
+      <p>ถ้า <mark>ตัวส่วนเท่ากัน</mark> ให้เอาตัวเศษมาบวกกัน ส่วนตัวส่วนคงเดิม</p>
+      <p class="hint">เพราะทุกชิ้นมีขนาดเท่ากัน (1 ใน 8) เราแค่นับว่ามีกี่ชิ้น ไม่ได้ตัดเค้กใหม่</p>`
+  },
+  {
+    vis: () => `
+      <div class="fig">${pie(2, [B], { anim: 'filled' })}<div class="cap">${frac(1, 2)}</div></div>
+      <div class="fig">${pie(4, [B, B, B], { anim: 'filled', delay0: .3 })}<div class="cap">${frac(3, 4)}</div></div>
+      <div class="fig">${pie(8, Array(7).fill(B), { anim: 'filled', delay0: .6 })}<div class="cap">${frac(7, 8)}</div></div>`,
+    say: () => `<h2>เศษส่วนแท้</h2>
+      <p>คือเศษส่วนที่ <mark>ตัวเศษน้อยกว่าตัวส่วน</mark></p>
+      <p class="callout">เค้กยังไม่ครบ 1 ก้อน</p>
+      <p class="hint">เช่น ${frac(1, 2)} ${frac(3, 4)} ${frac(7, 8)}</p>`
+  },
+  {
+    vis: () => `
+      <div class="fig">${piesSeg(4, [[4, O]], { cls: 'sm', anim: 'filled' })}<div class="cap">${frac(4, 4)}</div></div>
+      <div class="fig">${piesSeg(8, [[9, O]], { cls: 'sm', anim: 'filled', step: .05, delay0: .3 })}<div class="cap">${frac(9, 8)}</div></div>
+      <div class="fig">${piesSeg(3, [[5, O]], { cls: 'sm', anim: 'filled', delay0: .9 })}<div class="cap">${frac(5, 3)}</div></div>`,
+    say: () => `<h2>เศษเกิน</h2>
+      <p>คือเศษส่วนที่ <mark>ตัวเศษมากกว่าหรือเท่ากับตัวส่วน</mark></p>
+      <p class="callout">เค้กครบ 1 ก้อนพอดี หรือมากกว่า 1 ก้อน</p>
+      <p class="hint">เช่น ${frac(4, 4)} ${frac(9, 8)} ${frac(5, 3)}</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind p"><h3>เศษส่วนแท้</h3><span>ตัวเศษ &lt; ตัวส่วน</span><div class="ex">${frac(1, 2)}${frac(3, 4)}${frac(7, 8)}</div><span class="hint">ไม่ถึง 1 ก้อน</span></div>
+        <div class="kind i"><h3>เศษเกิน</h3><span>ตัวเศษ ≥ ตัวส่วน</span><div class="ex">${frac(8, 8)}${frac(9, 8)}${frac(5, 3)}</div><span class="hint">ตั้งแต่ 1 ก้อนขึ้นไป</span></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p>ดูแค่ <b>ตัวบน</b> กับ <b>ตัวล่าง</b></p>
+      <p>ตัวบนน้อยกว่า → <b>เศษส่วนแท้</b></p>
+      <p>ตัวบนเท่ากันหรือมากกว่า → <b>เศษเกิน</b></p>
+      <p class="hint">ไปลองตัดเค้กเองในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+const play = { d: 8, n: 5, pop: -1 };
+let sort = null;
+function newSort() {
+  const cards = [], seen = new Set();
+  while (cards.length < 8) {
+    const imp = cards.length % 2 === 0, d = ri(2, 10), n = imp ? ri(d, d * 2) : ri(1, d - 1);
+    if (seen.has(n + '/' + d)) continue;
+    seen.add(n + '/' + d); cards.push({ n, d });
+  }
+  return { cards: shuffle(cards), i: 0, p: 0, im: 0, miss: false, hint: false, msg: '', msgCls: '', busy: false };
+}
+
+function cutterHTML() {
+  const { d, n } = play;
+  const k = Math.min(3, Math.floor(n / d) + 1);
+  let h = '';
+  for (let p = 0; p < k; p++) {
+    const c = Math.max(0, Math.min(d, n - p * d));
+    const fills = Array.from({ length: d }, (_, i) => i < c ? O : null);
+    h += pie(d, fills, { tap: p * d, anim: play.pop - p * d, cls: p > 0 && c === 0 ? 'ghosty' : '' });
+  }
+  let badge, line;
+  if (n === 0) { badge = '<span class="badge z">ยังไม่ได้ระบาย</span>'; line = 'แตะชิ้นเค้กเพื่อระบายสี'; }
+  else if (n < d) { badge = '<span class="badge p">เศษส่วนแท้</span>'; line = `ตัวเศษ ${n} น้อยกว่าตัวส่วน ${d} · ยังไม่ครบ 1 ก้อน`; }
+  else if (n === d) { badge = '<span class="badge i">เศษเกิน</span>'; line = `ตัวเศษ ${n} เท่ากับตัวส่วน ${d} · ครบ 1 ก้อนพอดี`; }
+  else { badge = '<span class="badge i">เศษเกิน</span>'; line = `ตัวเศษ ${n} มากกว่าตัวส่วน ${d} · เกิน 1 ก้อน`; }
+  return `
+    <div class="pie-zone">${h}</div>
+    <div class="ctrls">
+      <div class="readout">${frac(n, d, { cls: 'xl' })}<div>${badge}<p class="hint" style="margin-top:6px">${line}</p></div></div>
+      <div class="ctrl"><span class="lab">ตัดก้อนละ</span><span class="stepper"><button class="btn ghost round" data-act="d-" aria-label="ลดจำนวนชิ้น">−</button><span class="val">${d}</span><button class="btn ghost round" data-act="d+" aria-label="เพิ่มจำนวนชิ้น">+</button></span><span class="lab">ชิ้น</span></div>
+      <div class="ctrl"><span class="lab">ระบาย</span><span class="stepper"><button class="btn ghost round" data-act="n-" aria-label="ลดชิ้นที่ระบาย">−</button><span class="val">${n}</span><button class="btn ghost round" data-act="n+" aria-label="เพิ่มชิ้นที่ระบาย">+</button></span><span class="lab">ชิ้น</span></div>
+    </div>`;
+}
+
+function sortHTML() {
+  const s = sort;
+  if (s.i >= s.cards.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">จัดครบ 8 ใบแล้ว!</h3>
+      <p>เศษส่วนแท้ ${s.p} ใบ · เศษเกิน ${s.im} ใบ</p>
+      <button class="btn" data-act="sort-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const c = s.cards[s.i];
+  return `
+    <div class="sort-grid">
+      <button class="basket p" data-ans="p"><span class="bk-title">เศษส่วนแท้</span><span class="bk-rule">ตัวเศษ &lt; ตัวส่วน</span><span class="bk-count">${s.p} ใบ</span></button>
+      <div class="sort-card">
+        <div class="fcard" id="fcard">${frac(c.n, c.d)}</div>
+        ${s.hint ? piesSeg(c.d, [[c.n, O]], { cls: 'sm' }) : '<button class="link" data-act="hint">ดูภาพช่วย</button>'}
+      </div>
+      <button class="basket i" data-ans="i"><span class="bk-title">เศษเกิน</span><span class="bk-rule">ตัวเศษ ≥ ตัวส่วน</span><span class="bk-count">${s.im} ใบ</span></button>
+    </div>
+    <p class="msg ${s.msgCls}">${s.msg}</p>
+    <p class="sort-progress">ใบที่ ${s.i + 1} จาก ${s.cards.length}</p>`;
+}
+
+function playHTML() {
+  if (!sort) sort = newSort();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>ตัดเค้กเอง</h2><p>เลือกว่าจะตัดก้อนละกี่ชิ้น แล้วแตะชิ้นเค้กเพื่อระบายสี ถ้าระบายครบก้อนจะมีก้อนใหม่ให้</p></div>
+      <div class="cutter" id="cutter">${cutterHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>จัดลงตะกร้า</h2><p>การ์ดใบนี้เป็นเศษส่วนแท้ หรือเศษเกิน แตะตะกร้าที่ถูก</p></div>
+      <div id="sort">${sortHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs (the card-flying timeout), so skip when not on screen.
+const drawCutter = () => { const el = $('#cutter'); if (el) el.innerHTML = cutterHTML(); };
+const drawSort = () => { const el = $('#sort'); if (el) el.innerHTML = sortHTML(); };
+
+function setN(n) {
+  n = Math.max(0, Math.min(play.d * 3, n));
+  play.pop = n > play.n ? n - 1 : -1;
+  play.n = n; drawCutter();
+}
+
+function answerSort(ans) {
+  const s = sort;
+  if (s.busy || s.i >= s.cards.length) return;
+  const c = s.cards[s.i], right = c.n < c.d ? 'p' : 'i';
+  if (ans === right) {
+    sfx.good();
+    if (!s.miss) addExp(5);
+    s.busy = true;
+    $('#fcard').classList.add(ans === 'p' ? 'go-p' : 'go-i');
+    setTimeout(() => {
+      if (ans === 'p') s.p++; else s.im++;
+      s.i++; s.miss = false; s.hint = false; s.busy = false;
+      s.msg = pick(['เก่งมาก!', 'ถูกต้อง!', 'ใช่เลย!', 'เยี่ยม!']); s.msgCls = 'good';
+      if (s.i >= s.cards.length) sfx.win();
+      drawSort();
+    }, 380);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = c.n < c.d
+      ? `ตัวเศษ ${c.n} น้อยกว่าตัวส่วน ${c.d} ลองใหม่นะ`
+      : `ตัวเศษ ${c.n} ${c.n === c.d ? 'เท่ากับ' : 'มากกว่า'}ตัวส่วน ${c.d} ลองใหม่นะ`;
+    s.msgCls = 'bad';
+    drawSort();
+    $('#fcard').classList.add('shake');
+  }
+}
+
+function playClick(e) {
+  const g = e.target.closest('[data-g]');
+  if (g) { const gi = +g.dataset.g; sfx.tap(); setN(gi + 1 === play.n ? gi : gi + 1); return; }
+  const ans = e.target.closest('[data-ans]');
+  if (ans) { answerSort(ans.dataset.ans); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  switch (a.dataset.act) {
+    case 'd-': case 'd+': {
+      const d = Math.max(2, Math.min(12, play.d + (a.dataset.act === 'd+' ? 1 : -1)));
+      if (d !== play.d) { play.d = d; play.n = Math.min(play.n, d * 3); play.pop = -1; sfx.tap(); drawCutter(); }
+      break;
+    }
+    case 'n-': sfx.tap(); setN(play.n - 1); break;
+    case 'n+': sfx.tap(); setN(play.n + 1); break;
+    case 'hint': sort.hint = true; drawSort(); break;
+    case 'sort-again': sort = newSort(); drawSort(); break;
+  }
+}
+
+/* ---------- 3. quiz ---------- */
+const DS = [3, 4, 5, 6, 8];
+function fracOpts(correct, cands) {
+  const out = [correct], keys = new Set([correct.join('/')]);
+  for (const c of cands) {
+    if (out.length >= 4) break;
+    if (!(c[0] > 0 && c[1] > 0)) continue;
+    const k = c.join('/'); if (keys.has(k)) continue;
+    keys.add(k); out.push(c);
+  }
+  let t = 0;
+  while (out.length < 4 && t++ < 60) {
+    const c = [ri(1, correct[1] * 2), correct[1]], k = c.join('/');
+    if (!keys.has(k)) { keys.add(k); out.push(c); }
+  }
+  return shuffle(out.map((f, i) => ({ html: frac(f[0], f[1]), ok: i === 0 })));
+}
+function qA() {
+  const d = pick(DS), n = Math.random() < .5 ? ri(1, d - 1) : ri(d, 2 * d - 1), col = pick([G, B, O]);
+  const c = [];
+  if (n < d) c.push([d - n, d]); else c.push([n, 2 * d]);
+  c.push([d, n], [n + 1, d], [n - 1, d]);
+  return {
+    ask: 'ภาพนี้ระบายสีแสดงเศษส่วนเท่าใด',
+    pic: piesSeg(d, [[n, col]]),
+    opts: fracOpts([n, d], c),
+    explain: `นับชิ้นที่ระบายได้ <b>${n} ชิ้น</b> เค้กแต่ละก้อนตัดเป็น <b>${d} ชิ้น</b> จึงเป็น ${frac(n, d)}`
+      + (n > d ? ` (มีเค้ก 2 ก้อน แต่ตัวส่วนยังเป็น ${d} เพราะ 1 ก้อนตัดเป็น ${d} ชิ้น)` : ''),
+    review: `ภาพระบาย ${n} ชิ้น ก้อนละ ${d} ชิ้น → ${frac(n, d)}`
+  };
+}
+function qB() {
+  const d = ri(2, 10), r = Math.random();
+  const n = r < .45 ? ri(1, d - 1) : r < .6 ? d : ri(d + 1, 2 * d);
+  const imp = n >= d;
+  return {
+    ask: `${frac(n, d)} เป็นเศษส่วนแบบใด`,
+    pic: '',
+    opts: [{ html: 'เศษส่วนแท้', ok: !imp }, { html: 'เศษเกิน', ok: imp }],
+    explain: imp
+      ? `ตัวเศษ ${n} ${n === d ? 'เท่ากับ' : 'มากกว่า'}ตัวส่วน ${d} จึงเป็น <b>เศษเกิน</b>`
+      : `ตัวเศษ ${n} น้อยกว่าตัวส่วน ${d} จึงเป็น <b>เศษส่วนแท้</b>`,
+    review: `${frac(n, d)} → ${imp ? 'เศษเกิน' : 'เศษส่วนแท้'}`
+  };
+}
+function qC() {
+  const d = pick([4, 5, 6, 8, 10]), a = ri(1, d - 1), b = ri(1, d - 1), s = a + b;
+  return {
+    ask: `${frac(a, d, { nc: G })}<span>+</span>${frac(b, d, { nc: B })}<span>=</span><span>?</span>`,
+    pic: '',
+    opts: fracOpts([s, d], [[s, 2 * d], [s + 1, d], [s - 1, d], [Math.abs(a - b), d]]),
+    explain: `ตัวส่วนเท่ากันคือ ${d} ให้เอาตัวเศษบวกกัน ${a} + ${b} = ${s} ตัวส่วนยังเป็น ${d} ได้ ${frac(s, d)}`
+      + (s >= d ? ' ซึ่งเป็นเศษเกิน' : ' ซึ่งเป็นเศษส่วนแท้'),
+    after: piesSeg(d, [[a, G], [b, B]], { cls: 'sm' }),
+    review: `${frac(a, d)} + ${frac(b, d)} = ${frac(s, d)}`
+  };
+}
+function qD() {
+  const wantImp = Math.random() < .5, seen = new Set();
+  const make = imp => {
+    let f;
+    do { const d = ri(2, 9); f = [imp ? ri(d, 2 * d) : ri(1, d - 1), d]; } while (seen.has(f.join('/')));
+    seen.add(f.join('/')); return f;
+  };
+  const right = make(wantImp), others = [make(!wantImp), make(!wantImp), make(!wantImp)];
+  const [n, d] = right;
+  return {
+    ask: wantImp ? 'ข้อใดเป็น <mark>เศษเกิน</mark>' : 'ข้อใดเป็น <mark>เศษส่วนแท้</mark>',
+    pic: '',
+    opts: shuffle([{ html: frac(n, d), ok: true }, ...others.map(f => ({ html: frac(f[0], f[1]), ok: false }))]),
+    explain: wantImp
+      ? `${frac(n, d)} ตัวเศษ ${n} ${n === d ? 'เท่ากับ' : 'มากกว่า'}ตัวส่วน ${d} จึงเป็นเศษเกิน ข้ออื่นตัวเศษน้อยกว่าตัวส่วนทั้งหมด`
+      : `${frac(n, d)} ตัวเศษ ${n} น้อยกว่าตัวส่วน ${d} จึงเป็นเศษส่วนแท้ ข้ออื่นตัวเศษมากกว่าหรือเท่ากับตัวส่วน`,
+    review: `${wantImp ? 'เศษเกิน' : 'เศษส่วนแท้'} คือ ${frac(n, d)}`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/6.1',
+  storyLabel: 'ดูเรื่องเค้ก',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD()])
+});
+})();
+</script>
+</body>
+</html>

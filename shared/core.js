@@ -1,0 +1,311 @@
+/* learn-park (สนามเด็กเรียน) shared code: lesson list, saved progress, sound, drawing helpers,
+   and the lesson shell (tabs 1 ดู → 2 ลองเล่น → 3 ตอบคำถาม) every lesson page uses.
+   Exposed as window.L. */
+window.L = (() => {
+const $ = s => document.querySelector(s);
+
+/* ---------- lesson list (follows the textbook) ---------- */
+// A topic with `file` is ready; the rest show "เร็วๆ นี้" on the home page.
+const COURSES = [{
+  id: 'math-p4', subject: 'คณิตศาสตร์', grade: 'ป.4', term: 'เทอม 2',
+  chapters: [
+    { no: 6, title: 'เศษส่วน', color: 'var(--red)', topics: [
+      { no: '6.1', title: 'เศษส่วนแท้ เศษเกิน', file: 'math/p4/6-1.html' },
+      { no: '6.2', title: 'จำนวนคละ' },
+      { no: '6.3', title: 'เศษส่วนที่เท่ากับจำนวนนับ' },
+      { no: '6.4', title: 'เศษส่วนที่เท่ากัน' },
+      { no: '6.5', title: 'เศษส่วนอย่างต่ำ' },
+      { no: '6.6', title: 'การเปรียบเทียบและเรียงลำดับ' },
+      { no: '6.7', title: 'การบวก การลบ' },
+      { no: '6.8', title: 'โจทย์ปัญหา' }
+    ] },
+    { no: 7, title: 'ทศนิยม', color: 'var(--yellow-deep)', topics: [
+      { no: '7.1', title: 'การอ่าน การเขียนทศนิยมไม่เกิน 3 ตำแหน่ง' },
+      { no: '7.2', title: 'การเปรียบเทียบและเรียงลำดับ' },
+      { no: '7.3', title: 'การบวกและการลบทศนิยมไม่เกิน 3 ตำแหน่ง' },
+      { no: '7.4', title: 'โจทย์ปัญหา' }
+    ] },
+    { no: 8, title: 'มุม', color: 'var(--blue)', topics: [
+      { no: '8.1', title: 'จุด เส้นตรง รังสี และส่วนของเส้นตรง' },
+      { no: '8.2', title: 'มุม ส่วนประกอบของมุมและการเรียกชื่อมุม' },
+      { no: '8.3', title: 'มุมฉาก มุมตรง มุมแหลม มุมป้าน' },
+      { no: '8.4', title: 'การวัดขนาดของมุมและการจำแนกชนิดของมุม' },
+      { no: '8.5', title: 'การสร้างมุมโดยใช้โพรแทรกเตอร์' }
+    ] }
+  ]
+}];
+const lessonId = (course, topic) => `${course.id}/${topic.no}`;
+function findLesson(id) {
+  for (const course of COURSES) for (const chapter of course.chapters) for (const topic of chapter.topics)
+    if (lessonId(course, topic) === id) return { course, chapter, topic };
+  return null;
+}
+
+/* ---------- saved progress (this device only) ---------- */
+const KEY = 'learn-at-home';   // saved progress lives under the app's first name; keep it so nothing is lost
+const store = { exp: 0, sound: true, lessons: {} };
+try { Object.assign(store, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+// Progress from the first version of lesson 6.1 (before the home page existed): copy it in once, leave the old entry alone.
+try {
+  const old = JSON.parse(localStorage.getItem('p4-frac-6-1') || 'null');
+  if (old && !store.migrated61) {
+    store.exp += old.exp || 0;
+    if (typeof old.sound === 'boolean') store.sound = old.sound;
+    const l = store.lessons['math-p4/6.1'] || (store.lessons['math-p4/6.1'] = {});
+    l.best = Math.max(l.best || 0, old.best || 0);
+    store.migrated61 = true;
+    localStorage.setItem(KEY, JSON.stringify(store));
+  }
+} catch (e) {}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {}
+  const x = $('#exp'); if (x) x.textContent = store.exp;
+}
+function addExp(n) {
+  store.exp += n; save();
+  const c = $('#expchip'); if (!c) return;
+  c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');
+}
+const best = id => (store.lessons[id] && store.lessons[id].best) || 0;
+function setBest(id, stars) {
+  const l = store.lessons[id] || (store.lessons[id] = {});
+  l.best = Math.max(l.best || 0, stars); save();
+}
+
+/* ---------- sound ---------- */
+let ac = null;
+function tone(freqs) {
+  if (!store.sound) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === 'suspended') ac.resume();
+    const t0 = ac.currentTime;
+    freqs.forEach((f, i) => {
+      const o = ac.createOscillator(), g = ac.createGain(), t = t0 + i * .09;
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, t);
+      g.gain.exponentialRampToValueAtTime(.18, t + .02);
+      g.gain.exponentialRampToValueAtTime(.0001, t + .28);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + .3);
+    });
+  } catch (e) {}
+}
+const sfx = { tap: () => tone([700]), good: () => tone([523, 659, 784]), bad: () => tone([300, 240]), win: () => tone([523, 659, 784, 1047]) };
+
+/* ---------- helpers ---------- */
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const G = 'var(--green)', B = 'var(--blue)', O = 'var(--orange)', Y = 'var(--yellow)';
+const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+const starsFor = score => score >= 8 ? 3 : score >= 6 ? 2 : score >= 4 ? 1 : 0;
+
+function frac(n, d, o = {}) {
+  return `<span class="frac ${o.cls || ''}"${o.color ? ` style="color:${o.color}"` : ''}><b${o.nc ? ` style="color:${o.nc}"` : ''}>${n}</b><i>${d}</i></span>`;
+}
+const fade = (html, d) => `<span class="fade" style="--d:${d}s">${html}</span>`;
+const ava = (initial, color) => `<span class="ava" style="background:${color}">${initial}</span>`;
+
+const pathCache = {};
+function slicePaths(n) {
+  if (pathCache[n]) return pathCache[n];
+  const r = 100, out = [];
+  for (let i = 0; i < n; i++) {
+    if (n === 1) { out.push('M0,-100A100,100 0 1 1 0,100A100,100 0 1 1 0,-100Z'); break; }
+    const a0 = -Math.PI / 2 + i * 2 * Math.PI / n, a1 = a0 + 2 * Math.PI / n;
+    const f = v => v.toFixed(2);
+    out.push(`M0,0L${f(r * Math.cos(a0))},${f(r * Math.sin(a0))}A${r},${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${f(r * Math.cos(a1))},${f(r * Math.sin(a1))}Z`);
+  }
+  return (pathCache[n] = out);
+}
+
+/* fills: array of colors (null = empty slice).
+   o.anim: 'filled' pops filled slices in order, 'all' pops every slice, a number pops only that slice.
+   o.tap: base index for tappable slices. */
+function pie(d, fills, o = {}) {
+  const step = o.step ?? .08;
+  let k = 0, s = '';
+  slicePaths(d).forEach((p, i) => {
+    const f = fills[i];
+    let anim = false;
+    if (o.anim === 'all') anim = true;
+    else if (o.anim === 'filled') anim = !!f;
+    else if (typeof o.anim === 'number') anim = o.anim === i;
+    const delay = anim ? (o.delay0 || 0) + (typeof o.anim === 'number' ? 0 : step * k++) : 0;
+    s += `<path class="s${anim ? ' anim' : ''}" d="${p}" style="fill:${f || 'var(--empty)'};--d:${delay.toFixed(2)}s"${o.tap != null ? ` data-g="${o.tap + i}"` : ''}/>`;
+  });
+  return `<svg class="pie ${o.cls || ''}${o.tap != null ? ' tap' : ''}" viewBox="-108 -108 216 216" aria-hidden="true">${s}<circle class="rim" r="100"/></svg>`;
+}
+
+/* parts: [[count, color], ...] laid out across as many pies as needed */
+function piesSeg(d, parts, o = {}) {
+  const colors = [];
+  parts.forEach(([n, c]) => { for (let i = 0; i < n; i++) colors.push(c); });
+  const k = Math.max(1, Math.ceil(colors.length / d));
+  let h = '';
+  for (let p = 0; p < k; p++) {
+    const fills = [];
+    for (let i = 0; i < d; i++) fills.push(colors[p * d + i] || null);
+    h += pie(d, fills, { ...o, delay0: (o.delay0 || 0) + Math.min(colors.length, p * d) * (o.step ?? .08) });
+  }
+  return `<span class="pies">${h}</span>`;
+}
+
+/* ---------- header chips (sound + EXP) ---------- */
+function chipsHTML() {
+  return `<button class="chip icon-btn" id="sound" title="เปิด/ปิดเสียง"></button>
+    <span class="chip" id="expchip">${STAR}<span id="exp">${store.exp}</span> <span class="txt">EXP</span></span>`;
+}
+function drawSound() {
+  const b = $('#sound'); if (!b) return;
+  b.innerHTML = store.sound
+    ? '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+  b.setAttribute('aria-label', store.sound ? 'ปิดเสียง' : 'เปิดเสียง');
+}
+function wireChips() {
+  drawSound();
+  const b = $('#sound');
+  if (b) b.addEventListener('click', () => { store.sound = !store.sound; save(); drawSound(); sfx.tap(); });
+}
+
+/* ---------- lesson shell ----------
+   L.lesson({ id, home, story: [{vis, say}], play: {render, onClick}, quiz: () => [question] })
+   question: { ask, pic, opts: [{html, ok}], explain, after?, review } */
+function lesson(cfg) {
+  const { course, chapter, topic } = findLesson(cfg.id);
+  const app = $('#app');
+  app.innerHTML = `
+    <header class="top">
+      <a class="chip back" href="${cfg.home || '../../index.html'}">‹ หน้าแรก</a>
+      <div class="title"><div class="eyebrow">${course.subject} ${course.grade} · บทที่ ${chapter.no} ${chapter.title}</div><h1>${topic.no} ${topic.title}</h1></div>
+      <div class="top-right">${chipsHTML()}</div>
+    </header>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="story" aria-selected="true"><span class="n">1</span>${cfg.storyLabel || 'ดูเรื่องเล่า'}</button>
+      <button class="tab" role="tab" data-tab="play" aria-selected="false"><span class="n">2</span>ลองเล่น</button>
+      <button class="tab" role="tab" data-tab="quiz" aria-selected="false"><span class="n">3</span>ตอบคำถาม</button>
+    </nav>
+    <main id="view"></main>`;
+  wireChips();
+  const view = $('#view');
+  const STORY = cfg.story;
+  let tab = 'story', st = 0, quiz = null;
+
+  function renderStory() {
+    const s = STORY[st], last = st === STORY.length - 1;
+    view.innerHTML = `
+      <section class="card story">
+        <div class="stage">${s.vis()}</div>
+        <div class="say"><div class="step-no">ขั้นที่ ${st + 1} จาก ${STORY.length}</div>${s.say()}</div>
+      </section>
+      <div class="story-nav">
+        <button class="btn ghost" data-act="prev" ${st === 0 ? 'disabled' : ''}>← ย้อน</button>
+        <div class="dots">${STORY.map((_, i) => `<button class="dot${i === st ? ' on' : ''}" data-step="${i}" aria-label="ไปขั้นที่ ${i + 1}"></button>`).join('')}</div>
+        ${last ? '<button class="btn" data-act="goplay">ไปลองเล่น →</button>' : '<button class="btn" data-act="next">ต่อไป →</button>'}
+      </div>`;
+  }
+
+  const newQuiz = () => ({ qs: cfg.quiz(), i: 0, score: 0, picked: null, marks: [], done: false });
+  function renderQuiz() {
+    if (!quiz) quiz = newQuiz();
+    const z = quiz;
+    if (z.done) {
+      const stars = starsFor(z.score);
+      const wrong = z.qs.filter((_, i) => !z.marks[i]);
+      view.innerHTML = `
+        <section class="card result">
+          <div class="stars">${[0, 1, 2].map(i => STAR.replace('<svg', `<svg class="${i < stars ? 'on' : ''}" style="--d:${.2 + i * .25}s"`)).join('')}</div>
+          <h2 style="font-size:2rem">ถูก ${z.score} จาก ${z.qs.length} ข้อ</h2>
+          <p>${stars === 3 ? 'เก่งมาก ได้เต็มเลย!' : stars === 2 ? 'เก่งมาก อีกนิดเดียวก็เต็มแล้ว' : 'ไม่เป็นไร ลองดูเรื่องเล่าอีกรอบแล้วมาเล่นใหม่นะ'}</p>
+          <p class="hint">ดาวมากที่สุดที่เคยได้: ${best(cfg.id)} ดวง</p>
+          ${wrong.length ? `<div class="review"><h3>ข้อที่ยังพลาด</h3><ul>${wrong.map(q => `<li>${q.review}</li>`).join('')}</ul></div>` : ''}
+          <div class="row-btns">
+            <button class="btn" data-act="quiz-again">เล่นอีกรอบ (โจทย์ใหม่)</button>
+            <button class="btn ghost" data-act="tostory">ดูเรื่องเล่าอีกครั้ง</button>
+          </div>
+        </section>`;
+      return;
+    }
+    const q = z.qs[z.i], picked = z.picked;
+    const dots = z.qs.map((_, i) => `<span class="qdot ${i < z.marks.length ? (z.marks[i] ? 'ok' : 'no') : i === z.i ? 'now' : ''}"></span>`).join('');
+    let fb = '';
+    if (picked != null) {
+      const ok = q.opts[picked].ok;
+      fb = `<div class="fb ${ok ? 'good' : 'bad'}"><b class="t">${ok ? pick(['ถูกต้อง เก่งมาก!', 'ใช่เลย!', 'เยี่ยมมาก!']) : 'ยังไม่ใช่ ลองดูวิธีคิดนะ'}</b><p>${q.explain}</p>${!ok && q.after ? q.after : ''}</div>
+        <div class="qfoot"><button class="btn" data-act="qnext">${z.i === z.qs.length - 1 ? 'ดูผล →' : 'ข้อต่อไป →'}</button></div>`;
+    }
+    view.innerHTML = `
+      <section class="card">
+        <div class="qtop"><span class="step-no">ข้อ ${z.i + 1} จาก ${z.qs.length}</span><div class="qdots">${dots}</div><span class="step-no">ถูก ${z.score} ข้อ</span></div>
+        <div class="qask">${q.ask}</div>
+        ${q.pic ? `<div class="qpic">${q.pic}</div>` : ''}
+        <div class="opts n${q.opts.length}">${q.opts.map((o, i) => {
+          let cls = '';
+          if (picked != null) cls = o.ok ? 'ok' : i === picked ? 'no' : 'dim';
+          return `<button class="opt ${cls}" data-opt="${i}" ${picked != null ? 'aria-disabled="true"' : ''}>${o.html}</button>`;
+        }).join('')}</div>
+        ${fb}
+      </section>`;
+  }
+  function answerQuiz(i) {
+    const z = quiz;
+    if (z.picked != null) return;
+    z.picked = i;
+    const ok = z.qs[z.i].opts[i].ok;
+    z.marks.push(ok);
+    if (ok) { z.score++; addExp(10); sfx.good(); } else sfx.bad();
+    renderQuiz();
+  }
+  function nextQuiz() {
+    const z = quiz;
+    z.picked = null;
+    if (z.i === z.qs.length - 1) {
+      z.done = true;
+      const stars = starsFor(z.score);
+      setBest(cfg.id, stars);
+      if (stars) sfx.win();
+    } else z.i++;
+    renderQuiz();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function render() { tab === 'story' ? renderStory() : tab === 'play' ? (view.innerHTML = cfg.play.render()) : renderQuiz(); }
+  function setTab(t) {
+    tab = t;
+    document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+    render();
+    window.scrollTo({ top: 0 });
+  }
+
+  $('.tabs').addEventListener('click', e => {
+    const b = e.target.closest('.tab'); if (b) { sfx.tap(); setTab(b.dataset.tab); }
+  });
+  view.addEventListener('click', e => {
+    const dot = e.target.closest('[data-step]');
+    if (dot) { st = +dot.dataset.step; sfx.tap(); renderStory(); return; }
+    const opt = e.target.closest('[data-opt]');
+    if (opt) { answerQuiz(+opt.dataset.opt); return; }
+    const a = e.target.closest('[data-act]');
+    switch (a && a.dataset.act) {
+      case 'next': st = Math.min(STORY.length - 1, st + 1); sfx.tap(); renderStory(); return;
+      case 'prev': st = Math.max(0, st - 1); sfx.tap(); renderStory(); return;
+      case 'goplay': sfx.tap(); setTab('play'); return;
+      case 'tostory': st = 0; setTab('story'); return;
+      case 'qnext': sfx.tap(); nextQuiz(); return;
+      case 'quiz-again': quiz = newQuiz(); renderQuiz(); return;
+    }
+    if (tab === 'play' && cfg.play.onClick) cfg.play.onClick(e);
+  });
+
+  save(); render();
+}
+
+return {
+  COURSES, lessonId, findLesson,
+  store, save, addExp, best, setBest,
+  sfx, ri, pick, shuffle, G, B, O, Y, STAR, starsFor,
+  frac, fade, ava, pie, piesSeg,
+  chipsHTML, wireChips, lesson
+};
+})();

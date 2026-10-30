@@ -1,0 +1,32 @@
+# สนามเด็กเรียน (learn-park)
+
+A small learning web app for one child, used on an iPad: tap-to-explain lessons (คณิต ป.4 เทอม 2 so far),
+a skate-park home page where each chapter is a park zone and each lesson a stop.
+
+Plain HTML/CSS/JS, no build tools. Progress (stars, EXP, chosen skater) is saved in the browser's
+`localStorage` under the key `learn-at-home` (the app's first name; kept so saved progress survives renames).
+
+## Run locally
+
+```bash
+node serve.js    # http://localhost:3003
+```
+
+## Deploy
+
+Pushing to `main` builds `_site/` with `node build.js` and deploys it to GitHub Pages
+(`.github/workflows/pages.yml`).
+
+## Layout
+
+- `index.html` home page (written without `<!doctype>`/`<head>`; `serve.js`, `build.js` and the Claude
+  artifact publish add them)
+- `math/p4/6-1.html` lessons, at `<subject>/<grade>/<topic>.html`
+- `shared/core.css`, `shared/core.js` shared look and lesson shell; the lesson list `COURSES` is in core.js
+- `shared/parks.js` where each skate-park stop sits on its picture (generated)
+- `tools/` dev-only renderers for the 3D pictures (`render.html` single models, `park.html` + `parks.js` the parks)
+
+## Credits
+
+- 3D skate park models: [Kenney "Mini Skate"](https://kenney.nl/assets/mini-skate), CC0
+- Sun, cloud, stars, trophy, lock: [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji), MIT

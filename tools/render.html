@@ -1,0 +1,120 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Render models</title>
+<style>body { font: 14px system-ui; background: #ddd; } canvas { background: repeating-conic-gradient(#ccc 0 25%, #eee 0 50%) 0 0 / 20px 20px; }</style>
+<p id="log">loading…</p>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+// Renders each model from the same 3/4 view (like Kenney's previews) onto a transparent square canvas.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const SIZE = +(new URLSearchParams(location.search).get('size') || 512);
+const q = new URLSearchParams(location.search);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(SIZE, SIZE);
+renderer.setClearColor(0x000000, 0);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7f9a, 2.2));
+const sun = new THREE.DirectionalLight(0xffffff, 2.4);
+sun.position.set(4, 8, 6);
+scene.add(sun);
+
+const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100);
+const yaw = +(q.get('yaw') || 35) * Math.PI / 180, pitch = +(q.get('pitch') || 30) * Math.PI / 180;
+const loader = new GLTFLoader();
+const log = t => (document.getElementById('log').textContent = t);
+window.results = {};
+
+async function render(file) {
+  const gltf = await loader.loadAsync('/' + file);
+  const obj = gltf.scene;
+  // ?skin=rrggbb makes the skin fairer (or any tone); ?amt=0..1 sets how far
+  if (q.get('skin')) obj.traverse(m => { if (m.isMesh && m.material.map) m.material.map = recolor(m.material.map, q.get('skin')); });
+  // characters: pose them with an animation frame instead of the rest pose
+  const anims = gltf.animations.map(a => a.name);
+  if (gltf.animations.length) {
+    const want = q.get('anim');
+    const clip = gltf.animations.find(a => a.name === want) || gltf.animations.find(a => /idle|skate|ride/i.test(a.name)) || gltf.animations[0];
+    const mixer = new THREE.AnimationMixer(obj);
+    mixer.clipAction(clip).play();
+    mixer.update(+(q.get('t') || 0.3));
+  }
+  // ?with=skateboard puts the character on a board (board top at the feet)
+  if (q.get('with')) {
+    const extra = (await loader.loadAsync('/' + q.get('with') + '.glb')).scene;
+    const eb = new THREE.Box3().setFromObject(extra);
+    extra.position.y = -eb.max.y + +(q.get('lift') || 0);
+    extra.rotation.y = +(q.get('turn') || 0) * Math.PI / 180;
+    obj.add(extra);
+  }
+  scene.add(obj);
+  obj.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(obj), c = box.getCenter(new THREE.Vector3());
+  const dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+  cam.position.copy(c).addScaledVector(dir, 20);
+  cam.lookAt(c);
+  cam.updateMatrixWorld();
+  // fit: project the 8 box corners into view space
+  let w = 0, h = 0;
+  for (let i = 0; i < 8; i++) {
+    const p = new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).applyMatrix4(cam.matrixWorldInverse);
+    w = Math.max(w, Math.abs(p.x)); h = Math.max(h, Math.abs(p.y));
+  }
+  const half = Math.max(w, h) * 1.04;
+  Object.assign(cam, { left: -half, right: half, top: half, bottom: -half });
+  cam.updateProjectionMatrix();
+  renderer.render(scene, cam);
+  const png = renderer.domElement.toDataURL('image/png');
+  scene.remove(obj);
+  await fetch('/save/' + file.replace(/\.glb$/, '') + (q.get('suffix') || ''), { method: 'POST', body: png });
+  window.results[file] = anims;
+}
+
+const recolored = new Map();
+// The skin is a shaded strip of the colour map, so blend every skin-toned pixel (warm hue, not fully saturated)
+// toward the target colour, keeping its shading. Saturated oranges (shoes, ramps) are left alone.
+function recolor(tex, hex) {
+  if (recolored.has(tex)) return recolored.get(tex);
+  const img = tex.image, c = document.createElement('canvas');
+  c.width = img.width; c.height = img.height;
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+  const data = x.getImageData(0, 0, c.width, c.height), d = data.data;
+  const to = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16)), amt = +(q.get('amt') || .6);
+  const luma = (r, g, b) => .3 * r + .59 * g + .11 * b, lit = luma(0xee, 0xb9, 0x93);   // lightest skin shade
+  for (let i = 0; i < d.length; i += 4) {
+    const [h, s, l] = hsl(d[i], d[i + 1], d[i + 2]);
+    if (h >= 14 && h <= 32 && s > .2 && s < .75 && l > .35) {
+      const f = Math.min(1.05, luma(d[i], d[i + 1], d[i + 2]) / lit);
+      for (let k = 0; k < 3; k++) d[i + k] = Math.min(255, Math.round(d[i + k] + (to[k] * f - d[i + k]) * amt));
+    }
+  }
+  x.putImageData(data, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  Object.assign(t, { flipY: tex.flipY, colorSpace: tex.colorSpace, magFilter: tex.magFilter, minFilter: tex.minFilter, wrapS: tex.wrapS, wrapT: tex.wrapT });
+  recolored.set(tex, t);
+  return t;
+}
+function hsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, dd = mx - mn;
+  if (!dd) return [0, 0, l];
+  const s = dd / (1 - Math.abs(2 * l - 1));
+  const h = mx === r ? 60 * (((g - b) / dd) % 6) : mx === g ? 60 * ((b - r) / dd + 2) : 60 * ((r - g) / dd + 4);
+  return [(h + 360) % 360, s, l];
+}
+
+const only = q.get('only');
+const files = only ? only.split(',').map(f => f + '.glb') : await (await fetch('/list')).json();
+for (const f of files) { log('rendering ' + f); await render(f); }
+log('done ' + files.length);
+window.done = true;
+</script>

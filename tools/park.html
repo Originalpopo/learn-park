@@ -1,0 +1,177 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Render parks</title>
+<style>body { font: 14px system-ui; background: #ddd; margin: 8px; } canvas { max-width: 100%; height: auto; background: repeating-conic-gradient(#ccc 0 25%, #eee 0 50%) 0 0 / 20px 20px; }</style>
+<p id="log">loading…</p>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+// Builds each skate park zone from Kenney tiles (layouts in parks.js) and renders it from one fixed 3/4 view:
+//   <zone>-base.webp  the plaza, trees, fences, decor and the shadows of every stop (stops themselves invisible)
+//   <zone>-<n>.webp   each stop alone, cropped, so the app can grey out locked ones and stack them over the base
+//   <zone>.json       where each stop layer sits, its ground point (for the route) and the tile size, all in % of the base
+// ?zone=ramps limits to one zone; ?preview=1 only draws the whole park on screen without saving.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { PARKS } from '/parks.js';
+
+const q = new URLSearchParams(location.search);
+const OUT_W = +(q.get('w') || 1600);
+const yaw = +(q.get('yaw') || 35) * Math.PI / 180, pitch = +(q.get('pitch') || 35) * Math.PI / 180;
+const log = t => (document.getElementById('log').textContent = t);
+const loader = new GLTFLoader(), cache = {};
+async function model(name) {
+  if (!cache[name]) cache[name] = (await loader.loadAsync('/' + name + '.glb')).scene;
+  const m = cache[name].clone(true);
+  m.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.material = o.material.clone(); } });
+  return m;
+}
+async function place(group, [name, x, z, rot]) {
+  const m = await model(name);
+  m.position.set(x, 0, z);
+  m.rotation.y = (rot || 0) * Math.PI / 180;
+  group.add(m);
+  return m;
+}
+const flat = c => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: .9 });
+function tree(x, z, s = 1) {
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.07, .1, .45, 6), flat(0x9a6b43));
+  trunk.position.y = .22;
+  const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(.48, 0), flat(0x5cb85c));
+  crown.position.y = .78;
+  const top = new THREE.Mesh(new THREE.IcosahedronGeometry(.32, 0), flat(0x7ccf6e));
+  top.position.set(.12, 1.1, .05);
+  for (const m of [trunk, crown, top]) { m.castShadow = true; m.receiveShadow = true; g.add(m); }
+  g.position.set(x, 0, z); g.scale.setScalar(s);
+  return g;
+}
+
+async function buildPark(name, P) {
+  const [W, D] = P.size;
+  const scene = new THREE.Scene();
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x9a90b0, 1.7));
+  const sun = new THREE.DirectionalLight(0xffffff, 2.6);
+  sun.position.set(W / 2 - 6, 12, D / 2 + 5);
+  sun.target.position.set(W / 2, 0, D / 2);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(4096, 4096);
+  Object.assign(sun.shadow.camera, { left: -W, right: W, top: W, bottom: -W, near: 1, far: 40 });
+  sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+  scene.add(sun, sun.target);
+
+  const base = new THREE.Group(); scene.add(base);
+  // grass lawn and a light concrete plaza with tile joints (a canvas texture, one cell per tile)
+  const grass = new THREE.Mesh(new THREE.BoxGeometry(W + 2.6, .3, D + 2.6), flat(0x9fd88a));
+  grass.position.set(W / 2 - .5, -.28, D / 2 - .5); grass.receiveShadow = true; base.add(grass);
+  const tc = document.createElement('canvas'); tc.width = tc.height = 64;
+  const tx = tc.getContext('2d'); tx.fillStyle = '#ece8f2'; tx.fillRect(0, 0, 64, 64);
+  tx.strokeStyle = '#d6d0e2'; tx.lineWidth = 3; tx.strokeRect(0, 0, 64, 64);
+  const tileTex = new THREE.CanvasTexture(tc); tileTex.colorSpace = THREE.SRGBColorSpace;
+  tileTex.wrapS = tileTex.wrapT = THREE.RepeatWrapping; tileTex.repeat.set(W, D);
+  const side = flat(0xc9c3d8), top = new THREE.MeshStandardMaterial({ map: tileTex, roughness: .95 });
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(W, .16, D), [side, side, top, side, side, side]);
+  slab.position.set(W / 2 - .5, -.085, D / 2 - .5); slab.receiveShadow = true; base.add(slab);
+  // fences on the back and side edges (never in front of a stop)
+  for (let i = 0; i < W; i++) await place(base, ['fence', i, -.45, 0]);
+  for (let j = 0; j < D; j++) { await place(base, ['fence', -.45, j, 90]); await place(base, ['fence', W - .55, j, 90]); }
+  for (const d of P.decor || []) await place(base, d);
+  for (const [x, z, s] of P.trees || []) base.add(tree(x, z, s || 1.35));
+
+  const stops = [];
+  for (const pieces of P.stops) {
+    const g = new THREE.Group();
+    for (const p of pieces) await place(g, p);
+    scene.add(g);
+    const cx = pieces.reduce((s, p) => s + p[1], 0) / pieces.length, cz = pieces.reduce((s, p) => s + p[2], 0) / pieces.length;
+    stops.push({ g, cx, cz });
+  }
+  return { scene, base, stops, W, D };
+}
+
+function fitCamera(scene) {
+  scene.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(scene), c = box.getCenter(new THREE.Vector3());
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, 200);
+  const dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+  cam.position.copy(c).addScaledVector(dir, 60); cam.lookAt(c); cam.updateMatrixWorld();
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (let i = 0; i < 8; i++) {
+    const p = new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).applyMatrix4(cam.matrixWorldInverse);
+    x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+  }
+  const pad = .02 * (x1 - x0);
+  Object.assign(cam, { left: x0 - pad, right: x1 + pad, top: y1 + pad, bottom: y0 - pad });
+  cam.updateProjectionMatrix();
+  return cam;
+}
+// world point → % of the image
+function toPct(cam, x, y, z) {
+  const p = new THREE.Vector3(x, y, z).project(cam);
+  return [+((p.x + 1) * 50).toFixed(2), +((1 - p.y) * 50).toFixed(2)];
+}
+function cropAlpha(canvas) {
+  const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height;
+  const x = c.getContext('2d'); x.drawImage(canvas, 0, 0);
+  const d = x.getImageData(0, 0, c.width, c.height).data;
+  let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) for (let i = 0; i < c.width; i++) if (d[(y * c.width + i) * 4 + 3] > 8) {
+    if (i < x0) x0 = i; if (i > x1) x1 = i; if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  x0 = Math.max(0, x0 - 2); y0 = Math.max(0, y0 - 2); x1 = Math.min(c.width - 1, x1 + 2); y1 = Math.min(c.height - 1, y1 + 2);
+  const out = document.createElement('canvas'); out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+  out.getContext('2d').drawImage(c, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+  return { out, x0, y0, w: out.width, h: out.height };
+}
+const save = (name, body) => fetch('/save/' + name, { method: 'POST', body });
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setClearColor(0x000000, 0);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const zones = q.get('zone') ? [q.get('zone')] : Object.keys(PARKS);
+window.layouts = {};
+for (const name of zones) {
+  log('building ' + name);
+  const { scene, base, stops } = await buildPark(name, PARKS[name]);
+  const cam = fitCamera(scene);
+  const aspect = (cam.right - cam.left) / (cam.top - cam.bottom);
+  const H = Math.round(OUT_W / aspect);
+  renderer.setSize(OUT_W, H);
+  if (q.get('preview')) { renderer.render(scene, cam); await save(name + '-preview.webp', renderer.domElement.toDataURL('image/webp', .9)); log('preview ' + name); continue; }
+
+  // base: stops invisible in colour but still casting their shadows
+  const hide = (g, on) => g.traverse(o => { if (o.isMesh) { o.material.colorWrite = !on; o.material.depthWrite = !on; } });
+  stops.forEach(s => hide(s.g, true));
+  renderer.render(scene, cam);
+  await save(name + '-base.webp', renderer.domElement.toDataURL('image/webp', .88));
+  stops.forEach(s => hide(s.g, false));
+
+  // each stop alone
+  const lay = { aspect: +aspect.toFixed(4), tile: 0, stops: [] };
+  const a = toPct(cam, 0, 0, 0), b = toPct(cam, 1, 0, 0);
+  lay.tile = +Math.hypot(b[0] - a[0], (b[1] - a[1]) / aspect).toFixed(2);   // 1 tile, in % of the width
+  base.visible = false;
+  for (let i = 0; i < stops.length; i++) {
+    stops.forEach((s, j) => (s.g.visible = j === i));
+    renderer.render(scene, cam);
+    const c = cropAlpha(renderer.domElement);
+    await save(`${name}-${i + 1}.webp`, c.out.toDataURL('image/webp', .9));
+    const [gx, gy] = toPct(cam, stops[i].cx, 0, stops[i].cz);
+    lay.stops.push({ l: +(c.x0 / OUT_W * 100).toFixed(2), t: +(c.y0 / H * 100).toFixed(2), w: +(c.w / OUT_W * 100).toFixed(2), h: +(c.h / H * 100).toFixed(2), gx, gy });
+  }
+  base.visible = true; stops.forEach(s => (s.g.visible = true));
+  await save(name + '.json', JSON.stringify(lay));
+  window.layouts[name] = lay;
+  renderer.render(scene, cam);
+}
+log('done ' + zones.join(', '));
+window.done = true;
+</script>

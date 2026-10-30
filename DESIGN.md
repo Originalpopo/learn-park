@@ -29,7 +29,7 @@ There is only a light look; no dark mode.
 - **One exception:** the level pill at the top right of the home page (level number, EXP bar, "Lv.1 · 0 EXP") is solid `--ink` with white text and a yellow level circle. The owner wants it dark.
 - **Second exception:** the scratch-pad toolbar in lessons is dark (#26231F) with white icons, like the drawing tools in the Claude app. The owner asked for this.
 - **White box or ghost button:** `background: var(--card); border: 2px solid var(--line); box-shadow: 0 4px 0 var(--line);`. This is the "ดูแผนที่ด่าน" look.
-- **Yellow button or label:** `background: var(--yellow); box-shadow: 0 4px 0 var(--yellow-deep);`, with no border. This is the "เล่นด่าน" look. Use one yellow button per screen, for the main action.
+- **Yellow button:** `background: var(--yellow); box-shadow: 0 4px 0 var(--yellow-deep);`, with no border. This is the "เล่นด่าน" look. Use one yellow button per screen, for the main action.
 - A box floating over a picture (like the stop card on the map) may add a soft drop shadow: `0 10px 24px rgba(43, 38, 32, .12)`.
 - Number badges on the map are coloured pills with a white rim.
 - Corners are round: cards 18 to 28px, buttons fully round (999px).
@@ -55,7 +55,8 @@ A round pencil button sits at the bottom right on every screen size: iPad, phone
 ## Map
 - Built lesson, not reached yet: grey stop with a lock badge.
 - Lesson not built yet: grey stop with a faded number in a dashed outline. No lock.
-- The skater waits at the next stop, under a yellow "เริ่มตรงนี้!" label.
+- Every built lesson shows its best result as 3 small stars above its number: filled ones are earned, empty ones are still to win. Lessons not built yet have no stars.
+- The newest lesson to play has its stars bobbing up and down, and the skater waits beside it. There is no "เริ่มตรงนี้" label.
 - Cards close when the page scrolls or its width changes.
 
 ## Motion

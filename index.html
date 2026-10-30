@@ -107,12 +107,15 @@
 .park .badge b { min-width: 34px; height: 30px; padding: 0 8px; border-radius: 999px; border: 2px solid #fff; color: #fff; font-family: var(--display); font-weight: 500; font-size: .95rem; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(43, 38, 32, .2); }
 .park .badge.soon b { background: #E5E0EE !important; color: #8A8499; border-color: #B4ADC4; box-shadow: none; display: flex; gap: 3px; }
 .park .badge.soon b img { width: 15px; height: 15px; }
-.park .badge .go { background: var(--yellow); color: var(--ink); border-radius: 12px; padding: 1px 10px; font-family: var(--display); font-size: .9rem; white-space: nowrap; box-shadow: 0 3px 0 var(--yellow-deep); animation: bob 1.8s ease-in-out infinite; }
+.park .badge .mini { display: flex; gap: 1px; filter: drop-shadow(0 1px 1px rgba(43, 38, 32, .25)); }   /* best stars of a built lesson; the next one bobs */
+.park .badge .mini svg { width: 17px; height: 17px; fill: #fff; stroke: #C9BFA6; stroke-width: 1.5; }
+.park .badge .mini svg.on { fill: var(--yellow); stroke: var(--yellow-deep); }
+.park .badge .mini.bob { animation: bob 1.8s ease-in-out infinite; }
 /* not built yet: a faded number in a dashed outline (a lock would suggest the lesson exists) */
 .park .badge.todo b, .park .pop .no.todo { background: rgba(255, 255, 255, .7) !important; color: #B4ADC4; border: 2px dashed #B4ADC4; box-shadow: none; }
 /* the child's skater waits beside the stop to play next, rolling back and forth */
 /* unlock show (playUnlock) */
-.park .badge.shut .go { visibility: hidden; }
+.park .badge.shut .mini { visibility: hidden; }
 .park .badge.wiggle b { animation: wiggle .5s ease-in-out 2; }
 @keyframes wiggle { 25% { transform: rotate(-12deg) scale(1.1); } 75% { transform: rotate(12deg) scale(1.1); } }
 .park .badge b img.fly { animation: fly .5s ease-in forwards; }
@@ -152,7 +155,7 @@
   .lv .meter, .brand .sub { display: none; }
   .park .badge b { min-width: 0; height: 18px; padding: 0 4px; font-size: .62rem; border-width: 2px; box-shadow: none; }
   .park .badge.soon b img { display: none; }
-  .park .badge .go { font-size: .75rem; padding: 0 6px; border-width: 2px; }
+  .park .badge .mini svg { width: 12px; height: 12px; }
   .chap-nav .chap-name { min-width: 0; font-size: 1rem; }
   /* the park is too short on a phone for a card beside the stop: show it as a sheet at the bottom of the screen */
   .park .pop { position: fixed; left: 16px !important; right: 16px; top: auto !important; bottom: calc(16px + env(safe-area-inset-bottom)); width: auto; transform: none; }
@@ -277,7 +280,7 @@ function drawWorld({ c, ch, zone, park }) {
     layers += `<button class="layer ${grey ? 'soon' : ''}" data-i="${i}" style="${pct(L.l, L.t)};width:${L.w}%;z-index:${z + 1}" aria-label="ด่าน ${t.no} ${t.title}">
         <img src="${PARK(`${zone}-${i + 1}`)}" alt=""></button>`;
     badges += `<button class="badge ${st === 'soon' ? 'todo' : grey ? 'soon' : st}" data-i="${i}" style="${pct(L.l + L.w / 2, L.t + 1)}" tabindex="-1" aria-hidden="true">
-        ${st === 'next' ? '<span class="go">เริ่มตรงนี้!</span>' : ''}
+        ${t.file ? `<span class="mini${st === 'next' ? ' bob' : ''}">${[0, 1, 2].map(k => star(k < best(id))).join('')}</span>` : ''}
         <b style="background:${ch.color}">${st === 'locked' ? LOCK : ''}${t.no}</b></button>`;
     // the child's skater stands on the floor spot just in front of the stop to play next
     if (st === 'next') ride = `<span class="ride" style="${pct(L.gx, L.gy)};width:max(34px, ${(lay.tile * 1.5).toFixed(2)}%)"><img src="${heroImg()}" alt=""></span>`;
@@ -354,7 +357,7 @@ if (unlockId && isOpen(unlockId)) {
 function playUnlock(w, i) {
   goTo(worlds.indexOf(w), false);
   const layer = w.park.querySelector(`.layer[data-i="${i}"]`), badge = w.park.querySelector(`.badge[data-i="${i}"]`);
-  const b = badge.querySelector('b'), go = badge.querySelector('.go'), ride = w.park.querySelector('.ride');
+  const b = badge.querySelector('b'), ride = w.park.querySelector('.ride');
   // the locked look to start from
   layer.classList.add('soon');
   badge.classList.add('soon', 'shut');
@@ -367,7 +370,6 @@ function playUnlock(w, i) {
     b.querySelector('img').classList.add('fly');
     layer.classList.remove('soon'); layer.classList.add('colour-in');
     badge.classList.remove('soon', 'wiggle', 'shut'); badge.classList.add('opened');
-    if (go) go.textContent = 'ปลดล็อกแล้ว!';
     sfx.win();
     // a ring of little stars bursting from the badge
     const over = w.park.querySelector('.over');
@@ -380,7 +382,7 @@ function playUnlock(w, i) {
     }
   });
   at(2200, () => { b.querySelector('img.fly')?.remove(); if (ride) ride.style.opacity = 1; });
-  at(3400, () => { if (go) go.textContent = 'เริ่มตรงนี้!'; openPop(w, i); });
+  at(3400, () => openPop(w, i));
 }
 
 /* hero kid: tap to jump and get a tip */

@@ -93,7 +93,7 @@
 /* level map */
 .map-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .map-head h2 { font-size: clamp(1.6rem, 4.4vw, 2.2rem); }
-/* worlds: each chapter is one zone of the skate park (ramps / rails / bowl), drawn as a 3D park picture.
+/* worlds: each chapter is one zone of the skate park (ramps / rails / bowl), drawn as a painted park picture.
    The base picture holds the plaza; every stop is its own layer on top, so locked ones can turn grey. */
 /* chapters sit side by side in a swipe slider (no frames); under it, arrows around the current chapter's name */
 .chap-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: -8px; }
@@ -104,12 +104,12 @@
 .slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; margin-top: -6px; }
 .slider::-webkit-scrollbar { display: none; }
 .world { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; position: relative; padding: 4px 2px 8px; }
-.park { position: relative; max-width: 820px; margin: calc(min(100%, 820px) * -.06) auto 0; }   /* the picture's top is empty sky: pull it up */
+.park { position: relative; max-width: 820px; margin: calc(min(100%, 820px) * -.02) auto calc(min(100%, 820px) * -.06); }   /* trim the empty paper above and below the island */
 .park > img.base, .park > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .park .layer { position: absolute; display: block; height: auto; padding: 0; border: 0; background: none; cursor: pointer; }
 .park .over { position: absolute; inset: 0; pointer-events: none; }
 .park .layer img { width: 100%; height: auto; display: block; }
-.park .layer.soon img { filter: grayscale(1) opacity(.5); }
+.park .layer.soon img { filter: grayscale(1) brightness(1.06) contrast(.8); }   /* sits exactly over the coloured base, so no see-through */
 .park .layer:active img { transform: translateY(2px); }
 .park .badge { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: auto; padding: 0; border: 0; background: none; cursor: pointer; }
 .park .badge b { min-width: 34px; height: 30px; padding: 0 8px; border-radius: 999px; border: 3px solid var(--ink); color: #fff; font-family: var(--display); font-weight: 500; font-size: .95rem; display: grid; place-items: center; box-shadow: 0 2px 0 var(--ink); }
@@ -216,7 +216,7 @@ const $ = s => document.querySelector(s);
 const star = on => STAR.replace('<svg', `<svg class="${on ? 'on' : ''}"`);
 
 /* ---------- skate park zones, one per chapter ----------
-   Each zone is a 3D park rendered by tools/park.html: a base picture plus one layer per stop (window.PARK_LAYOUT). */
+   Each zone is a painted park picture cut up by tools/cut.html: a base picture plus one layer per stop (window.PARK_LAYOUT). */
 const IMG = n => `shared/img/${n}.png`;
 const SK = n => IMG('skate/' + n);
 const PARK = n => `shared/img/park/${n}.webp`;

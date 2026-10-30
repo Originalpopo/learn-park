@@ -1,0 +1,125 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>cut parks</title>
+<!-- Dev-only tool (not published): turns the painted park pictures in tools/incoming/<zone>.jpg into what the map needs:
+     <zone>-base.webp (background made see-through), <zone>-<n>.webp (each stop cut out, so a locked one can turn grey),
+     <zone>.json (where each stop sits, in % of the picture) and <zone>-debug.png (outlines, to check the cut).
+     Open http://localhost:3013/cut.html  (?zone=ramps to do one zone) -->
+<body style="font:14px system-ui;background:#ddd">
+<pre id="log"></pre>
+<script>
+/* Each stop: box = [x0,y0,x1,y1] in picture pixels around the obstacle, ground = [x,y] the spot on the floor just in front
+   of it (the route and the skater use it), skip = boxes to leave out (a tree standing in front, say). In play order. */
+const ZONES = {
+  ramps: { tile: 5, stops: [
+    { box: [140, 290, 300, 445], ground: [255, 450] },             // quarter pipe, left
+    { box: [305, 235, 465, 355], ground: [400, 360] },             // orange box
+    { box: [455, 100, 655, 260], ground: [560, 265], skip: [[558, 40, 660, 170]] },   // quarter pipe, back (trees behind)
+    { box: [610, 200, 900, 390], ground: [760, 395] },             // big double quarter pipe
+    { box: [452, 315, 625, 428], ground: [530, 432] },             // small quarter pipe, middle
+    { box: [335, 435, 535, 575], ground: [440, 580], skip: [[330, 515, 420, 585]] },   // kicker with rail (planter)
+    { box: [530, 555, 812, 705], ground: [610, 712], skip: [[688, 630, 760, 740]] },   // big ramp, front (tree in front)
+    { box: [790, 510, 990, 625], ground: [870, 630] },             // small quarter pipe, front right
+  ] },
+  rails: { tile: 5, stops: [
+    { box: [280, 210, 470, 345], ground: [370, 330] },             // rail, back left
+    { box: [465, 310, 745, 495], ground: [585, 495] },             // long ledge
+    { box: [640, 225, 885, 380], ground: [745, 385] },             // ledge + box, back right
+    { box: [775, 450, 1000, 615], ground: [860, 615] },            // rail, front right
+  ] },
+  bowl: { tile: 5, stops: [
+    { box: [160, 305, 310, 440], ground: [270, 440] },             // quarter pipe, left
+    { box: [325, 395, 575, 590], ground: [455, 595], skip: [[330, 515, 420, 585]] },   // quarter pipe + box (planter)
+    { box: [585, 575, 790, 695], ground: [650, 700], skip: [[688, 630, 760, 740]] },   // small quarter pipe, front (tree in front)
+    { box: [760, 485, 965, 612], ground: [850, 615] },             // kicker, right
+    { box: [430, 230, 910, 510], ground: [670, 470], fill: true }, // the bowl (its inside is floor-coloured, so fill it)
+  ] },
+};
+
+const log = s => (document.getElementById('log').textContent += s + '\n');
+const save = (name, body) => fetch('/save/' + name, { method: 'POST', body });
+const load = src => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; });
+const q = new URLSearchParams(location.search);
+
+(async () => {
+  for (const [zone, cfg] of Object.entries(ZONES)) {
+    if (q.get('zone') && q.get('zone') !== zone) continue;
+    const img = await load(`/incoming/${zone}.jpg?${Date.now()}`), W = img.width, H = img.height;
+    const cv = Object.assign(document.createElement('canvas'), { width: W, height: H }), cx = cv.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(img, 0, 0);
+    const src = cx.getImageData(0, 0, W, H), px = src.data;
+    const at = (x, y) => (y * W + x) * 4;
+    const dist = (i, c) => Math.max(Math.abs(px[i] - c[0]), Math.abs(px[i + 1] - c[1]), Math.abs(px[i + 2] - c[2]));
+    const mode = list => { const m = new Map(); list.forEach(i => { const k = (px[i] >> 2) + ',' + (px[i + 1] >> 2) + ',' + (px[i + 2] >> 2); m.set(k, (m.get(k) || 0) + 1); });
+      const k = [...m].sort((a, b) => b[1] - a[1])[0][0].split(',').map(v => v * 4 + 2); return k; };
+
+    // 1. the paper around the island becomes see-through (flood from the edges), with a soft edge
+    const bg = mode([0, W - 1].flatMap(x => [0, H - 1].map(y => at(x, y))).concat([...Array(200)].map((_, k) => at(k * 5 % W, 0))));
+    const out = new Uint8ClampedArray(W * H).fill(255), seen = new Uint8Array(W * H), stack = [];
+    for (let x = 0; x < W; x++) stack.push(x, (H - 1) * W + x);
+    for (let y = 0; y < H; y++) stack.push(y * W, y * W + W - 1);
+    while (stack.length) { const p = stack.pop(); if (seen[p]) continue; seen[p] = 1;
+      const d = dist(p * 4, bg); if (d > 14) continue;
+      out[p] = d <= 5 ? 0 : Math.round((d - 5) / 9 * 255);
+      const x = p % W; if (x > 0) stack.push(p - 1); if (x < W - 1) stack.push(p + 1); if (p >= W) stack.push(p - W); if (p < W * (H - 1)) stack.push(p + W); }
+    const base = cx.createImageData(W, H); base.data.set(px); for (let p = 0; p < W * H; p++) base.data[p * 4 + 3] = out[p];
+    const bc = Object.assign(document.createElement('canvas'), { width: W, height: H }); bc.getContext('2d').putImageData(base, 0, 0);
+    await save(zone + '-base.webp', bc.toDataURL('image/webp', .9));
+
+    // floor colour = the most common colour inside the island
+    const floor = mode([...Array(4000)].map(() => at(Math.round(W * (.3 + Math.random() * .4)), Math.round(H * (.3 + Math.random() * .4)))));
+    log(`${zone}: ${W}x${H} paper ${bg} floor ${floor}`);
+
+    // 2. each stop: the pixels in its box that are not plain floor, the biggest connected blob, holes filled, grown a little
+    const dbg = cx; dbg.lineWidth = 2;
+    const lay = { aspect: +(W / H).toFixed(4), tile: cfg.tile, stops: [] };
+    for (const [n, s] of cfg.stops.entries()) {
+      const [x0, y0, x1, y1] = s.box, w = x1 - x0, h = y1 - y0, m = new Uint8Array(w * h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = at(x0 + x, y0 + y); if (!out[(y0 + y) * W + x0 + x]) continue;
+        if (s.skip && s.skip.some(([a, b, c, d]) => x0 + x >= a && x0 + x < c && y0 + y >= b && y0 + y < d)) continue;
+        if (dist(i, floor) > 20) m[y * w + x] = 1; }
+      // shave 1px off so the thin joint lines in the floor fall away
+      { const g = m.slice(); for (let p = 0; p < w * h; p++) if (m[p]) { const x = p % w;
+        if (!(x > 0 && m[p - 1]) || !(x < w - 1 && m[p + 1]) || !(p >= w && m[p - w]) || !(p < w * (h - 1) && m[p + w])) g[p] = 0; } m.set(g); }
+      // biggest blob
+      const lab = new Int32Array(w * h); let best = 0, bestN = 0, id = 0;
+      for (let p = 0; p < w * h; p++) if (m[p] && !lab[p]) { id++; let cnt = 0; const st = [p];
+        while (st.length) { const c = st.pop(); if (lab[c] || !m[c]) continue; lab[c] = id; cnt++; const x = c % w;
+          if (x > 0) st.push(c - 1); if (x < w - 1) st.push(c + 1); if (c >= w) st.push(c - w); if (c < w * (h - 1)) st.push(c + w); }
+        if (cnt > bestN) { bestN = cnt; best = id; } }
+      for (let p = 0; p < w * h; p++) m[p] = lab[p] === best ? 1 : 0;
+      // fill holes: whatever the box edge cannot reach is inside the obstacle
+      const reach = new Uint8Array(w * h), st = [];
+      for (let x = 0; x < w; x++) st.push(x, (h - 1) * w + x); for (let y = 0; y < h; y++) st.push(y * w, y * w + w - 1);
+      while (st.length) { const c = st.pop(); if (reach[c] || m[c]) continue; reach[c] = 1; const x = c % w;
+        if (x > 0) st.push(c - 1); if (x < w - 1) st.push(c + 1); if (c >= w) st.push(c - w); if (c < w * (h - 1)) st.push(c + w); }
+      for (let p = 0; p < w * h; p++) if (!reach[p]) m[p] = 1;
+      // grow by 3px (1 shaved + 2) so the grey covers the soft outline too
+      for (let r = 0; r < 3; r++) { const g = m.slice(); for (let p = 0; p < w * h; p++) if (!m[p]) { const x = p % w;
+        if ((x > 0 && m[p - 1]) || (x < w - 1 && m[p + 1]) || (p >= w && m[p - w]) || (p < w * (h - 1) && m[p + w])) g[p] = 1; } m.set(g); }
+      // tight bounds, then the cut-out picture
+      let l = w, t = h, r = 0, b = 0;
+      for (let p = 0; p < w * h; p++) if (m[p]) { const x = p % w, y = (p - x) / w; l = Math.min(l, x); r = Math.max(r, x); t = Math.min(t, y); b = Math.max(b, y); }
+      const cw = r - l + 1, chh = b - t + 1, co = Object.assign(document.createElement('canvas'), { width: cw, height: chh }), cc = co.getContext('2d');
+      const piece = cc.createImageData(cw, chh);
+      for (let y = 0; y < chh; y++) for (let x = 0; x < cw; x++) { const k = (y * cw + x) * 4, i = at(x0 + l + x, y0 + t + y);
+        piece.data[k] = px[i]; piece.data[k + 1] = px[i + 1]; piece.data[k + 2] = px[i + 2]; piece.data[k + 3] = m[(t + y) * w + l + x] ? 255 : 0; }
+      cc.putImageData(piece, 0, 0);
+      await save(`${zone}-${n + 1}.webp`, co.toDataURL('image/webp', .92));
+      const pc = v => +(v * 100).toFixed(2);
+      lay.stops.push({ l: pc((x0 + l) / W), t: pc((y0 + t) / H), w: pc(cw / W), h: pc(chh / H), gx: pc(s.ground[0] / W), gy: pc(s.ground[1] / H) });
+      // debug: outline of the cut + the ground point + the number
+      dbg.fillStyle = 'rgba(255,0,80,.35)';
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (m[y * w + x]) { const x2 = x % 3, y2 = y % 3; if (!x2 && !y2) dbg.fillRect(x0 + x, y0 + y, 2, 2); }
+      dbg.strokeStyle = '#06c'; dbg.strokeRect(x0, y0, w, h);
+      dbg.fillStyle = '#000'; dbg.beginPath(); dbg.arc(s.ground[0], s.ground[1], 6, 0, 7); dbg.fill();
+      dbg.font = 'bold 28px system-ui'; dbg.fillText(n + 1, x0 + 4, y0 + 26);
+    }
+    await save(zone + '-debug', cv.toDataURL('image/png'));
+    await save(zone + '.json', JSON.stringify(lay));
+    log(`${zone}: saved ${cfg.stops.length} stops`);
+  }
+  log('done');
+})().catch(e => log('ERROR ' + e.stack));
+</script>

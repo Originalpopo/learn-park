@@ -24,6 +24,8 @@ http.createServer((req, res) => {
   }
   if (url === '/' || url === '/render.html') return send(res, path.join(__dirname, 'render.html'), 'text/html; charset=utf-8');
   if (url === '/park.html') return send(res, path.join(__dirname, 'park.html'), 'text/html; charset=utf-8');
+  if (url === '/cut.html') return send(res, path.join(__dirname, 'cut.html'), 'text/html; charset=utf-8');
+  if (url.startsWith('/incoming/')) return send(res, path.join(__dirname, 'incoming', path.basename(url)), 'image/jpeg');
   if (url === '/parks.js') return send(res, path.join(__dirname, 'parks.js'), 'text/javascript; charset=utf-8');
   if (url === '/list') { res.end(JSON.stringify(fs.readdirSync(models).filter(f => f.endsWith('.glb')))); return; }
   const file = path.join(models, path.normalize(url));

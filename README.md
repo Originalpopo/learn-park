@@ -24,9 +24,10 @@ Pushing to `main` builds `_site/` with `node build.js` and deploys it to GitHub 
 - `math/p4/6-1.html` lessons, at `<subject>/<grade>/<topic>.html`
 - `shared/core.css`, `shared/core.js` shared look and lesson shell; the lesson list `COURSES` is in core.js
 - `shared/parks.js` where each skate-park stop sits on its picture (generated)
-- `tools/` dev-only renderers for the 3D pictures (`render.html` single models, `park.html` + `parks.js` the parks)
+- `tools/` dev-only: `render.html` renders single Kenney models; `cut.html` cuts the painted park pictures in `tools/incoming/` into the map layers; `ART-STYLE.md` the style block to give an image AI for new pictures
 
 ## Credits
 
 - 3D skate park models: [Kenney "Mini Skate"](https://kenney.nl/assets/mini-skate), CC0
+- Park map pictures: painted with an image AI in the Kenney style
 - Sun, cloud, stars, trophy, lock: [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji), MIT

@@ -26,6 +26,7 @@ There is only a light look; no dark mode.
 
 ## Boxes and buttons
 - **Never a black outline.** `--ink` is for text, not for borders or shadows.
+- **One exception:** the level pill at the top right of the home page (level number, EXP bar, "Lv.1 · 0 EXP") is solid `--ink` with white text and a yellow level circle. The owner wants it dark.
 - **White box or ghost button:** `background: var(--card); border: 2px solid var(--line); box-shadow: 0 4px 0 var(--line);`. This is the "ดูแผนที่ด่าน" look.
 - **Yellow button or label:** `background: var(--yellow); box-shadow: 0 4px 0 var(--yellow-deep);`, with no border. This is the "เล่นด่าน" look. Use one yellow button per screen, for the main action.
 - A box floating over a picture (like the stop card on the map) may add a soft drop shadow: `0 10px 24px rgba(43, 38, 32, .12)`.

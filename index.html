@@ -319,6 +319,9 @@ worlds.forEach(w => w.park.addEventListener('click', e => {
   if (hit) { sfx.tap(); openPop(w, +hit.dataset.i); }
 }));
 document.addEventListener('click', e => { if (!e.target.closest('.park')) closePops(); });
+// the card's spot is measured when it opens, so a turned iPad or a resized window closes it rather than leave it misplaced
+let lastW = innerWidth;   // width only: Safari fires resize when its toolbar hides while scrolling
+addEventListener('resize', () => { if (innerWidth !== lastW) { lastW = innerWidth; closePops(); } });
 
 /* chapter slider: swipe or use the arrows; starts on the chapter of the next lesson */
 let cur = -1;

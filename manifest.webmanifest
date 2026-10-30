@@ -1,0 +1,13 @@
+{
+  "name": "สนามเด็กเรียน",
+  "short_name": "สนามเด็กเรียน",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FBF7EC",
+  "theme_color": "#FBF7EC",
+  "icons": [
+    { "src": "shared/img/icon/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "shared/img/icon/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

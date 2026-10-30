@@ -108,7 +108,8 @@
 .park .badge.soon b { background: #E5E0EE !important; color: #8A8499; border-color: #B4ADC4; box-shadow: none; display: flex; gap: 3px; }
 .park .badge.soon b img { width: 15px; height: 15px; }
 .park .badge .go { background: var(--yellow); color: var(--ink); border: 3px solid var(--ink); border-radius: 12px; padding: 0 10px; font-family: var(--display); font-size: .9rem; white-space: nowrap; box-shadow: 0 3px 0 var(--ink); animation: bob 1.8s ease-in-out infinite; }
-.park .badge .prize { width: 34px; height: 34px; }
+/* not built yet: a faded number in a dashed outline (a lock would suggest the lesson exists) */
+.park .badge.todo b, .park .pop .no.todo { background: rgba(255, 255, 255, .7) !important; color: #B4ADC4; border: 2px dashed #B4ADC4; box-shadow: none; }
 /* the child's skater waits beside the stop to play next, rolling back and forth */
 /* unlock show (playUnlock) */
 .park .badge.shut .go { visibility: hidden; }
@@ -152,7 +153,6 @@
   .park .badge b { min-width: 0; height: 18px; padding: 0 4px; font-size: .62rem; border-width: 2px; box-shadow: none; }
   .park .badge.soon b img { display: none; }
   .park .badge .go { font-size: .75rem; padding: 0 6px; border-width: 2px; }
-  .park .badge .prize { width: 24px; height: 24px; }
   .chap-nav .chap-name { min-width: 0; font-size: 1rem; }
   /* the park is too short on a phone for a card beside the stop: show it as a sheet at the bottom of the screen */
   .park .pop { position: fixed; left: 16px !important; right: 16px; top: auto !important; bottom: calc(16px + env(safe-area-inset-bottom)); width: auto; transform: none; }
@@ -276,10 +276,9 @@ function drawWorld({ c, ch, zone, park }) {
     const grey = st === 'soon' || st === 'locked';
     layers += `<button class="layer ${grey ? 'soon' : ''}" data-i="${i}" style="${pct(L.l, L.t)};width:${L.w}%;z-index:${z + 1}" aria-label="ด่าน ${t.no} ${t.title}">
         <img src="${PARK(`${zone}-${i + 1}`)}" alt=""></button>`;
-    badges += `<button class="badge ${grey ? 'soon' : st}" data-i="${i}" style="${pct(L.l + L.w / 2, L.t + 1)}" tabindex="-1" aria-hidden="true">
+    badges += `<button class="badge ${st === 'soon' ? 'todo' : grey ? 'soon' : st}" data-i="${i}" style="${pct(L.l + L.w / 2, L.t + 1)}" tabindex="-1" aria-hidden="true">
         ${st === 'next' ? '<span class="go">เริ่มตรงนี้!</span>' : ''}
-        ${i === n - 1 ? `<img class="prize" src="${IMG('trophy')}" alt="">` : ''}
-        <b style="background:${ch.color}">${grey ? LOCK : ''}${t.no}</b></button>`;
+        <b style="background:${ch.color}">${st === 'locked' ? LOCK : ''}${t.no}</b></button>`;
     // the child's skater stands on the floor spot just in front of the stop to play next
     if (st === 'next') ride = `<span class="ride" style="${pct(L.gx, L.gy)};width:max(34px, ${(lay.tile * 1.5).toFixed(2)}%)"><img src="${heroImg()}" alt=""></span>`;
   });
@@ -292,16 +291,20 @@ drawWorlds();
 
 /* stop card: name, stars and play (or "coming soon"), placed above the tapped stop */
 function closePops() { document.querySelectorAll('.park .pop').forEach(p => (p.hidden = true)); }
+// scrolling away from an open card closes it (on phones it is pinned to the bottom of the screen and would follow along)
+let popY = 0;
+addEventListener('scroll', () => { if (Math.abs(scrollY - popY) > 40) closePops(); }, { passive: true });
 function openPop(w, i) {
   const t = w.ch.topics[i], L = window.PARK_LAYOUT[w.zone].stops[i], id = lessonId(w.c, t), s = best(id);
   const pop = w.park.querySelector('.pop');
   const x = Math.min(78, Math.max(22, L.l + L.w / 2));   // keep the card inside the park
   pop.style.left = x + '%';
-  pop.innerHTML = `<b class="no" style="background:${w.ch.color}">${t.no}</b><div class="tt">${t.title}</div>
-    ${!t.file ? `<div class="soon">${LOCK} ยังไม่เปิด เร็วๆ นี้</div>`
+  pop.innerHTML = `<b class="no${t.file ? '' : ' todo'}" style="background:${w.ch.color}">${t.no}</b><div class="tt">${t.title}</div>
+    ${!t.file ? `<div class="soon">เนื้อหายังไม่พร้อม เร็วๆ นี้</div>`
       : !isOpen(id) ? `<div class="soon">${LOCK} ผ่านด่าน ${findLesson(prevId(id)).topic.no} ให้ได้ 1 ดาวก่อนนะ</div>`
       : `<div class="ms">${[0, 1, 2].map(k => star(k < s)).join('')}</div><a class="btn" href="${t.file}">เล่นด่านนี้</a>`}`;
   pop.hidden = false;
+  popY = scrollY;
   if (getComputedStyle(pop).position === 'fixed') return;   // phones: a sheet at the bottom of the screen
   // The slider clips anything outside it, so measure: above the stop if the card fits there,
   // else below it, else as high as it can go while staying fully visible.

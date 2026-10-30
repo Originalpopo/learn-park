@@ -122,9 +122,9 @@
 .park .ride img { width: 100%; height: auto; display: block; filter: drop-shadow(0 5px 3px rgba(43, 38, 32, .25)); animation: roll 2.8s ease-in-out infinite; }
 @keyframes roll { 50% { transform: translateX(-12%) rotate(-3deg); } }
 /* the card that opens over a tapped stop */
-.park .pop { position: absolute; z-index: 60; transform: translate(-50%, calc(-100% - 10px)); width: min(240px, 70%); background: var(--card); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 5px 0 var(--ink); padding: 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.park .pop { position: absolute; z-index: 60; transform: translateX(-50%);   /* top is set in px by openPop */
+   width: min(240px, 70%); background: var(--card); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 5px 0 var(--ink); padding: 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .park .pop[hidden] { display: none; }
-.park .pop.below { transform: translate(-50%, 10px); }
 .park .pop .no { min-width: 40px; height: 28px; padding: 0 8px; border-radius: 999px; color: #fff; font-family: var(--display); font-weight: 500; display: grid; place-items: center; }
 .park .pop .tt { font-family: var(--display); font-size: 1.05rem; line-height: 1.3; }
 .park .pop .ms { display: flex; gap: 2px; }
@@ -151,7 +151,7 @@
   .park .badge .prize { width: 24px; height: 24px; }
   .chap-nav .chap-name { min-width: 0; font-size: 1rem; }
   /* the park is too short on a phone for a card beside the stop: show it as a sheet at the bottom of the screen */
-  .park .pop, .park .pop.below { position: fixed; left: 16px !important; right: 16px; top: auto !important; bottom: calc(16px + env(safe-area-inset-bottom)); width: auto; transform: none; }
+  .park .pop { position: fixed; left: 16px !important; right: 16px; top: auto !important; bottom: calc(16px + env(safe-area-inset-bottom)); width: auto; transform: none; }
   .brand .name { display: none; }
 }
 </style>
@@ -308,15 +308,20 @@ function openPop(w, i) {
   const pop = w.park.querySelector('.pop');
   const x = Math.min(78, Math.max(22, L.l + L.w / 2));   // keep the card inside the park
   pop.style.left = x + '%';
-  // above the stop, or below it for the back row (the slider clips anything above the park)
-  const below = L.t < 38;
-  pop.style.top = (below ? L.t + L.h : L.t) + '%';
-  pop.classList.toggle('below', below);
   pop.innerHTML = `<b class="no" style="background:${w.ch.color}">${t.no}</b><div class="tt">${t.title}</div>
     ${t.file
       ? `<div class="ms">${[0, 1, 2].map(k => star(k < s)).join('')}</div><a class="btn" href="${t.file}">เล่นด่านนี้</a>`
       : `<div class="soon">${LOCK} ยังไม่เปิด เร็วๆ นี้</div>`}`;
   pop.hidden = false;
+  if (getComputedStyle(pop).position === 'fixed') return;   // phones: a sheet at the bottom of the screen
+  // The slider clips anything outside it, so measure: above the stop if the card fits there,
+  // else below it, else as high as it can go while staying fully visible.
+  const pr = w.park.getBoundingClientRect(), sr = slider.getBoundingClientRect(), H = pr.height, gap = 10;
+  const vTop = Math.max(0, sr.top - pr.top) + 4, vBot = Math.min(H, sr.bottom - pr.top) - 4, ch = pop.offsetHeight;
+  const sTop = L.t / 100 * H, sBot = (L.t + L.h) / 100 * H;
+  let top = sTop - gap - ch;
+  if (top < vTop) top = sBot + gap + ch <= vBot ? sBot + gap : Math.max(vTop, Math.min(vBot - ch, sTop - ch / 2));
+  pop.style.top = top + 'px';
 }
 worlds.forEach(w => w.park.addEventListener('click', e => {
   const hit = e.target.closest('[data-i]');

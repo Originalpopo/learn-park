@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>เศษส่วนที่เท่ากัน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<style>
+/* 6.4 only: equivalent fractions (same cake, cut finer or coarser), the cutter and the matching game */
+.lbl { font-size: 1rem; background: var(--yellow-soft); border-radius: 12px; padding: 4px 12px; text-align: center; }
+.rulebox { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.arrow-note { font-size: 1rem; background: var(--yellow-soft); border-radius: 12px; padding: 4px 12px; }
+.times { display: inline-flex; align-items: center; gap: .3em; font-family: var(--display); }
+.times .by { display: flex; flex-direction: column; justify-content: space-between; height: 2.6em; font-size: .55em; color: var(--orange); }
+.kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+.kind { border-radius: 22px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.kind h3 { font-size: 1.15rem; }
+.kind .ex { font-size: 1.5rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.kind.a { background: #E6F4EA; }
+.kind.b { background: #FDEBDD; }
+.pair { display: flex; gap: 18px; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
+.not-eq { color: var(--bad); font-family: var(--display); font-size: 2rem; }
+
+.cutter { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; align-items: center; }
+.ctrls { display: flex; flex-direction: column; gap: 14px; }
+.ctrl { display: flex; align-items: center; gap: 12px; justify-content: space-between; background: var(--bg); border-radius: 20px; padding: 10px 12px 10px 18px; }
+.ctrl .lab { font-family: var(--display); white-space: nowrap; }
+.ctrl .val { font-family: var(--display); font-size: 1.6rem; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.readout { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 2.4rem; }
+.readout .op { color: var(--muted); font-family: var(--display); }
+.pie-zone { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center; min-width: 0; }
+
+.match { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.fcard { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 14px 30px; box-shadow: 0 6px 0 var(--line); font-size: 3rem; display: flex; align-items: center; gap: .3em; }
+.fcard .op { color: var(--muted); font-family: var(--display); font-size: .7em; }
+.fcard .gap { font-family: var(--display); color: var(--orange); }
+.fcard.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+.choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 560px; }
+.choices .opt { font-size: 1.6rem; }
+.num { font-family: var(--display); font-size: 1.75em; line-height: 1; }
+.msg { min-height: 1.6em; text-align: center; font-size: 1.05rem; }
+.msg.bad { color: var(--bad); }
+.msg.good { color: var(--good); }
+.sort-progress { text-align: center; color: var(--muted); font-size: .95rem; }
+
+@media (max-width: 760px) {
+  .cutter { grid-template-columns: 1fr; }
+}
+@media (max-width: 440px) {
+  .kinds { grid-template-columns: 1fr; }
+  .choices .opt { font-size: 1.3rem; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script>
+(() => {
+const { frac, fade, pie, ri, pick, shuffle, sfx, addExp, G } = L;
+const $ = s => document.querySelector(s);
+
+/* one cake cut into d slices with the first n shaded */
+const cake = (n, d, o = {}) => pie(d, Array.from({ length: d }, (_, i) => i < n ? G : null), o);
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+const same = (a, b, c, d) => a * d === b * c;   // a/b = c/d
+// "n/d = (n×k)/(d×k)" with the ×k written beside the arrow
+const timesEq = (n, d, k, op = '×') => `<span class="times">${frac(n, d)}<span class="by"><span>${op}${k}</span><span>${op}${k}</span></span><span class="op">=</span>${op === '×' ? frac(n * k, d * k) : frac(n / k, d / k)}</span>`;
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(1, 2, { anim: 'filled' })}<div class="cap">${frac(1, 2)} ก้อน</div></div>
+        <div class="fig">${cake(2, 4, { anim: 'filled', delay0: .4 })}<div class="cap">${frac(2, 4)} ก้อน</div></div>
+      </div>`,
+    say: () => `<h2>ได้เค้กเท่ากันไหม</h2>
+      <p>แก้วตาตัดเค้กเป็น <b>2 ชิ้น</b> ได้ไป 1 ชิ้น คือ ${frac(1, 2)} ก้อน</p>
+      <p>ต้นกล้าตัดเค้กขนาดเท่ากันเป็น <b>4 ชิ้น</b> ได้ไป 2 ชิ้น คือ ${frac(2, 4)} ก้อน</p>
+      <p class="hint">ลองดูส่วนสีเขียว ใครได้มากกว่ากัน</p>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(1, 2, { cls: 'sm', anim: 'filled' })}<div class="cap">${frac(1, 2)}</div></div>
+        <div class="fig">${cake(2, 4, { cls: 'sm', anim: 'filled', delay0: .3 })}<div class="cap">${frac(2, 4)}</div></div>
+        <div class="fig">${cake(4, 8, { cls: 'sm', anim: 'filled', step: .05, delay0: .6 })}<div class="cap">${frac(4, 8)}</div></div>
+      </div>`,
+    say: () => `<h2>ได้เท่ากันพอดี!</h2>
+      <p>ส่วนสีเขียวเท่ากันทุกภาพ คือ <mark>ครึ่งก้อน</mark></p>
+      <div class="eq">${fade(frac(1, 2), .3)}${fade('<span class="op">=</span>', .5)}${fade(frac(2, 4), .7)}${fade('<span class="op">=</span>', .9)}${fade(frac(4, 8), 1.1)}</div>
+      <p class="callout">เศษส่วนที่บอกจำนวนเท่ากัน เรียกว่า <b>เศษส่วนที่เท่ากัน</b></p>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(1, 2, { cls: 'sm' })}<div class="cap">ตัด 2 ชิ้น</div></div>
+        <div class="fig">${cake(2, 4, { cls: 'sm', anim: 'all', step: .15 })}<div class="cap">ผ่าทุกชิ้นเป็น 2</div></div>
+      </div>`,
+    say: () => `<h2>ทำไมถึงเท่ากัน</h2>
+      <p>ถ้าผ่าเค้ก <b>ทุกชิ้น</b> ออกเป็น 2 ชิ้น</p>
+      <p>จำนวนชิ้นทั้งหมดเพิ่มเป็น 2 เท่า และชิ้นสีเขียวก็เพิ่มเป็น 2 เท่า</p>
+      <p>แต่เค้กยังเท่าเดิม ไม่ได้เพิ่มหรือหายไปเลย</p>
+      <div class="eq">${timesEq(1, 2, 2)}</div>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="eq">${timesEq(2, 3, 2)}</div>
+        <div class="eq">${timesEq(2, 3, 3)}</div>
+        <span class="arrow-note">คูณทั้งตัวเศษและตัวส่วน ด้วยจำนวนเดียวกัน</span>
+      </div>`,
+    say: () => `<h2>วิธีหา: คูณทั้งบนและล่าง</h2>
+      <p>เอา <mark>จำนวนเดียวกัน</mark> คูณทั้ง <b>ตัวเศษ</b> และ <b>ตัวส่วน</b></p>
+      <p>จะได้เศษส่วนที่เท่ากันเสมอ</p>
+      <div class="eq">${frac(2, 3)}<span class="op">=</span>${frac(4, 6)}<span class="op">=</span>${frac(6, 9)}</div>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(3, 4, { cls: 'sm', anim: 'filled' })}<div class="cap">${frac(3, 4)}</div></div>
+        <div class="fig">${cake(6, 8, { cls: 'sm', anim: 'filled', step: .06, delay0: .4 })}<div class="cap">${frac(6, 8)}</div></div>
+      </div>`,
+    say: () => `<h2>หาตัวที่หายไป</h2>
+      <p>${frac(3, 4)} = ${frac('?', 8)}</p>
+      <p>ตัวส่วน 4 กลายเป็น 8 คือ <b>คูณ 2</b></p>
+      <p>ตัวเศษก็ต้อง <b>คูณ 2</b> ด้วย: 3 × 2 = 6</p>
+      <div class="eq">${fade(timesEq(3, 4, 2), .3)}</div>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(6, 8, { cls: 'sm' })}<div class="cap">${frac(6, 8)}</div></div>
+        <div class="fig">${cake(3, 4, { cls: 'sm', anim: 'all', step: .15 })}<div class="cap">รวมทีละ 2 ชิ้น</div></div>
+      </div>`,
+    say: () => `<h2>ทำกลับได้ด้วยการหาร</h2>
+      <p>ถ้ารวมชิ้นเค้กทีละ 2 ชิ้นเป็นชิ้นใหญ่ ชิ้นจะน้อยลงครึ่งหนึ่ง</p>
+      <p>เอา <mark>จำนวนเดียวกัน</mark> หารทั้งตัวเศษและตัวส่วน ก็ได้เศษส่วนที่เท่ากัน</p>
+      <div class="eq">${timesEq(6, 8, 2, '÷')}</div>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(1, 2, { cls: 'sm', anim: 'filled' })}<div class="cap">${frac(1, 2)}</div></div>
+        <span class="not-eq">≠</span>
+        <div class="fig">${cake(2, 3, { cls: 'sm', anim: 'filled', delay0: .3 })}<div class="cap">${frac(2, 3)}</div></div>
+      </div>`,
+    say: () => `<h2>ระวัง! บวกไม่ได้</h2>
+      <p>${frac(1, 2)} ถ้าเอา 1 ไป <b>บวก</b> ทั้งบนและล่าง จะได้ ${frac(2, 3)}</p>
+      <p>แต่ดูภาพสิ ส่วนสีเขียวไม่เท่ากัน</p>
+      <p class="callout">เศษส่วนที่เท่ากัน ต้อง <b>คูณ</b> หรือ <b>หาร</b> ด้วยจำนวนเดียวกันเท่านั้น</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <span class="calc" style="font-family:var(--display);font-size:clamp(1.6rem,4.2vw,2.2rem)">${frac(2, 5)} = ${frac(6, '?')}</span>
+        <span class="arrow-note">ตัวเศษ 2 กลายเป็น 6 คือ คูณ 3</span>
+        <span class="arrow-note">ตัวส่วนก็คูณ 3: 5 × 3 = 15</span>
+        <div class="eq">${timesEq(2, 5, 3)}</div>
+      </div>`,
+    say: () => `<h2>หาตัวส่วนที่หายไป</h2>
+      <p>ดูว่าตัวที่รู้ทั้งสองตัว <b>คูณด้วยเท่าไร</b></p>
+      <p>แล้วเอาจำนวนเดียวกันนั้นไปคูณอีกตัว</p>
+      <p class="hint">2 × 3 = 6 ดังนั้น 5 × 3 = 15</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>คูณเพื่อตัดชิ้นเล็กลง</h3><span>คูณทั้งบนและล่าง ด้วยจำนวนเดียวกัน</span><div class="ex">${timesEq(1, 3, 2)}</div></div>
+        <div class="kind b"><h3>หารเพื่อรวมชิ้นให้ใหญ่ขึ้น</h3><span>หารทั้งบนและล่าง ด้วยจำนวนเดียวกัน</span><div class="ex">${timesEq(4, 10, 2, '÷')}</div></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p><b>เศษส่วนที่เท่ากัน</b> บอกจำนวนเค้กเท่ากัน แค่ตัดชิ้นไม่เท่ากัน</p>
+      <p>หาได้โดย <b>คูณ</b> หรือ <b>หาร</b> ทั้งตัวเศษและตัวส่วน ด้วยจำนวนเดียวกัน</p>
+      <p class="hint">ไปลองผ่าเค้กเองในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+// cutter: pick a fraction, then cut every slice into k pieces; the green part stays the same, the fraction changes
+const play = { n: 2, d: 3, k: 1, anim: false };
+function cutterHTML() {
+  const { n, d, k } = play;
+  const out = k === 1 ? frac(n, d) : `${frac(n, d)}<span class="op">=</span>${frac(n * k, d * k)}`;
+  const line = k === 1 ? 'กด + ที่ "ผ่าทุกชิ้นเป็น" เพื่อตัดเค้กให้ชิ้นเล็กลง' : `ตัวเศษ ${n} × ${k} = ${n * k} และ ตัวส่วน ${d} × ${k} = ${d * k} · ส่วนสีเขียวเท่าเดิม`;
+  return `
+    <div class="pie-zone">
+      <div class="fig">${cake(n, d)}<div class="cap">เดิม ${frac(n, d)}</div></div>
+      <div class="fig">${cake(n * k, d * k, { anim: play.anim ? 'all' : null, step: .03 })}<div class="cap">ผ่าแล้ว ${frac(n * k, d * k)}</div></div>
+    </div>
+    <div class="ctrls">
+      <div class="readout">${out}</div>
+      <p class="hint">${line}</p>
+      <div class="ctrl"><span class="lab">ตัวเศษ</span><span class="stepper"><button class="btn ghost round" data-act="n-" aria-label="ลดตัวเศษ">−</button><span class="val">${n}</span><button class="btn ghost round" data-act="n+" aria-label="เพิ่มตัวเศษ">+</button></span></div>
+      <div class="ctrl"><span class="lab">ตัวส่วน</span><span class="stepper"><button class="btn ghost round" data-act="d-" aria-label="ลดตัวส่วน">−</button><span class="val">${d}</span><button class="btn ghost round" data-act="d+" aria-label="เพิ่มตัวส่วน">+</button></span></div>
+      <div class="ctrl"><span class="lab">ผ่าทุกชิ้นเป็น</span><span class="stepper"><button class="btn ghost round" data-act="k-" aria-label="ผ่าน้อยลง">−</button><span class="val">${k}</span><button class="btn ghost round" data-act="k+" aria-label="ผ่ามากขึ้น">+</button></span></div>
+    </div>`;
+}
+
+// a proper fraction in lowest terms, and a multiplier for an equal one
+function eqSet() {
+  let n, d;
+  do { d = pick([2, 3, 4, 5, 6]); n = ri(1, d - 1); } while (gcd(n, d) !== 1);
+  const k = d >= 5 ? ri(2, 3) : ri(2, 4);
+  return { n, d, k, N: n * k, D: d * k };
+}
+// wrong but believable fractions for "equal to n/d": the add-the-same mistake, only one part multiplied, off by one
+function eqWrong({ n, d, k, N, D }) {
+  return [[n + k - 1, d + k - 1], [N, d], [n, D], [N + 1, D], [N - 1, D], [n + 1, d + 1], [N, D + 1], [n + k, d + k]]
+    .filter(([a, b]) => a > 0 && b > 1 && a < b && !same(a, b, n, d));
+}
+// wrong but believable missing numbers: adding instead of multiplying, off by one
+function numWrong(right, add, other) {
+  return [...new Set([add, right + 1, right - 1, right + other, other, right * 2])].filter(x => x > 0 && x !== right);
+}
+function dedupe(list) { const seen = new Set(); return list.filter(x => { const k = [].concat(x).join('/'); return seen.has(k) ? false : seen.add(k); }); }
+
+// matching game: 8 cards; even rounds pick the equal fraction, odd rounds fill in the missing number
+let match = null;
+function newMatch() {
+  const rounds = [], seen = new Set();
+  while (rounds.length < 8) {
+    const m = eqSet(), key = `${m.n}/${m.d}x${m.k}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (rounds.length % 2 === 0) {
+      const wrong = dedupe(eqWrong(m)).slice(0, 2);
+      rounds.push({ m, kind: 'eq', card: frac(m.n, m.d), ask: 'เศษส่วนนี้ เท่ากับข้อใด',
+        opts: shuffle([{ html: frac(m.N, m.D), ok: true }, ...wrong.map(x => ({ html: frac(...x), ok: false }))]) });
+    } else {
+      const top = Math.random() < .5;   // which part is missing
+      const right = top ? m.N : m.D, wrong = numWrong(right, top ? m.n + (m.D - m.d) : m.d + (m.N - m.n), top ? m.n : m.d).slice(0, 2);
+      rounds.push({ m, kind: 'gap', card: `${frac(m.n, m.d)}<span class="op">=</span>${top ? frac('<span class="gap">?</span>', m.D) : frac(m.N, '<span class="gap">?</span>')}`,
+        ask: 'ใส่ตัวเลขที่หายไป',
+        opts: shuffle([{ html: `<span class="num">${right}</span>`, ok: true }, ...wrong.map(x => ({ html: `<span class="num">${x}</span>`, ok: false }))]) });
+    }
+  }
+  return { rounds: shuffle(rounds), i: 0, got: 0, miss: false, hint: false, msg: '', msgCls: '', busy: false };
+}
+function matchHTML() {
+  const s = match;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">จับคู่ครบ 8 ใบแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} ใบ</p>
+      <button class="btn" data-act="match-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const q = s.rounds[s.i], { m } = q;
+  return `<div class="match">
+      <p>${q.ask}</p>
+      <div class="fcard" id="fcard">${q.card}</div>
+      ${s.hint ? `<div class="pair">${cake(m.n, m.d, { cls: 'sm' })}${cake(m.N, m.D, { cls: 'sm' })}</div>` : '<button class="link" data-act="hint">ดูภาพช่วย</button>'}
+      <div class="choices">${q.opts.map((o, i) => `<button class="opt" data-pick="${i}">${o.html}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">ใบที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+
+function playHTML() {
+  if (!match) match = newMatch();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>ผ่าเค้กให้ชิ้นเล็กลง</h2><p>เลือกเศษส่วน แล้วผ่าทุกชิ้นให้เล็กลง ดูว่าส่วนสีเขียวยังเท่าเดิม แต่เศษส่วนเปลี่ยนไป</p></div>
+      <div class="cutter" id="cutter">${cutterHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>จับคู่ให้ถูก</h2><p>เลือกคำตอบที่ทำให้เศษส่วนเท่ากัน</p></div>
+      <div id="match">${matchHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawCutter = () => { const el = $('#cutter'); if (el) el.innerHTML = cutterHTML(); play.anim = false; };
+const drawMatch = () => { const el = $('#match'); if (el) el.innerHTML = matchHTML(); };
+
+function answerMatch(i) {
+  const s = match;
+  if (s.busy || s.i >= s.rounds.length) return;
+  const q = s.rounds[s.i], { m } = q;
+  if (q.opts[i].ok) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true;
+    s.msg = pick(['เก่งมาก!', 'ถูกต้อง!', 'ใช่เลย!', 'เยี่ยม!']); s.msgCls = 'good';
+    drawMatch();
+    setTimeout(() => {
+      s.i++; s.miss = false; s.hint = false; s.busy = false;
+      if (s.i >= s.rounds.length) sfx.win();
+      drawMatch();
+    }, 700);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = `คูณทั้งบนและล่างด้วย ${m.k}: ${frac(m.n, m.d)} = ${frac(m.N, m.D)} ลองใหม่นะ`;
+    s.msgCls = 'bad';
+    drawMatch();
+    $('#fcard').classList.add('shake');
+  }
+}
+function playClick(e) {
+  const p = e.target.closest('[data-pick]');
+  if (p) { answerMatch(+p.dataset.pick); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  const act = a.dataset.act;
+  if (/^[ndk][+-]$/.test(act)) {
+    const step = act[1] === '+' ? 1 : -1;
+    if (act[0] === 'n') play.n = Math.max(1, Math.min(play.d - 1, play.n + step));
+    if (act[0] === 'd') { play.d = Math.max(2, Math.min(6, play.d + step)); play.n = Math.min(play.n, play.d - 1); }
+    if (act[0] === 'k') { const k = Math.max(1, Math.min(4, play.k + step)); play.anim = k > play.k; play.k = k; }
+    sfx.tap(); drawCutter();
+    return;
+  }
+  switch (act) {
+    case 'hint': match.hint = true; drawMatch(); break;
+    case 'match-again': match = newMatch(); drawMatch(); break;
+  }
+}
+
+/* ---------- 3. quiz ---------- */
+function opts(right, wrong, show) {
+  return shuffle([{ html: show(right), ok: true }, ...dedupe(wrong).slice(0, 3).map(x => ({ html: show(x), ok: false }))]);
+}
+const num = x => `<span class="num">${x}</span>`;
+// picture → an equal fraction with smaller slices
+function qA() {
+  const m = eqSet();
+  return {
+    ask: `ภาพนี้คือ ${frac(m.n, m.d)} ข้อใดเท่ากับภาพนี้`,
+    pic: cake(m.n, m.d),
+    opts: opts([m.N, m.D], eqWrong(m), x => frac(...x)),
+    explain: `ผ่าทุกชิ้นเป็น ${m.k} ชิ้น คูณทั้งบนและล่างด้วย ${m.k}: ${frac(m.n, m.d)} = ${frac(m.N, m.D)}`,
+    after: `<div class="pair">${cake(m.n, m.d, { cls: 'sm' })}${cake(m.N, m.D, { cls: 'sm' })}</div>`,
+    review: `${frac(m.n, m.d)} = ${frac(m.N, m.D)} (คูณ ${m.k} ทั้งบนและล่าง)`
+  };
+}
+// which one equals n/d (no picture)
+function qB() {
+  const m = eqSet(), down = Math.random() < .5;   // sometimes start from the bigger one and go down
+  const [a, b, c, d] = down ? [m.N, m.D, m.n, m.d] : [m.n, m.d, m.N, m.D];
+  const wrong = down
+    ? [[c + 1, d], [c, d + 1], [a - (b - d), d], [c + 1, d + 1], [a, d], [c, b]].filter(([x, y]) => x > 0 && y > 1 && x < y && !same(x, y, c, d))
+    : eqWrong(m);
+  return {
+    ask: `ข้อใดเท่ากับ ${frac(a, b)}`,
+    pic: '',
+    opts: opts([c, d], wrong, x => frac(...x)),
+    explain: down ? `หารทั้งบนและล่างด้วย ${m.k}: ${frac(a, b)} = ${frac(c, d)}` : `คูณทั้งบนและล่างด้วย ${m.k}: ${frac(a, b)} = ${frac(c, d)}`,
+    after: `<div class="pair">${cake(m.n, m.d, { cls: 'sm' })}${cake(m.N, m.D, { cls: 'sm' })}</div>`,
+    review: `${frac(a, b)} = ${frac(c, d)} (${down ? 'หาร' : 'คูณ'} ${m.k} ทั้งบนและล่าง)`
+  };
+}
+// missing numerator
+function qC() {
+  const m = eqSet();
+  return {
+    ask: `${frac(m.n, m.d)} = ${frac('?', m.D)} ตัวเศษที่หายไปคือเท่าใด`,
+    pic: '',
+    opts: opts(m.N, numWrong(m.N, m.n + (m.D - m.d), m.n), num),
+    explain: `ตัวส่วน ${m.d} × ${m.k} = ${m.D} ตัวเศษจึงต้อง × ${m.k} ด้วย: ${m.n} × ${m.k} = ${m.N}`,
+    after: `<div class="pair">${cake(m.n, m.d, { cls: 'sm' })}${cake(m.N, m.D, { cls: 'sm' })}</div>`,
+    review: `${frac(m.n, m.d)} = ${frac(m.N, m.D)} (${m.n} × ${m.k} = ${m.N})`
+  };
+}
+// missing denominator
+function qD() {
+  const m = eqSet();
+  return {
+    ask: `${frac(m.n, m.d)} = ${frac(m.N, '?')} ตัวส่วนที่หายไปคือเท่าใด`,
+    pic: '',
+    opts: opts(m.D, numWrong(m.D, m.d + (m.N - m.n), m.d), num),
+    explain: `ตัวเศษ ${m.n} × ${m.k} = ${m.N} ตัวส่วนจึงต้อง × ${m.k} ด้วย: ${m.d} × ${m.k} = ${m.D}`,
+    after: `<div class="pair">${cake(m.n, m.d, { cls: 'sm' })}${cake(m.N, m.D, { cls: 'sm' })}</div>`,
+    review: `${frac(m.n, m.d)} = ${frac(m.N, m.D)} (${m.d} × ${m.k} = ${m.D})`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/6.4',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD()])
+});
+})();
+</script>
+</body>
+</html>

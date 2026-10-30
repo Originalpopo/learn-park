@@ -338,6 +338,125 @@ function lesson(cfg) {
   });
 
   save(); render();
+  scratchPad();
+}
+
+/* ---------- scratch pad: write on the screen instead of on paper ----------
+   A pencil button opens a see-through layer over the lesson. While it is open the page is frozen (nothing can be
+   tapped or scrolled) but two fingers can still pinch-zoom. Pens: black, blue, red in three sizes, plus an eraser.
+   It closes only after "ล้างทั้งหมด", so the child always comes back to a clean page. Nothing is saved. */
+const ICON = {
+  pen: '<path d="M4 20l1-5L15.5 4.5a2.1 2.1 0 0 1 3 3L8 18z"/><path d="M13.5 6.5l3 3"/>',
+  eraser: '<path d="M8.5 20H20"/><path d="M4.6 15.4l9.9-9.9a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L12 18H7.2z"/><path d="M9 11l5 5"/>',
+  trash: '<path d="M4 7h16"/><path d="M9 7V4.5h6V7"/><path d="M6.5 7l1 13h9l1-13"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  chev: '<path d="M7 10l5 5 5-5"/>'
+};
+const icon = (n, s = 22) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true">${ICON[n]}</svg>`;
+const PENS = [['#2B2620', 'ดำ'], ['#2F6FD6', 'น้ำเงิน'], ['#E0433A', 'แดง']];
+const SIZES = [3, 6, 11];
+
+function scratchPad() {
+  const open = document.createElement('button');
+  open.className = 'scratch-open';
+  open.setAttribute('aria-label', 'เปิดกระดาษทด');
+  open.innerHTML = icon('pen', 26);
+  const layer = document.createElement('div');
+  layer.className = 'scratch';
+  layer.hidden = true;
+  layer.innerHTML = `<canvas></canvas>
+    <div class="scratch-menu" hidden>
+      <div class="row">${PENS.map(([c, n], i) => `<button class="swatch" data-pen="${i}" style="--c:${c}" aria-label="ปากกาสี${n}"></button>`).join('')}</div>
+      <div class="row">${SIZES.map((s, i) => `<button class="size" data-size="${i}" aria-label="เส้นขนาด ${i + 1}"><i style="width:${s + 4}px;height:${s + 4}px"></i></button>`).join('')}</div>
+    </div>
+    <div class="scratch-bar" role="toolbar" aria-label="กระดาษทด">
+      <button class="tool pen" data-tool="pen" aria-label="ปากกา">${icon('pen')}<span class="dot"></span></button>
+      <button class="tool more" data-act="menu" aria-label="เลือกสีและขนาด">${icon('chev', 18)}</button>
+      <button class="tool" data-tool="eraser" aria-label="ยางลบ">${icon('eraser')}</button>
+      <span class="sep"></span>
+      <button class="tool" data-act="clear" aria-label="ล้างทั้งหมด">${icon('trash')}</button>
+      <button class="tool" data-act="close" aria-label="ปิดกระดาษทด">${icon('close')}</button>
+      <span class="scratch-tip" hidden>กดล้างทั้งหมดก่อนนะ</span>
+    </div>`;
+  document.body.append(open, layer);
+  document.body.classList.add('has-scratch');
+
+  const cv = layer.querySelector('canvas'), cx = cv.getContext('2d');
+  const menu = layer.querySelector('.scratch-menu'), tip = layer.querySelector('.scratch-tip');
+  const st = { tool: 'pen', pen: 0, size: 1, strokes: [], cur: null, fingers: new Set(), multi: false };
+
+  function fit() {
+    const r = devicePixelRatio || 1;
+    cv.width = Math.round(innerWidth * r); cv.height = Math.round(innerHeight * r);
+    cx.setTransform(r, 0, 0, r, 0, 0);
+    redraw();
+  }
+  function line(s, from) {
+    cx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
+    cx.strokeStyle = s.color; cx.lineWidth = s.w; cx.lineCap = cx.lineJoin = 'round';
+    cx.beginPath();
+    const p = s.pts, a = p[Math.max(0, from - 1)];
+    cx.moveTo(a[0], a[1]);
+    for (let i = from; i < p.length; i++) cx.lineTo(p[i][0], p[i][1]);
+    if (p.length === 1) cx.lineTo(p[0][0] + .01, p[0][1]);   // a tap leaves a dot
+    cx.stroke();
+  }
+  function redraw() { cx.clearRect(0, 0, innerWidth, innerHeight); st.strokes.forEach(s => line(s, 0)); }
+  function paint() {
+    layer.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === st.tool));
+    layer.querySelectorAll('[data-pen]').forEach(b => b.classList.toggle('on', +b.dataset.pen === st.pen));
+    layer.querySelectorAll('[data-size]').forEach(b => b.classList.toggle('on', +b.dataset.size === st.size));
+    layer.querySelector('.pen .dot').style.background = PENS[st.pen][0];
+    layer.querySelector('[data-act="close"]').classList.toggle('off', st.strokes.length > 0);
+  }
+  const at = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * innerWidth / r.width, (e.clientY - r.top) * innerHeight / r.height]; };
+
+  // one finger writes; a second finger means a pinch, so the stroke just started is dropped and nothing draws until all lift
+  cv.addEventListener('pointerdown', e => {
+    st.fingers.add(e.pointerId);
+    menu.hidden = true;
+    if (st.fingers.size > 1) { if (st.cur) { st.strokes.pop(); st.cur = null; redraw(); paint(); } st.multi = true; return; }
+    if (st.multi) return;
+    cv.setPointerCapture(e.pointerId);
+    const erase = st.tool === 'eraser';
+    st.cur = { erase, color: PENS[st.pen][0], w: erase ? SIZES[st.size] * 4 : SIZES[st.size], pts: [at(e)] };
+    st.strokes.push(st.cur); line(st.cur, 0); paint();
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!st.cur || st.multi) return;
+    const evs = (e.getCoalescedEvents && e.getCoalescedEvents()) || [];
+    const from = st.cur.pts.length;
+    (evs.length ? evs : [e]).forEach(ev => st.cur.pts.push(at(ev)));
+    line(st.cur, from);
+  });
+  const lift = e => { st.fingers.delete(e.pointerId); st.cur = null; if (!st.fingers.size) st.multi = false; };
+  cv.addEventListener('pointerup', lift);
+  cv.addEventListener('pointercancel', lift);
+  // keep the page still under the layer (mouse wheel, trackpad scroll); a trackpad pinch still zooms
+  layer.addEventListener('wheel', e => { if (!e.ctrlKey) e.preventDefault(); }, { passive: false });
+
+  let tipT = null;
+  layer.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.tool) { st.tool = b.dataset.tool; menu.hidden = true; }
+    else if (b.dataset.pen) { st.pen = +b.dataset.pen; st.tool = 'pen'; }
+    else if (b.dataset.size) { st.size = +b.dataset.size; }
+    else if (b.dataset.act === 'menu') menu.hidden = !menu.hidden;
+    else if (b.dataset.act === 'clear') { st.strokes = []; redraw(); }
+    else if (b.dataset.act === 'close') {
+      if (st.strokes.length) { tip.hidden = false; clearTimeout(tipT); tipT = setTimeout(() => (tip.hidden = true), 2200); sfx.bad(); return; }
+      layer.hidden = true; open.hidden = false; menu.hidden = true; tip.hidden = true;
+      document.documentElement.classList.remove('scratching');
+    }
+    sfx.tap(); paint();
+  });
+  open.addEventListener('click', () => {
+    sfx.tap();
+    layer.hidden = false; open.hidden = true;
+    document.documentElement.classList.add('scratching');
+    fit(); paint();
+  });
+  addEventListener('resize', () => { if (!layer.hidden) fit(); });
 }
 
 return {

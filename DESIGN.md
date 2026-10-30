@@ -27,6 +27,7 @@ There is only a light look; no dark mode.
 ## Boxes and buttons
 - **Never a black outline.** `--ink` is for text, not for borders or shadows.
 - **One exception:** the level pill at the top right of the home page (level number, EXP bar, "Lv.1 · 0 EXP") is solid `--ink` with white text and a yellow level circle. The owner wants it dark.
+- **Second exception:** the scratch-pad toolbar in lessons is dark (#26231F) with white icons, like the drawing tools in the Claude app. The owner asked for this.
 - **White box or ghost button:** `background: var(--card); border: 2px solid var(--line); box-shadow: 0 4px 0 var(--line);`. This is the "ดูแผนที่ด่าน" look.
 - **Yellow button or label:** `background: var(--yellow); box-shadow: 0 4px 0 var(--yellow-deep);`, with no border. This is the "เล่นด่าน" look. Use one yellow button per screen, for the main action.
 - A box floating over a picture (like the stop card on the map) may add a soft drop shadow: `0 10px 24px rgba(43, 38, 32, .12)`.
@@ -47,6 +48,9 @@ There is only a light look; no dark mode.
   - **ตอบคำถาม:** 8 random questions with 4 options each, and stars (4 right = 1 star, 6 = 2, 8 = 3).
 - Lessons open in book order. The next one unlocks at 1 star, with the unlock show on the map.
 - Before release, bulk-test the quiz: options are all different, exactly one is right, and every right answer is worked out.
+
+## Scratch pad (every lesson)
+A round pencil button sits at the bottom right. It opens a see-through layer to write on with a finger or Apple Pencil. While it is open the page is frozen: no taps, no scrolling, but two fingers can pinch-zoom. The tools are a pen (black, blue or red, in 3 sizes), an eraser, ล้างทั้งหมด and close. Close only works after ล้างทั้งหมด, so the page is always clean again. Nothing is saved. It is built into `shared/core.js`, so new lessons get it for free.
 
 ## Map
 - Built lesson, not reached yet: grey stop with a lock badge.

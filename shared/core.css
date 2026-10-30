@@ -181,6 +181,38 @@ mark { background: linear-gradient(transparent 45%, var(--yellow) 45%); color: i
 .play-nav { margin-top: 18px; grid-template-columns: auto 1fr auto; }
 .locked-card { padding-top: 40px; padding-bottom: 40px; }
 
+/* scratch pad (core.js scratchPad): a pencil button, then a frozen see-through layer to write on.
+   Its toolbar is dark on purpose, like the drawing tools the owner knows from the Claude app. */
+.has-scratch .app { padding-bottom: max(100px, env(safe-area-inset-bottom, 0px)); }   /* room for the pencil button (lessons only) */
+.scratch-open { position: fixed; z-index: 900; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  width: 60px; height: 60px; border-radius: 50%; background: var(--card); color: var(--ink); border: 2px solid var(--line);
+  box-shadow: 0 4px 0 var(--line), 0 8px 20px rgba(43, 38, 32, .12); display: grid; place-items: center; cursor: pointer; }
+.scratch-open svg, .scratch svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.scratch-open:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
+.scratch { position: fixed; inset: 0; z-index: 1000; background: rgba(43, 38, 32, .04); touch-action: pinch-zoom; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.scratch[hidden], .scratch-open[hidden], .scratch-menu[hidden], .scratch-tip[hidden] { display: none; }
+.scratch canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+html.scratching, html.scratching body { overflow: hidden; }
+.scratch-bar, .scratch-menu { position: absolute; left: 50%; transform: translateX(-50%); background: #26231F; color: #fff; border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .25); touch-action: manipulation; }
+.scratch-bar { bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 2px; padding: 6px; }
+.scratch .tool { width: 48px; height: 48px; border: 0; border-radius: 12px; background: none; color: #fff; display: grid; place-items: center; position: relative; cursor: pointer; }
+.scratch .tool.more { width: 30px; margin-left: -4px; }
+.scratch .tool.on { background: rgba(255, 255, 255, .16); }
+.scratch .tool.off { opacity: .35; }
+.scratch .tool .dot { position: absolute; right: 8px; bottom: 8px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #26231F; }
+.scratch .sep { width: 1px; height: 26px; background: rgba(255, 255, 255, .2); margin: 0 4px; }
+.scratch-menu { bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 72px); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.scratch-menu .row { display: flex; gap: 8px; justify-content: center; }
+.scratch .swatch, .scratch .size { width: 44px; height: 44px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; }
+.scratch .swatch { background: var(--c); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .25); }
+.scratch .swatch.on { box-shadow: 0 0 0 3px #26231F, 0 0 0 5px #fff; }
+.scratch .size { background: none; }
+.scratch .size i { display: block; border-radius: 50%; background: #fff; }
+.scratch .size.on { background: rgba(255, 255, 255, .16); }
+.scratch-tip { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); white-space: nowrap; background: #26231F; color: #fff;
+  border-radius: 12px; padding: 6px 12px; font-size: .95rem; }
+
 @media (max-width: 760px) {
   .story { grid-template-columns: 1fr; min-height: 0; gap: 20px; }
   .story-nav { grid-template-columns: auto 1fr; }

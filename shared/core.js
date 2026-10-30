@@ -368,7 +368,7 @@ function scratchPad() {
   layer.innerHTML = `<canvas></canvas>
     <div class="scratch-menu" hidden></div>
     <div class="scratch-bar" role="toolbar" aria-label="กระดาษทด">
-      <button class="tool pen" data-tool="pen" aria-label="ปากกา">${icon('pen')}<span class="dot"></span></button>
+      <button class="tool pen" data-tool="pen" aria-label="ปากกา">${icon('pen')}<span class="ink"></span></button>
       <button class="tool more" data-menu="pen" aria-label="เลือกสีและขนาดปากกา">${icon('chev', 18)}</button>
       <button class="tool" data-tool="eraser" aria-label="ยางลบ">${icon('eraser')}</button>
       <button class="tool more" data-menu="eraser" aria-label="เลือกขนาดยางลบ">${icon('chev', 18)}</button>
@@ -413,7 +413,7 @@ function scratchPad() {
     layer.querySelectorAll('[data-pen]').forEach(b => b.classList.toggle('on', +b.dataset.pen === st.pen));
     if (st.menuFor) layer.querySelectorAll('[data-size]').forEach(b => b.classList.toggle('on', +b.dataset.size === st.size[st.menuFor]));
     layer.querySelectorAll('[data-menu]').forEach(b => b.classList.toggle('on', b.dataset.menu === st.menuFor));
-    layer.querySelector('.pen .dot').style.background = PENS[st.pen][0];
+    layer.querySelector('.pen .ink').style.background = PENS[st.pen][0];
   }
   const at = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * innerWidth / r.width, (e.clientY - r.top) * innerHeight / r.height]; };
 

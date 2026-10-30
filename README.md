@@ -3,7 +3,7 @@
 A small learning web app for one child, used on an iPad: tap-to-explain lessons (คณิต ป.4 เทอม 2 so far),
 a skate-park home page where each chapter is a park zone and each lesson a stop.
 
-Plain HTML/CSS/JS, no build tools. Progress (stars, EXP, chosen skater) is saved in the browser's
+Plain HTML/CSS/JS, no build tools. Progress (stars, EXP) is saved in the browser's
 `localStorage` under the key `learn-at-home` (the app's first name; kept so saved progress survives renames).
 
 ## Run locally

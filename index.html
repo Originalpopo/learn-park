@@ -13,9 +13,7 @@
 .home-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 /* the logo is the child's own skater; tap it to change character */
-.brand .me { width: 66px; height: 66px; border: 0; background: none; padding: 0; flex: none; margin: -8px 0; }
-.brand .me img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 4px 3px rgba(43, 38, 32, .2)); }
-.brand .me:active { transform: translateY(2px); }
+.brand .me { width: 66px; height: 66px; flex: none; margin: -8px 0; display: block; filter: drop-shadow(0 4px 3px rgba(43, 38, 32, .2)); }
 .brand .name { font-family: var(--display); font-size: 1.2rem; line-height: 1.1; }
 .brand .sub { font-size: .75rem; color: var(--muted); }
 .lv { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px 0 6px; border-radius: 999px; background: var(--ink); color: #fff; font-family: var(--display); }
@@ -74,18 +72,6 @@
 .twinkle.t2 { animation-delay: -.8s; } .twinkle.t3 { animation-delay: -1.5s; }
 @keyframes twinkle { 50% { transform: scale(.5); opacity: .4; } }
 
-/* character picker */
-.picker { position: fixed; inset: 0; z-index: 50; background: rgba(43, 38, 32, .55); display: grid; place-items: center; padding: 16px; }
-.picker[hidden] { display: none; }
-.picker .box { background: var(--card); border: 3px solid var(--ink); border-radius: 28px; box-shadow: 0 6px 0 var(--ink); padding: 24px clamp(16px, 4vw, 32px); width: 100%; max-width: 520px; text-align: center; display: flex; flex-direction: column; gap: 16px; }
-.picker h2 { font-size: clamp(1.5rem, 5vw, 2rem); }
-.picker p { margin: 0; color: var(--muted); }
-.picker .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.picker .opt { border: 3px solid var(--ink); border-radius: 22px; background: var(--yellow-soft); padding: 14px 8px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; font-family: var(--display); font-size: 1.2rem; box-shadow: 0 4px 0 var(--ink); }
-.picker .opt img { width: min(130px, 30vw); height: auto; }
-.picker .opt.on { background: var(--yellow); }
-.picker .opt:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
-.picker .close { align-self: center; background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 6px 12px; }
 
 /* stats */
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -164,7 +150,7 @@
 <div class="app" id="app">
   <header class="home-top">
     <div class="brand">
-      <button class="me" id="me" title="เปลี่ยนตัวละคร" aria-label="เปลี่ยนตัวละคร"><img id="me-img" alt=""></button>
+      <img class="me" src="shared/img/skate/boy.png" alt="">
       <div><div class="name">สนามเด็กเรียน</div><div class="sub">เรียนสนุก ทีละด่าน</div></div>
     </div>
     <div class="top-right">
@@ -193,7 +179,7 @@
         <img class="sticker s-bench" src="shared/img/skate/bench.png" alt="">
         <img class="sticker s-tw1 twinkle" src="shared/img/glowing-star.png" alt="">
         <img class="sticker s-tw2 twinkle t2" src="shared/img/glowing-star.png" alt="">
-        <button class="kid" id="kid" aria-label="ตัวละครของเรา แตะเพื่อฟังคำแนะนำ"><span class="shadow"></span><img class="bob" id="kid-img" alt=""></button>
+        <button class="kid" id="kid" aria-label="ตัวละครของเรา แตะเพื่อฟังคำแนะนำ"><span class="shadow"></span><img class="bob" src="shared/img/skate/boy.png" alt=""></button>
       </div>
       <span class="tap-hint">แตะตัวเราดูสิ</span>
     </div>
@@ -209,18 +195,6 @@
     <button class="arrow" id="chap-prev" aria-label="บทก่อนหน้า">‹</button>
     <span class="chap-name" id="chap-name" aria-live="polite"></span>
     <button class="arrow" id="chap-next" aria-label="บทถัดไป">›</button>
-  </div>
-</div>
-
-<div class="picker" id="picker" hidden role="dialog" aria-modal="true" aria-labelledby="pick-h">
-  <div class="box">
-    <h2 id="pick-h">เลือกตัวละครของหนู</h2>
-    <p>นักสเก็ตคนนี้จะไถสเก็ตไปกับหนูทุกด่าน</p>
-    <div class="opts">
-      <button class="opt" data-hero="boy"><img src="shared/img/skate/boy.png" alt="">เด็กผู้ชาย</button>
-      <button class="opt" data-hero="girl"><img src="shared/img/skate/girl.png" alt="">เด็กผู้หญิง</button>
-    </div>
-    <button class="close" id="pick-close">ปิด</button>
   </div>
 </div>
 
@@ -245,9 +219,8 @@ const THEMES = {
 };
 const CHAPTER_THEME = { 6: 'ramps', 7: 'rails', 8: 'bowl' };
 
-/* the child's skater (boy/girl), chosen on first visit */
-const HEROES = { boy: 'เด็กผู้ชาย', girl: 'เด็กผู้หญิง' };
-const heroImg = () => SK(store.hero in HEROES ? store.hero : 'boy');
+/* the child's skater: the boy in the cap (no choice of character) */
+const heroImg = () => SK('boy');
 
 /* top bar: level from EXP (100 EXP per level) */
 const lvl = Math.floor(store.exp / 100) + 1, into = store.exp % 100;
@@ -359,27 +332,6 @@ $('#chap-prev').addEventListener('click', () => { sfx.tap(); goTo(cur - 1); });
 $('#chap-next').addEventListener('click', () => { sfx.tap(); goTo(cur + 1); });
 slider.addEventListener('scroll', () => markTab(Math.round(slider.scrollLeft / slider.clientWidth)), { passive: true });
 goTo(Math.max(0, worlds.findIndex(w => w.ch === next.ch)), false);
-
-/* character: shown in the hero, the top bar and on the map; first visit asks the child to pick one */
-const picker = $('#picker');
-function showHero() {
-  $('#kid-img').src = $('#me-img').src = heroImg();
-  picker.querySelectorAll('.opt').forEach(b => b.classList.toggle('on', b.dataset.hero === store.hero));
-}
-function openPicker() {
-  $('#pick-close').hidden = !(store.hero in HEROES);
-  picker.hidden = false;
-}
-picker.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => {
-  sfx.tap();
-  store.hero = b.dataset.hero; L.save();
-  showHero(); drawWorlds();
-  picker.hidden = true;
-}));
-$('#pick-close').addEventListener('click', () => { picker.hidden = true; });
-$('#me').addEventListener('click', () => { sfx.tap(); openPicker(); });
-showHero();
-if (!(store.hero in HEROES)) openPicker();
 
 /* hero kid: tap to jump and get a tip */
 const TIPS = [

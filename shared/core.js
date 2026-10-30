@@ -1,5 +1,5 @@
 /* learn-park (สนามเด็กเรียน) shared code: lesson list, saved progress, sound, drawing helpers,
-   and the lesson shell (tabs 1 ดู → 2 ลองเล่น → 3 ตอบคำถาม) every lesson page uses.
+   and the lesson shell (tabs 1 เนื้อหา, 2 ลองเล่น, 3 ตอบคำถาม: the same names in every lesson) every lesson page uses.
    Exposed as window.L. */
 window.L = (() => {
 const $ = s => document.querySelector(s);
@@ -182,7 +182,7 @@ function lesson(cfg) {
       <div class="top-right">${chipsHTML()}</div>
     </header>
     <nav class="tabs" role="tablist">
-      <button class="tab" role="tab" data-tab="story" aria-selected="true"><span class="n">1</span>${cfg.storyLabel || 'ดูเรื่องเล่า'}</button>
+      <button class="tab" role="tab" data-tab="story" aria-selected="true"><span class="n">1</span>เนื้อหา</button>
       <button class="tab" role="tab" data-tab="play" aria-selected="false"><span class="n">2</span>ลองเล่น</button>
       <button class="tab" role="tab" data-tab="quiz" aria-selected="false"><span class="n">3</span>ตอบคำถาม</button>
     </nav>
@@ -200,7 +200,7 @@ function lesson(cfg) {
         <div class="say"><div class="step-no">ขั้นที่ ${st + 1} จาก ${STORY.length}</div>${s.say()}</div>
       </section>
       <div class="story-nav">
-        <button class="btn ghost" data-act="prev" ${st === 0 ? 'disabled' : ''}>← ย้อน</button>
+        <button class="round" data-act="prev" aria-label="ย้อน" ${st === 0 ? 'disabled' : ''}>‹</button>
         <div class="dots">${STORY.map((_, i) => `<button class="dot${i === st ? ' on' : ''}" data-step="${i}" aria-label="ไปขั้นที่ ${i + 1}"></button>`).join('')}</div>
         ${last ? '<button class="btn" data-act="goplay">ไปลองเล่น</button>' : '<button class="btn" data-act="next">ต่อไป</button>'}
       </div>`;

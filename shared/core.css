@@ -89,6 +89,10 @@ mark { background: linear-gradient(transparent 45%, var(--yellow) 45%); color: i
 .btn.ghost { background: var(--card); box-shadow: 0 4px 0 var(--line); border: 2px solid var(--line); }
 .btn.ghost:active { box-shadow: 0 1px 0 var(--line); }
 .btn:disabled { opacity: .35; pointer-events: none; }
+/* round arrow button (back), the same look as the chapter arrows on the home page */
+.round { width: 52px; height: 52px; border-radius: 50%; border: 3px solid var(--ink); background: var(--card); color: var(--ink); font-family: var(--display); font-size: 1.8rem; line-height: 1; display: grid; place-items: center; padding: 0 0 4px; box-shadow: 0 3px 0 var(--ink); cursor: pointer; flex: none; }
+.round:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.round:disabled { opacity: .3; box-shadow: none; pointer-events: none; }
 .round { width: 52px; min-height: 52px; padding: 0; font-size: 1.5rem; }
 .link { border: 0; background: none; text-decoration: underline; color: var(--muted); min-height: 40px; }
 
@@ -177,7 +181,7 @@ mark { background: linear-gradient(transparent 45%, var(--yellow) 45%); color: i
 
 @media (max-width: 760px) {
   .story { grid-template-columns: 1fr; min-height: 0; gap: 20px; }
-  .story-nav { grid-template-columns: 1fr 1fr; }
+  .story-nav { grid-template-columns: auto 1fr; }
   .story-nav .dots { grid-column: 1 / -1; grid-row: 1; }
   .story-nav .btn { width: 100%; }
   .opts { grid-template-columns: 1fr 1fr; }

@@ -50,7 +50,7 @@ There is only a light look; no dark mode.
 - Before release, bulk-test the quiz: options are all different, exactly one is right, and every right answer is worked out.
 
 ## Scratch pad (every lesson)
-A round pencil button sits at the bottom right. It opens a see-through layer to write on with a finger or Apple Pencil. While it is open the page is frozen: no taps, no scrolling, but two fingers can pinch-zoom. The tools are a pen (black, blue or red, in 3 sizes), an eraser, ล้างทั้งหมด and close. Close only works after ล้างทั้งหมด, so the page is always clean again. Nothing is saved. It is built into `shared/core.js`, so new lessons get it for free.
+A round pencil button sits at the bottom right on every screen size: iPad, phone and computer. It opens a see-through layer to write on with a finger, Apple Pencil or mouse. While it is open the page is frozen: no taps, no scrolling, but two fingers can pinch-zoom. The tools are a pen (black, blue or red, in 3 sizes), an eraser (3 sizes), ล้างทั้งหมด and close. Close wipes everything and closes in one tap, so the page is always clean again. Nothing is saved. It is built into `shared/core.js`, so new lessons get it for free.
 
 ## Map
 - Built lesson, not reached yet: grey stop with a lock badge.

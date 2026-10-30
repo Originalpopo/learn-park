@@ -178,12 +178,16 @@ mark { background: linear-gradient(transparent 45%, var(--yellow) 45%); color: i
 .review ul { padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .review li { background: var(--bg); border-radius: 16px; padding: 12px 16px; list-style: none; }
 .row-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.play-nav { margin-top: 18px; grid-template-columns: auto 1fr auto; }
+.locked-card { padding-top: 40px; padding-bottom: 40px; }
 
 @media (max-width: 760px) {
   .story { grid-template-columns: 1fr; min-height: 0; gap: 20px; }
   .story-nav { grid-template-columns: auto 1fr; }
   .story-nav .dots { grid-column: 1 / -1; grid-row: 1; }
   .story-nav .btn { width: 100%; }
+  .play-nav { grid-template-columns: auto 1fr; }
+  .play-nav > span { display: none; }
   .opts { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 440px) {

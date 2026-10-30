@@ -72,6 +72,14 @@ function setBest(id, stars) {
   l.best = Math.max(l.best || 0, stars); save();
 }
 
+/* ---------- lessons open one at a time, in book order ---------- */
+// A lesson opens once the one before it has at least PASS stars (4 of 8 right), so the child learns in order.
+const ORDER = COURSES.flatMap(c => c.chapters.flatMap(ch => ch.topics.map(t => lessonId(c, t))));
+const PASS = 1;
+const isOpen = id => { const i = ORDER.indexOf(id); return i <= 0 || best(ORDER[i - 1]) >= PASS; };
+const nextId = id => ORDER[ORDER.indexOf(id) + 1] || null;
+const prevId = id => ORDER[ORDER.indexOf(id) - 1] || null;
+
 /* ---------- sound ---------- */
 let ac = null;
 function tone(freqs) {
@@ -174,13 +182,27 @@ function wireChips() {
    question: { ask, pic, opts: [{html, ok}], explain, after?, review } */
 function lesson(cfg) {
   const { course, chapter, topic } = findLesson(cfg.id);
-  const app = $('#app');
-  app.innerHTML = `
+  const app = $('#app'), home = cfg.home || '../../index.html', root = home.replace(/index.html$/, '');
+  const header = `
     <header class="top">
-      <a class="chip back" href="${cfg.home || '../../index.html'}">‹ หน้าแรก</a>
+      <a class="chip back" href="${home}">‹ หน้าแรก</a>
       <div class="title"><div class="eyebrow">${course.subject} ${course.grade} · บทที่ ${chapter.no} ${chapter.title}</div><h1>${topic.no} ${topic.title}</h1></div>
       <div class="top-right">${chipsHTML()}</div>
-    </header>
+    </header>`;
+  // opened by link or bookmark before the lesson before it is passed: say so and send the child back to the map
+  if (!isOpen(cfg.id)) {
+    const p = findLesson(prevId(cfg.id)).topic;
+    app.innerHTML = `${header}
+      <section class="card result locked-card">
+        <img src="${root}shared/img/locked.png" alt="" width="72" height="72">
+        <h2>ด่านนี้ยังล็อกอยู่</h2>
+        <p>ผ่านด่าน ${p.no} ${p.title} ให้ได้อย่างน้อย 1 ดาวก่อนนะ</p>
+        <a class="btn" href="${home}#map">กลับแผนที่</a>
+      </section>`;
+    wireChips();
+    return;
+  }
+  app.innerHTML = `${header}
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" data-tab="story" aria-selected="true"><span class="n">1</span>เนื้อหา</button>
       <button class="tab" role="tab" data-tab="play" aria-selected="false"><span class="n">2</span>ลองเล่น</button>
@@ -206,7 +228,15 @@ function lesson(cfg) {
       </div>`;
   }
 
-  const newQuiz = () => ({ qs: cfg.quiz(), i: 0, score: 0, picked: null, marks: [], done: false });
+  const newQuiz = () => ({ qs: cfg.quiz(), i: 0, score: 0, picked: null, marks: [], done: false, unlockedNow: false });
+  // after the quiz: the way on to the next lesson (back on the map, where it plays its unlock if this quiz just opened it)
+  function nextStep() {
+    const nid = nextId(cfg.id), nx = nid && findLesson(nid);
+    if (!nx) return '';
+    if (best(cfg.id) < PASS) return `<p class="callout">ตอบถูกอย่างน้อย 4 ข้อ (1 ดาว) เพื่อเปิดด่าน ${nx.topic.no} นะ</p>`;
+    if (!nx.topic.file) return `<p class="hint">ด่าน ${nx.topic.no} กำลังสร้าง เร็วๆ นี้</p>`;
+    return `<a class="btn" href="${home}${quiz.unlockedNow ? '?unlocked=' + encodeURIComponent(nid) : ''}#map">ไปด่านถัดไป ${nx.topic.no}</a>`;
+  }
   function renderQuiz() {
     if (!quiz) quiz = newQuiz();
     const z = quiz;
@@ -217,12 +247,13 @@ function lesson(cfg) {
         <section class="card result">
           <div class="stars">${[0, 1, 2].map(i => STAR.replace('<svg', `<svg class="${i < stars ? 'on' : ''}" style="--d:${.2 + i * .25}s"`)).join('')}</div>
           <h2 style="font-size:2rem">ถูก ${z.score} จาก ${z.qs.length} ข้อ</h2>
-          <p>${stars === 3 ? 'เก่งมาก ได้เต็มเลย!' : stars === 2 ? 'เก่งมาก อีกนิดเดียวก็เต็มแล้ว' : 'ไม่เป็นไร ลองดูเรื่องเล่าอีกรอบแล้วมาเล่นใหม่นะ'}</p>
+          <p>${stars === 3 ? 'เก่งมาก ได้เต็มเลย!' : stars === 2 ? 'เก่งมาก อีกนิดเดียวก็เต็มแล้ว' : stars === 1 ? 'ผ่านแล้ว! ลองเล่นอีกรอบเพื่อเก็บดาวเพิ่มได้นะ' : 'ไม่เป็นไร ลองดูเนื้อหาอีกรอบแล้วมาเล่นใหม่นะ'}</p>
           <p class="hint">ดาวมากที่สุดที่เคยได้: ${best(cfg.id)} ดวง</p>
+          ${nextStep()}
           ${wrong.length ? `<div class="review"><h3>ข้อที่ยังพลาด</h3><ul>${wrong.map(q => `<li>${q.review}</li>`).join('')}</ul></div>` : ''}
           <div class="row-btns">
-            <button class="btn" data-act="quiz-again">เล่นอีกรอบ (โจทย์ใหม่)</button>
-            <button class="btn ghost" data-act="tostory">ดูเรื่องเล่าอีกครั้ง</button>
+            <button class="btn ${best(cfg.id) >= PASS && nextId(cfg.id) ? 'ghost' : ''}" data-act="quiz-again">เล่นอีกรอบ (โจทย์ใหม่)</button>
+            <button class="btn ghost" data-act="tostory">ดูเนื้อหาอีกครั้ง</button>
           </div>
         </section>`;
       return;
@@ -263,6 +294,7 @@ function lesson(cfg) {
     if (z.i === z.qs.length - 1) {
       z.done = true;
       const stars = starsFor(z.score);
+      z.unlockedNow = best(cfg.id) < PASS && stars >= PASS;
       setBest(cfg.id, stars);
       if (stars) sfx.win();
     } else z.i++;
@@ -270,7 +302,12 @@ function lesson(cfg) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function render() { tab === 'story' ? renderStory() : tab === 'play' ? (view.innerHTML = cfg.play.render()) : renderQuiz(); }
+  // the play tab ends with the same kind of bar as the story, so the way on to the quiz is easy to find
+  const playNav = `<div class="story-nav play-nav">
+      <button class="arrow-btn" data-act="toplay-back" aria-label="กลับไปเนื้อหา">‹</button><span></span>
+      <button class="btn" data-act="goquiz">ไปตอบคำถาม</button>
+    </div>`;
+  function render() { tab === 'story' ? renderStory() : tab === 'play' ? (view.innerHTML = cfg.play.render() + playNav) : renderQuiz(); }
   function setTab(t) {
     tab = t;
     document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
@@ -291,6 +328,8 @@ function lesson(cfg) {
       case 'next': st = Math.min(STORY.length - 1, st + 1); sfx.tap(); renderStory(); return;
       case 'prev': st = Math.max(0, st - 1); sfx.tap(); renderStory(); return;
       case 'goplay': sfx.tap(); setTab('play'); return;
+      case 'goquiz': sfx.tap(); setTab('quiz'); return;
+      case 'toplay-back': sfx.tap(); st = STORY.length - 1; setTab('story'); return;
       case 'tostory': st = 0; setTab('story'); return;
       case 'qnext': sfx.tap(); nextQuiz(); return;
       case 'quiz-again': quiz = newQuiz(); renderQuiz(); return;
@@ -303,7 +342,7 @@ function lesson(cfg) {
 
 return {
   COURSES, lessonId, findLesson,
-  store, save, addExp, best, setBest,
+  store, save, addExp, best, setBest, PASS, isOpen, nextId, prevId,
   sfx, ri, pick, shuffle, G, B, O, Y, STAR, starsFor,
   frac, fade, ava, pie, piesSeg,
   chipsHTML, wireChips, lesson

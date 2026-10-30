@@ -110,7 +110,19 @@
 .park .badge .go { background: var(--yellow); color: var(--ink); border: 3px solid var(--ink); border-radius: 12px; padding: 0 10px; font-family: var(--display); font-size: .9rem; white-space: nowrap; box-shadow: 0 3px 0 var(--ink); animation: bob 1.8s ease-in-out infinite; }
 .park .badge .prize { width: 34px; height: 34px; }
 /* the child's skater waits beside the stop to play next, rolling back and forth */
-.park .ride { position: absolute; transform: translate(-50%, -88%); pointer-events: none; z-index: 1; }
+/* unlock show (playUnlock) */
+.park .badge.shut .go { visibility: hidden; }
+.park .badge.wiggle b { animation: wiggle .5s ease-in-out 2; }
+@keyframes wiggle { 25% { transform: rotate(-12deg) scale(1.1); } 75% { transform: rotate(12deg) scale(1.1); } }
+.park .badge b img.fly { animation: fly .5s ease-in forwards; }
+@keyframes fly { to { transform: translateY(-30px) scale(1.8); opacity: 0; } }
+.park .badge.opened b { animation: popin .6s cubic-bezier(.3, 1.8, .5, 1); }
+@keyframes popin { from { transform: scale(.3); } }
+.park .layer.colour-in img { animation: colour-in 1s ease both; }
+@keyframes colour-in { from { filter: grayscale(1) brightness(1.06) contrast(.8); } }
+.park .burst { position: absolute; width: 24px; height: 24px; margin: -40px 0 0 -12px; pointer-events: none; animation: burst .9s ease-out forwards; }
+@keyframes burst { from { transform: translate(0, 0) scale(.3); opacity: 1; } to { transform: translate(var(--x), var(--y)) scale(1); opacity: 0; } }
+.park .ride { position: absolute; transform: translate(-50%, -88%); pointer-events: none; z-index: 1; transition: opacity .5s; }
 .park .ride img { width: 100%; height: auto; display: block; filter: drop-shadow(0 5px 3px rgba(43, 38, 32, .25)); animation: roll 2.8s ease-in-out infinite; }
 @keyframes roll { 50% { transform: translateX(-12%) rotate(-3deg); } }
 /* the card that opens over a tapped stop */
@@ -195,7 +207,7 @@
 <script src="shared/parks.js"></script>
 <script>
 (() => {
-const { COURSES, lessonId, best, store, STAR, sfx, pick } = L;
+const { COURSES, lessonId, best, store, STAR, sfx, pick, PASS, isOpen, prevId, findLesson } = L;
 const $ = s => document.querySelector(s);
 const star = on => STAR.replace('<svg', `<svg class="${on ? 'on' : ''}"`);
 
@@ -220,7 +232,9 @@ L.wireChips();
 const all = [];
 COURSES.forEach(c => c.chapters.forEach(ch => ch.topics.forEach(t => all.push({ c, ch, t, id: lessonId(c, t) }))));
 const ready = all.filter(r => r.t.file);
-const next = ready.find(r => best(r.id) < 3) || ready[ready.length - 1];
+// lessons open one at a time: next is the newest open one not yet passed, else the first open one short of 3 stars
+const open = ready.filter(r => isOpen(r.id));
+const next = open.find(r => best(r.id) < PASS) || open.find(r => best(r.id) < 3) || open[open.length - 1];
 const stars = ready.reduce((s, r) => s + best(r.id), 0);
 const passed = ready.filter(r => best(r.id) > 0).length;
 
@@ -258,13 +272,14 @@ function drawWorld({ c, ch, zone, park }) {
   const order = ch.topics.map((_, i) => i).sort((a, b) => lay.stops[a].gy - lay.stops[b].gy);
   order.forEach((i, z) => {
     const t = ch.topics[i], L = lay.stops[i], id = lessonId(c, t);
-    const st = !t.file ? 'soon' : next && next.id === id ? 'next' : 'ready';
-    layers += `<button class="layer ${st === 'soon' ? 'soon' : ''}" data-i="${i}" style="${pct(L.l, L.t)};width:${L.w}%;z-index:${z + 1}" aria-label="ด่าน ${t.no} ${t.title}">
+    const st = !t.file ? 'soon' : !isOpen(id) ? 'locked' : next && next.id === id ? 'next' : 'ready';
+    const grey = st === 'soon' || st === 'locked';
+    layers += `<button class="layer ${grey ? 'soon' : ''}" data-i="${i}" style="${pct(L.l, L.t)};width:${L.w}%;z-index:${z + 1}" aria-label="ด่าน ${t.no} ${t.title}">
         <img src="${PARK(`${zone}-${i + 1}`)}" alt=""></button>`;
-    badges += `<button class="badge ${st}" data-i="${i}" style="${pct(L.l + L.w / 2, L.t + 1)}" tabindex="-1" aria-hidden="true">
+    badges += `<button class="badge ${grey ? 'soon' : st}" data-i="${i}" style="${pct(L.l + L.w / 2, L.t + 1)}" tabindex="-1" aria-hidden="true">
         ${st === 'next' ? '<span class="go">เริ่มตรงนี้!</span>' : ''}
         ${i === n - 1 ? `<img class="prize" src="${IMG('trophy')}" alt="">` : ''}
-        <b style="background:${ch.color}">${st === 'soon' ? LOCK : ''}${t.no}</b></button>`;
+        <b style="background:${ch.color}">${grey ? LOCK : ''}${t.no}</b></button>`;
     // the child's skater stands on the floor spot just in front of the stop to play next
     if (st === 'next') ride = `<span class="ride" style="${pct(L.gx, L.gy)};width:max(34px, ${(lay.tile * 1.5).toFixed(2)}%)"><img src="${heroImg()}" alt=""></span>`;
   });
@@ -283,9 +298,9 @@ function openPop(w, i) {
   const x = Math.min(78, Math.max(22, L.l + L.w / 2));   // keep the card inside the park
   pop.style.left = x + '%';
   pop.innerHTML = `<b class="no" style="background:${w.ch.color}">${t.no}</b><div class="tt">${t.title}</div>
-    ${t.file
-      ? `<div class="ms">${[0, 1, 2].map(k => star(k < s)).join('')}</div><a class="btn" href="${t.file}">เล่นด่านนี้</a>`
-      : `<div class="soon">${LOCK} ยังไม่เปิด เร็วๆ นี้</div>`}`;
+    ${!t.file ? `<div class="soon">${LOCK} ยังไม่เปิด เร็วๆ นี้</div>`
+      : !isOpen(id) ? `<div class="soon">${LOCK} ผ่านด่าน ${findLesson(prevId(id)).topic.no} ให้ได้ 1 ดาวก่อนนะ</div>`
+      : `<div class="ms">${[0, 1, 2].map(k => star(k < s)).join('')}</div><a class="btn" href="${t.file}">เล่นด่านนี้</a>`}`;
   pop.hidden = false;
   if (getComputedStyle(pop).position === 'fixed') return;   // phones: a sheet at the bottom of the screen
   // The slider clips anything outside it, so measure: above the stop if the card fits there,
@@ -323,6 +338,47 @@ $('#chap-prev').addEventListener('click', () => { sfx.tap(); goTo(cur - 1); });
 $('#chap-next').addEventListener('click', () => { sfx.tap(); goTo(cur + 1); });
 slider.addEventListener('scroll', () => markTab(Math.round(slider.scrollLeft / slider.clientWidth)), { passive: true });
 goTo(Math.max(0, worlds.findIndex(w => w.ch === next.ch)), false);
+
+/* unlock show: a quiz that has just opened the next lesson sends the child here with ?unlocked=<lesson id>.
+   The stop starts locked and grey, the lock wiggles and flies off, the stop fills with colour, stars burst out,
+   the skater rolls in and the stop's card opens. The address is cleaned first, so a reload does not replay it. */
+const unlockId = new URLSearchParams(location.search).get('unlocked');
+if (unlockId && isOpen(unlockId)) {
+  history.replaceState(null, '', location.pathname + location.hash);
+  const w = worlds.find(w => w.ch.topics.some(t => lessonId(w.c, t) === unlockId));
+  if (w) playUnlock(w, w.ch.topics.findIndex(t => lessonId(w.c, t) === unlockId));
+}
+function playUnlock(w, i) {
+  goTo(worlds.indexOf(w), false);
+  const layer = w.park.querySelector(`.layer[data-i="${i}"]`), badge = w.park.querySelector(`.badge[data-i="${i}"]`);
+  const b = badge.querySelector('b'), go = badge.querySelector('.go'), ride = w.park.querySelector('.ride');
+  // the locked look to start from
+  layer.classList.add('soon');
+  badge.classList.add('soon', 'shut');
+  b.insertAdjacentHTML('afterbegin', LOCK);
+  if (ride) ride.style.opacity = 0;
+  const at = (ms, fn) => setTimeout(fn, ms);
+  at(300, () => w.park.scrollIntoView({ behavior: 'smooth', block: 'center' }));   // after the page has settled
+  at(700, () => badge.classList.add('wiggle'));
+  at(1700, () => {
+    b.querySelector('img').classList.add('fly');
+    layer.classList.remove('soon'); layer.classList.add('colour-in');
+    badge.classList.remove('soon', 'wiggle', 'shut'); badge.classList.add('opened');
+    if (go) go.textContent = 'ปลดล็อกแล้ว!';
+    sfx.win();
+    // a ring of little stars bursting from the badge
+    const over = w.park.querySelector('.over');
+    for (let k = 0; k < 8; k++) {
+      const a = k / 8 * 2 * Math.PI, s = document.createElement('img');
+      s.src = IMG('glowing-star'); s.alt = ''; s.className = 'burst';
+      s.style.cssText = `${badge.style.cssText};--x:${Math.round(Math.cos(a) * 60)}px;--y:${Math.round(Math.sin(a) * 60)}px`;
+      over.appendChild(s);
+      at(1000, () => s.remove());
+    }
+  });
+  at(2200, () => { b.querySelector('img.fly')?.remove(); if (ride) ride.style.opacity = 1; });
+  at(3400, () => { if (go) go.textContent = 'เริ่มตรงนี้!'; openPop(w, i); });
+}
 
 /* hero kid: tap to jump and get a tip */
 const TIPS = [

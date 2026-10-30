@@ -32,7 +32,7 @@ Made for a children's learning app: friendly, clean, not busy.
 
 ## Rules learned so far
 - Ask for **no text and no numbers**. The AI draws Thai and digits badly; the app adds its own labels.
-- Ask for **no dotted lines or paths**. The app draws its own route in play order.
+- Ask for **no dotted lines or paths**. The map shows only number badges, no route.
 - AI often miscounts objects. Extra pieces are fine: Claude uses them as decoration.
 - Download the **largest size** offered (Upscale if there is a button). 1264px wide is the minimum.
 - Keep one chat for a set of pictures, so the style stays the same.

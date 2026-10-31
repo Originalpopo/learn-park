@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>เศษส่วนอย่างต่ำ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<style>
+/* 6.5 only: lowest terms (divide top and bottom by the same number until nothing divides both), the shrink machine and the sort game */
+.rulebox { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.arrow-note { font-size: 1rem; background: var(--yellow-soft); border-radius: 12px; padding: 4px 12px; text-align: center; }
+.times { display: inline-flex; align-items: center; gap: .3em; font-family: var(--display); }
+.times .by { display: flex; flex-direction: column; justify-content: space-between; height: 2.6em; font-size: .55em; color: var(--orange); }
+.kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+.kind { border-radius: 22px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.kind h3 { font-size: 1.15rem; }
+.kind .ex { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.kind.a { background: #E6F4EA; }
+.kind.b { background: #FDEBDD; }
+.pair { display: flex; gap: 18px; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
+.tick { color: var(--good); font-family: var(--display); }
+.cross { color: var(--bad); font-family: var(--display); }
+.check { display: flex; flex-direction: column; gap: 6px; font-size: 1.05rem; }
+
+.machine { display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; align-items: center; }
+.ctrls { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.readout { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 2.4rem; }
+.readout.shake { animation: shake .4s; }
+.readout .op { color: var(--muted); font-family: var(--display); font-size: .7em; }
+.trail { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 1.25rem; min-height: 2.6em; }
+.trail .to { font-family: var(--display); color: var(--orange); font-size: .8em; }
+.divs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 380px; }
+.divs .btn { min-height: 56px; font-size: 1.3rem; padding: 0; }
+.pie-zone { display: flex; justify-content: center; min-width: 0; }
+
+.match { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.fcard { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 14px 30px; box-shadow: 0 6px 0 var(--line); font-size: 3rem; display: flex; align-items: center; gap: .3em; }
+.fcard.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 480px; }
+.choices .opt { font-size: 1.2rem; font-family: var(--display); }
+.num { font-family: var(--display); font-size: 1.75em; line-height: 1; }
+.msg { min-height: 1.6em; text-align: center; font-size: 1.05rem; }
+.msg.bad { color: var(--bad); }
+.msg.good { color: var(--good); }
+.sort-progress { text-align: center; color: var(--muted); font-size: .95rem; }
+
+@media (max-width: 760px) {
+  .machine { grid-template-columns: 1fr; }
+  .ctrls { align-items: center; }
+  .trail { justify-content: center; }
+}
+@media (max-width: 440px) {
+  .kinds { grid-template-columns: 1fr; }
+  .choices .opt { font-size: 1.05rem; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script>
+(() => {
+const { frac, fade, pie, ri, pick, shuffle, sfx, addExp, G } = L;
+const $ = s => document.querySelector(s);
+
+/* one cake cut into d slices with the first n shaded (more than d: one more cake per d slices) */
+const cake = (n, d, o = {}) => n <= d
+  ? pie(d, Array.from({ length: d }, (_, i) => i < n ? G : null), o)
+  : L.piesSeg(d, [[n, G]], o);
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+const lowest = (n, d) => gcd(n, d) === 1;
+// the numbers from 2 up that divide both n and d
+const commonDivs = (n, d) => { const out = []; for (let k = 2; k <= Math.min(n, d); k++) if (n % k === 0 && d % k === 0) out.push(k); return out; };
+// "n/d ÷k = (n÷k)/(d÷k)" with the ÷k written beside the arrow
+const divEq = (n, d, k) => `<span class="times">${frac(n, d)}<span class="by"><span>÷${k}</span><span>÷${k}</span></span><span class="op">=</span>${frac(n / k, d / k)}</span>`;
+// the steps the book teaches: keep dividing by the smallest number that divides both, until none does
+function steps(n, d) {
+  const out = [[n, d]];
+  for (let c = commonDivs(n, d); c.length; c = commonDivs(n, d)) { n /= c[0]; d /= c[0]; out.push([n, d]); }
+  return out;
+}
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(4, 8, { cls: 'sm', anim: 'filled', step: .05 })}<div class="cap">${frac(4, 8)}</div></div>
+        <div class="fig">${cake(2, 4, { cls: 'sm', anim: 'filled', delay0: .4 })}<div class="cap">${frac(2, 4)}</div></div>
+        <div class="fig">${cake(1, 2, { cls: 'sm', anim: 'filled', delay0: .7 })}<div class="cap">${frac(1, 2)}</div></div>
+      </div>`,
+    say: () => `<h2>เค้กเท่ากัน เขียนได้หลายแบบ</h2>
+      <p>จากด่าน 6.4 เรารู้แล้วว่า ${frac(4, 8)} = ${frac(2, 4)} = ${frac(1, 2)}</p>
+      <p>ทั้งสามแบบบอกเค้ก <b>ครึ่งก้อน</b> เท่ากัน</p>
+      <p class="hint">แบบไหนดูง่ายที่สุด</p>`
+  },
+  {
+    vis: () => `<div class="fig">${cake(1, 2, { cls: 'big', anim: 'filled' })}<div class="cap">${frac(1, 2)}</div></div>`,
+    say: () => `<h2>แบบที่ตัวเลขน้อยที่สุด</h2>
+      <p>${frac(1, 2)} ใช้ตัวเลขน้อยที่สุด อ่านง่ายที่สุด</p>
+      <p>หาจำนวนที่หารทั้ง 1 และ 2 ลงตัวไม่ได้แล้ว (นอกจาก 1)</p>
+      <p class="callout">เศษส่วนที่ <b>ไม่มีจำนวนใด นอกจาก 1</b> หารทั้งตัวเศษและตัวส่วนได้ลงตัว เรียกว่า <mark>เศษส่วนอย่างต่ำ</mark></p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>เป็นอย่างต่ำแล้ว</h3><div class="ex">${frac(2, 3)}${frac(3, 5)}${frac(4, 7)}</div><span class="hint">ไม่มีจำนวนใดหารทั้งบนและล่างได้</span></div>
+        <div class="kind b"><h3>ยังไม่ใช่อย่างต่ำ</h3><div class="ex">${frac(2, 4)}${frac(6, 9)}${frac(5, 10)}</div><span class="hint">ยังมีจำนวนหารทั้งบนและล่างได้</span></div>
+      </div>`,
+    say: () => `<h2>ดูยังไงว่าเป็นอย่างต่ำ</h2>
+      <p>ลองหาจำนวนที่หาร <b>ทั้งตัวเศษและตัวส่วน</b> ได้ลงตัว</p>
+      <div class="check">
+        <span>${frac(6, 9)} : 3 หาร 6 ได้ 2 และหาร 9 ได้ 3 <span class="cross">ยังไม่ใช่</span></span>
+        <span>${frac(3, 5)} : ไม่มีจำนวนใดหารทั้ง 3 และ 5 ได้ <span class="tick">เป็นอย่างต่ำ</span></span>
+      </div>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(6, 8, { cls: 'sm' })}<div class="cap">${frac(6, 8)}</div></div>
+        <div class="fig">${cake(3, 4, { cls: 'sm', anim: 'all', step: .15 })}<div class="cap">รวมทีละ 2 ชิ้น</div></div>
+      </div>`,
+    say: () => `<h2>ทำให้เป็นอย่างต่ำ: หารทั้งบนและล่าง</h2>
+      <p>${frac(6, 8)} : 6 และ 8 เป็นเลขคู่ทั้งคู่ <b>2 หารได้ลงตัว</b></p>
+      <p>เอา 2 หารทั้งตัวเศษและตัวส่วน เหมือนรวมเค้กทีละ 2 ชิ้น</p>
+      <div class="eq">${fade(divEq(6, 8, 2), .3)}</div>
+      <p class="hint">3 กับ 4 ไม่มีจำนวนใดหารได้ทั้งคู่แล้ว จึงเป็นอย่างต่ำ</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="eq">${fade(divEq(8, 12, 2), .2)}</div>
+        <div class="eq">${fade(divEq(4, 6, 2), .9)}</div>
+        <span class="arrow-note">${fade('2 กับ 3 หารต่อไม่ได้แล้ว หยุดได้', 1.5)}</span>
+      </div>`,
+    say: () => `<h2>หารต่อไปเรื่อยๆ</h2>
+      <p>${frac(8, 12)} หารด้วย 2 ได้ ${frac(4, 6)}</p>
+      <p>แต่ 4 กับ 6 ยังหารด้วย 2 ได้อีก จึง <b>ยังไม่เสร็จ</b></p>
+      <p>หารต่ออีกครั้ง ได้ ${frac(2, 3)}</p>
+      <p class="callout">หารไปจน <b>ไม่มีจำนวนใดหารทั้งบนและล่างได้</b> จึงได้เศษส่วนอย่างต่ำ</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="eq">${divEq(8, 12, 4)}</div>
+        <span class="arrow-note">4 หาร 8 ได้ 2 และ 4 หาร 12 ได้ 3</span>
+      </div>`,
+    say: () => `<h2>หารทีเดียวก็ได้</h2>
+      <p>ถ้าเห็นจำนวนที่ใหญ่กว่า เช่น 4 หารทั้ง 8 และ 12 ได้ลงตัว</p>
+      <p>หาร 4 ทีเดียว ก็ได้ ${frac(2, 3)} เหมือนกัน</p>
+      <p class="hint">จะหารทีละน้อยหรือทีเดียว คำตอบสุดท้ายเท่ากันเสมอ</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <span class="arrow-note">เป็นเลขคู่ทั้งคู่ → ลองหาร 2</span>
+        <span class="arrow-note">อยู่ในสูตรคูณแม่ 3 ทั้งคู่ → ลองหาร 3</span>
+        <span class="arrow-note">ลงท้ายด้วย 0 หรือ 5 ทั้งคู่ → ลองหาร 5</span>
+      </div>`,
+    say: () => `<h2>เคล็ดลับ: ลองหารด้วยอะไรดี</h2>
+      <p>${frac(4, 10)} เลขคู่ทั้งคู่ หาร 2 ได้ ${frac(2, 5)}</p>
+      <p>${frac(3, 9)} อยู่ในแม่ 3 ทั้งคู่ หาร 3 ได้ ${frac(1, 3)}</p>
+      <p>${frac(5, 15)} ลงท้ายด้วย 5 ทั้งคู่ หาร 5 ได้ ${frac(1, 3)}</p>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(10, 4, { cls: 'sm', anim: 'filled', step: .05 })}<div class="cap">${frac(10, 4)}</div></div>
+        <div class="fig">${cake(5, 2, { cls: 'sm', anim: 'filled', delay0: .6 })}<div class="cap">${frac(5, 2)}</div></div>
+      </div>`,
+    say: () => `<h2>เศษเกินก็ทำได้</h2>
+      <p>${frac(10, 4)} : 10 และ 4 เป็นเลขคู่ทั้งคู่</p>
+      <div class="eq">${divEq(10, 4, 2)}</div>
+      <p class="hint">5 กับ 2 หารต่อไม่ได้แล้ว ${frac(5, 2)} จึงเป็นเศษส่วนอย่างต่ำ</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>เศษส่วนอย่างต่ำ</h3><span>ไม่มีจำนวนใด นอกจาก 1 หารทั้งบนและล่างได้ลงตัว</span><div class="ex">${frac(1, 2)}${frac(2, 3)}${frac(5, 2)}</div></div>
+        <div class="kind b"><h3>วิธีทำ</h3><span>หารทั้งบนและล่าง ด้วยจำนวนเดียวกัน จนหารต่อไม่ได้</span><div class="ex">${divEq(6, 9, 3)}</div></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p><b>เศษส่วนอย่างต่ำ</b> คือแบบที่ใช้ตัวเลขน้อยที่สุด แต่ยังบอกเค้กเท่าเดิม</p>
+      <p>ทำได้โดย <b>หาร</b> ทั้งตัวเศษและตัวส่วนด้วยจำนวนเดียวกัน จนหารต่อไม่ได้</p>
+      <p class="hint">ไปลองย่อเศษส่วนเองในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+// a lowest fraction n/d (proper unless asked) and a number k to blow it up by: N/D = (n×k)/(d×k)
+function lowSet(o = {}) {
+  let n, d, k;
+  do {
+    d = ri(2, o.maxd || 7);
+    n = o.improper ? ri(d + 1, 2 * d + 1) : ri(1, d - 1);
+    k = pick(o.ks || [2, 3, 4, 5, 6]);
+  } while (!lowest(n, d) || d * k > (o.maxD || 24) || n * k > (o.maxD || 24) * 2);
+  return { n, d, k, N: n * k, D: d * k };
+}
+
+// shrink machine: start from a big fraction, tap ÷2 ÷3 ÷4 ÷5 until it is in lowest terms
+const DIVS = [2, 3, 4, 5];
+let mac = null;
+function newMachine() {
+  const m = lowSet({ ks: [4, 6, 2, 3, 5, 4, 6], maxD: 24 });
+  return { start: [m.N, m.D], trail: [[m.N, m.D]], n: m.N, d: m.D, anim: false, msg: 'เลือกจำนวนที่หารทั้งตัวเศษและตัวส่วนได้ลงตัว', msgCls: '', done: false, shake: false };
+}
+function machineHTML() {
+  const s = mac;
+  const trail = s.trail.map(([a, b]) => frac(a, b)).join('<span class="to">→</span>');
+  return `
+    <div class="pie-zone">${cake(s.n, s.d, { cls: 'big', anim: s.anim ? 'all' : null, step: .03 })}</div>
+    <div class="ctrls">
+      <div class="readout${s.shake ? ' shake' : ''}">${frac(s.n, s.d)}</div>
+      <div class="trail">${s.trail.length > 1 ? trail : ''}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      ${s.done
+        ? `<button class="btn" data-act="mac-new">ข้อใหม่</button>`
+        : `<div class="divs">${DIVS.map(k => `<button class="btn ghost" data-div="${k}">÷${k}</button>`).join('')}</div>`}
+    </div>`;
+}
+function divide(k) {
+  const s = mac;
+  if (s.done) return;
+  if (s.n % k || s.d % k) {
+    sfx.bad();
+    const bad = s.n % k && s.d % k ? `${s.n} และ ${s.d}` : s.n % k ? s.n : s.d;
+    s.msg = `${k} หาร ${bad} ไม่ลงตัว ลองจำนวนอื่นนะ`; s.msgCls = 'bad'; s.shake = true; s.anim = false;
+  } else {
+    s.n /= k; s.d /= k; s.trail.push([s.n, s.d]); s.anim = true; s.shake = false;
+    if (lowest(s.n, s.d)) {
+      s.done = true; sfx.win(); addExp(5);
+      s.msg = `เยี่ยม! ${frac(s.n, s.d)} เป็นเศษส่วนอย่างต่ำแล้ว`; s.msgCls = 'good';
+    } else {
+      sfx.good();
+      s.msg = `${commonDivs(s.n, s.d)[0]} ยังหารทั้ง ${s.n} และ ${s.d} ได้อีก หารต่อเลย`; s.msgCls = '';
+    }
+  }
+  drawMachine();
+}
+
+// sort game: 8 cards, half already in lowest terms, half not
+let sort = null;
+function newSort() {
+  const cards = [], seen = new Set();
+  while (cards.length < 8) {
+    const low = cards.length % 2 === 0, m = lowSet({ maxd: 9, maxD: 20, ks: [2, 3, 4, 5] });
+    const f = low ? [m.n, m.d] : [m.N, m.D], key = f.join('/');
+    if (seen.has(key) || (low && m.d < 3)) continue;
+    seen.add(key); cards.push(f);
+  }
+  return { cards: shuffle(cards), i: 0, got: 0, miss: false, msg: '', msgCls: '', busy: false };
+}
+function sortHTML() {
+  const s = sort;
+  if (s.i >= s.cards.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">แยกครบ 8 ใบแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} ใบ</p>
+      <button class="btn" data-act="sort-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const [n, d] = s.cards[s.i];
+  return `<div class="match">
+      <p>เศษส่วนนี้เป็นอย่างต่ำแล้วหรือยัง</p>
+      <div class="fcard" id="fcard">${frac(n, d)}</div>
+      <div class="choices">
+        <button class="opt" data-low="1">เป็นอย่างต่ำแล้ว</button>
+        <button class="opt" data-low="0">ยังย่อได้อีก</button>
+      </div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">ใบที่ ${s.i + 1} จาก ${s.cards.length}</p>
+    </div>`;
+}
+function answerSort(sayLow) {
+  const s = sort;
+  if (s.busy || s.i >= s.cards.length) return;
+  const [n, d] = s.cards[s.i], low = lowest(n, d), k = commonDivs(n, d)[0];
+  const [a, b] = steps(n, d).pop();
+  if (sayLow === low) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true;
+    s.msg = low ? `ถูกต้อง! ไม่มีจำนวนใดหารทั้ง ${n} และ ${d} ได้` : `ถูกต้อง! ย่อได้เป็น ${frac(a, b)}`;
+    s.msgCls = 'good';
+    drawSort();
+    setTimeout(() => {
+      s.i++; s.miss = false; s.busy = false; s.msg = ''; s.msgCls = '';
+      if (s.i >= s.cards.length) sfx.win();
+      drawSort();
+    }, 1100);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = low ? `ลองหาดูสิ ไม่มีจำนวนใดหารทั้ง ${n} และ ${d} ได้ลงตัวเลย` : `${k} หารทั้ง ${n} และ ${d} ได้ลงตัว จึงยังย่อได้อีก`;
+    s.msgCls = 'bad';
+    drawSort();
+    $('#fcard').classList.add('shake');
+  }
+}
+
+function playHTML() {
+  if (!mac) mac = newMachine();
+  if (!sort) sort = newSort();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>เครื่องย่อเศษส่วน</h2><p>กดปุ่มหาร ให้ตัวเศษและตัวส่วนเล็กลง จนเป็นเศษส่วนอย่างต่ำ</p></div>
+      <div class="machine" id="machine">${machineHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>อย่างต่ำหรือยัง</h2><p>ดูเศษส่วนแต่ละใบ แล้วเลือกว่าเป็นอย่างต่ำแล้ว หรือยังย่อได้อีก</p></div>
+      <div id="sort">${sortHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawMachine = () => { const el = $('#machine'); if (el) el.innerHTML = machineHTML(); mac.anim = false; mac.shake = false; };
+const drawSort = () => { const el = $('#sort'); if (el) el.innerHTML = sortHTML(); };
+
+function playClick(e) {
+  const dv = e.target.closest('[data-div]');
+  if (dv) { divide(+dv.dataset.div); return; }
+  const lw = e.target.closest('[data-low]');
+  if (lw) { answerSort(lw.dataset.low === '1'); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  switch (a.dataset.act) {
+    case 'mac-new': sfx.tap(); mac = newMachine(); drawMachine(); break;
+    case 'sort-again': sort = newSort(); drawSort(); break;
+  }
+}
+
+/* ---------- 3. quiz ---------- */
+function dedupe(list) { const seen = new Set(); return list.filter(x => { const k = [].concat(x).join('/'); return seen.has(k) ? false : seen.add(k); }); }
+function opts(right, wrong, show) {
+  const rk = [].concat(right).join('/');
+  return shuffle([{ html: show(right), ok: true }, ...dedupe(wrong).filter(x => [].concat(x).join('/') !== rk).slice(0, 3).map(x => ({ html: show(x), ok: false }))]);
+}
+const num = x => `<span class="num">${x}</span>`;
+const walk = (N, D) => steps(N, D).map(([a, b]) => frac(a, b)).join(' = ');
+// wrong answers for "N/D in lowest terms": stopped too early, the big one itself, only one part divided, off by one
+function lowWrong({ n, d, N, D }) {
+  const mid = steps(N, D).slice(1, -1);
+  return [...mid, [N, D], [n, D], [N, d], [n + 1, d], [n, d + 1], [d, n], [n + 1, d + 1]]
+    .filter(([a, b]) => a > 0 && b > 1 && !(a * d === b * n && lowest(a, b)));
+}
+// picture → lowest terms
+function qA() {
+  const m = lowSet({ maxD: 12, ks: [2, 3, 4] });
+  return {
+    ask: `ภาพนี้คือ ${frac(m.N, m.D)} ก้อน เขียนเป็นเศษส่วนอย่างต่ำได้เท่าใด`,
+    pic: cake(m.N, m.D),
+    opts: opts([m.n, m.d], lowWrong(m), x => frac(...x)),
+    explain: `หารทั้งบนและล่างด้วย ${m.k}: ${frac(m.N, m.D)} = ${frac(m.n, m.d)} แล้ว ${m.n} กับ ${m.d} หารต่อไม่ได้`,
+    after: `<div class="pair">${cake(m.N, m.D, { cls: 'sm' })}${cake(m.n, m.d, { cls: 'sm' })}</div>`,
+    review: `${walk(m.N, m.D)}`
+  };
+}
+// which one is (or is not) in lowest terms
+function qB() {
+  const wantLow = Math.random() < .6, seen = new Set();
+  const make = low => {
+    let f;
+    do { const m = lowSet({ maxd: 9, maxD: 20, ks: [2, 3, 4, 5] }); f = low ? [m.n, m.d] : [m.N, m.D]; } while (seen.has(f.join('/')) || (low && f[1] < 3));
+    seen.add(f.join('/')); return f;
+  };
+  const right = make(wantLow), others = [make(!wantLow), make(!wantLow), make(!wantLow)];
+  const [n, d] = right;
+  const explain = wantLow
+    ? `${frac(n, d)} ไม่มีจำนวนใดหารทั้ง ${n} และ ${d} ได้ลงตัว ข้ออื่นยังย่อได้ เช่น ${walk(...others[0])}`
+    : `${frac(n, d)} ยังมี ${commonDivs(n, d)[0]} หารทั้ง ${n} และ ${d} ได้ลงตัว ย่อได้ ${walk(n, d)}`;
+  return {
+    ask: wantLow ? 'ข้อใดเป็น <mark>เศษส่วนอย่างต่ำ</mark>' : 'ข้อใด <mark>ไม่ใช่</mark> เศษส่วนอย่างต่ำ',
+    pic: '',
+    opts: shuffle([{ html: frac(n, d), ok: true }, ...others.map(f => ({ html: frac(...f), ok: false }))]),
+    explain,
+    review: `${wantLow ? 'อย่างต่ำ' : 'ยังไม่ใช่อย่างต่ำ'} คือ ${frac(n, d)}`
+  };
+}
+// N/D → lowest terms (no picture, sometimes improper, often more than one step)
+function qC() {
+  const m = Math.random() < .3 ? lowSet({ improper: true, maxd: 5, maxD: 20, ks: [2, 3, 4] }) : lowSet({ maxd: 7, maxD: 24, ks: [4, 6, 2, 3, 5] });
+  return {
+    ask: `${frac(m.N, m.D)} เขียนเป็นเศษส่วนอย่างต่ำได้เท่าใด`,
+    pic: '',
+    opts: opts([m.n, m.d], lowWrong(m), x => frac(...x)),
+    explain: `หารทั้งบนและล่างจนหารต่อไม่ได้: ${walk(m.N, m.D)}`
+      + (steps(m.N, m.D).length > 2 ? ` (หารด้วย ${m.k} ทีเดียวก็ได้)` : ''),
+    review: `${walk(m.N, m.D)}`
+  };
+}
+// which number divides both top and bottom
+function qD() {
+  const m = lowSet({ maxd: 7, maxD: 24, ks: [2, 3, 4, 5, 6] }), cd = commonDivs(m.N, m.D);
+  const right = pick(cd);
+  const wrong = shuffle([2, 3, 4, 5, 6, 7, 8, 9].filter(x => !cd.includes(x)));
+  return {
+    ask: `จำนวนใดหารทั้งตัวเศษและตัวส่วนของ ${frac(m.N, m.D)} ได้ลงตัว`,
+    pic: '',
+    opts: opts(right, wrong, num),
+    explain: `${right} หาร ${m.N} ได้ ${m.N / right} และหาร ${m.D} ได้ ${m.D / right} ลงตัวทั้งคู่: ${divEq(m.N, m.D, right)}`,
+    review: `${right} หารทั้ง ${m.N} และ ${m.D} ได้ลงตัว`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/6.5',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
+});
+})();
+</script>
+</body>
+</html>

@@ -24,18 +24,17 @@
 .brand .me { width: 66px; height: 66px; flex: none; margin: -8px 0; display: block; filter: drop-shadow(0 4px 3px rgba(43, 38, 32, .2)); }
 .brand .name { font-family: var(--display); font-size: 1.2rem; line-height: 1.1; }
 .brand .sub { font-size: .75rem; color: var(--muted); }
-/* level bar: folded it is just the level number in a yellow circle with a dark rim, beside the sound button.
-   It unrolls to the right into the full dark bar (number, meter, EXP) when the page opens and when tapped,
-   stays 5 seconds, then rolls back (openLv below). The slot keeps the full width free, so nothing around it moves.
-   --lv-w is the open width, measured by script. */
-.lv-slot { display: flex; width: var(--lv-w, auto); }
-.lv { display: flex; align-items: center; gap: 10px; height: 48px; width: 44px; padding: 0; border: 0; border-radius: 999px; background: transparent; color: #fff; font-family: var(--display); overflow: hidden; cursor: pointer; flex: none;
-  transition: width .5s cubic-bezier(.4, 0, .2, 1) .15s, padding .5s cubic-bezier(.4, 0, .2, 1) .15s, background-color .25s .4s; }
-.lv.open { width: var(--lv-w); padding: 0 16px 0 6px; background: var(--ink);   /* the one dark piece on purpose (owner's choice) */
-  transition: width .55s cubic-bezier(.3, 1.2, .5, 1), padding .55s cubic-bezier(.3, 1.2, .5, 1), background-color .15s; }
+/* level bar: folded it is just the yellow level circle in a thick dark ring (the bar's own edge), right-aligned
+   beside the sound button. It unrolls to the left into the full dark bar (number, meter, EXP), pushing the sound
+   button along, when the page opens and when tapped, stays 5 seconds, then rolls back (openLv below).
+   The yellow circle is the same size both ways. --lv-w is the open width, measured by script. */
+.lv-slot { display: flex; justify-content: flex-end; }
+.lv { display: flex; align-items: center; gap: 10px; height: 48px; width: 48px; padding: 0 6px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-family: var(--display); overflow: hidden; cursor: pointer; flex: none;   /* the one dark piece on purpose (owner's choice) */
+  transition: width .5s cubic-bezier(.4, 0, .2, 1) .15s, padding .5s cubic-bezier(.4, 0, .2, 1) .15s; }
+.lv.open { width: var(--lv-w); padding: 0 16px 0 6px;
+  transition: width .55s cubic-bezier(.3, 1.2, .5, 1), padding .55s cubic-bezier(.3, 1.2, .5, 1); }
 .lv.measure { width: auto !important; padding: 0 16px 0 6px; transition: none !important; }
-.lv .badge-lv { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--yellow); color: var(--ink); border: 2px solid var(--ink); display: grid; place-items: center; font-size: 1.05rem; transition: width .45s .15s, height .45s .15s, font-size .45s .15s; }
-.lv.open .badge-lv, .lv.measure .badge-lv { width: 36px; height: 36px; font-size: .95rem; transition-delay: 0s; }
+.lv .badge-lv { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--yellow); color: var(--ink); display: grid; place-items: center; font-size: .95rem; }
 .lv .meter, .lv .exp { flex: none; opacity: 0; transition: opacity .2s; }
 .lv.open .meter, .lv.open .exp { opacity: 1; transition: opacity .3s .3s; }
 .lv .meter { width: 86px; height: 8px; border-radius: 4px; background: #4A443B; overflow: hidden; }

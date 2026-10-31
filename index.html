@@ -135,9 +135,9 @@
 .park .ride img { width: 100%; height: auto; display: block; filter: drop-shadow(0 5px 3px rgba(43, 38, 32, .25)); animation: roll 2.8s ease-in-out infinite; }
 @keyframes roll { 50% { transform: translateX(-12%) rotate(-3deg); } }
 
-/* first-open show, like a product page: the parts slide up one after another, the title slab stamps in,
+/* entrance show, like a product page: the parts slide up one after another, the title slab stamps in,
    the skater rolls in and the numbers count up; the map parts rise as they scroll into view.
-   Only when the page is opened fresh (class "intro" on <html>, set before the first paint), not on the way back from a lesson.
+   Every time the home page opens, also on the way back from a lesson (class "intro" on <html>, set before the first paint).
    Fill "backwards" only, so nothing keeps a transform afterwards (a transform would break the phone's fixed stop card). */
 @keyframes rise { from { opacity: 0; transform: translateY(28px); } }
 @keyframes slab-in { from { opacity: 0; transform: rotate(-14deg) scale(.3); } 65% { opacity: 1; transform: rotate(3deg) scale(1.1); } }
@@ -197,11 +197,8 @@
 </style>
 
 <script>
-// the first-open show (CSS ".intro ..."): skip it on the way back from a lesson and during an unlock show
-try {
-  const fromLesson = document.referrer.startsWith(location.origin) && /\/math\//.test(document.referrer);
-  if (!fromLesson && !/[?&]unlocked=/.test(location.search)) document.documentElement.classList.add('intro');
-} catch (e) {}
+// the entrance show (CSS ".intro ...") plays every time the home page opens, except during an unlock show (which has its own)
+if (!/[?&]unlocked=/.test(location.search)) document.documentElement.classList.add('intro');
 </script>
 <div class="app" id="app">
   <header class="home-top">
@@ -275,9 +272,10 @@ L.wireChips();
 const all = [];
 COURSES.forEach(c => c.chapters.forEach(ch => ch.topics.forEach(t => all.push({ c, ch, t, id: lessonId(c, t) }))));
 const ready = all.filter(r => r.t.file);
-// lessons open one at a time: next is the newest open one not yet passed, else the first open one short of 3 stars
+// "where the child is up to": the newest open lesson not yet passed, else (all built lessons passed) the newest one.
+// Its stop bobs on the map, the skater waits there and the hero button plays it.
 const open = ready.filter(r => isOpen(r.id));
-const next = open.find(r => best(r.id) < PASS) || open.find(r => best(r.id) < 3) || open[open.length - 1];
+const next = open.find(r => best(r.id) < PASS) || open[open.length - 1];
 const stars = ready.reduce((s, r) => s + best(r.id), 0);
 const passed = ready.filter(r => best(r.id) > 0).length;
 
@@ -456,10 +454,10 @@ function playUnlock(w, i) {
   at(3400, () => openPop(w, i));
 }
 
-/* first-open show: the numbers count up as their boxes slide in; the map parts rise as they scroll into view */
-if (document.documentElement.classList.contains('intro')) {
+/* entrance show: the numbers count up as their boxes slide in; the map parts rise as they scroll into view */
+function playIntro() {
   document.querySelectorAll('.stat .num').forEach((el, k) => {
-    const m = el.textContent.match(/^(\d+)(.*)$/);
+    const m = (el.dataset.full ??= el.textContent).match(/^(\d+)(.*)$/);
     if (!m || +m[1] === 0) return;
     const to = +m[1], rest = m[2], t0 = performance.now() + 700 + k * 100, dur = 900;
     el.textContent = 0 + rest;
@@ -473,8 +471,16 @@ if (document.documentElement.classList.contains('intro')) {
   const seen = new IntersectionObserver(es => es.forEach(e => {
     if (e.isIntersecting) { e.target.classList.add('in'); seen.unobserve(e.target); }
   }), { threshold: .15 });
-  document.querySelectorAll('.reveal').forEach(el => seen.observe(el));
+  document.querySelectorAll('.reveal').forEach(el => { el.classList.remove('in'); seen.observe(el); });
 }
+if (document.documentElement.classList.contains('intro')) playIntro();
+// Back/swipe-back on the iPad can show the page kept in memory without loading it again: restart the show then too
+addEventListener('pageshow', e => {
+  if (!e.persisted) return;
+  const h = document.documentElement;
+  h.classList.remove('intro'); void h.offsetWidth; h.classList.add('intro');
+  playIntro();
+});
 
 /* hero kid: tap to jump and get a tip */
 const TIPS = [

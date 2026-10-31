@@ -61,12 +61,14 @@ try {
 } catch (e) {}
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {}
-  const x = $('#exp'); if (x) x.textContent = store.exp;
 }
+// won EXP shows on the level bar: it unrolls with the new total and the level circle bumps
 function addExp(n) {
   store.exp += n; save();
-  const c = $('#expchip'); if (!c) return;
-  c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');
+  const lv = $('#lv'); if (!lv) return;
+  drawLevel();
+  lv.classList.remove('bump'); void lv.offsetWidth; lv.classList.add('bump');
+  openLevel();
 }
 const best = id => (store.lessons[id] && store.lessons[id].best) || 0;
 function setBest(id, stars) {
@@ -163,10 +165,50 @@ function piesSeg(d, parts, o = {}) {
   return `<span class="pies">${h}</span>`;
 }
 
-/* ---------- header chips (sound + EXP) ---------- */
+/* ---------- header chips (sound + level bar), the same on the home page and in lessons ---------- */
 function chipsHTML() {
   return `<button class="chip icon-btn" id="sound" title="เปิด/ปิดเสียง"></button>
-    <span class="chip" id="expchip">${STAR}<span id="exp">${store.exp}</span> <span class="txt">EXP</span></span>`;
+    <div class="lv-slot"><button class="lv" id="lv" aria-expanded="false"></button></div>`;
+}
+// level from EXP (100 EXP per level)
+function drawLevel() {
+  const lv = $('#lv'); if (!lv) return;
+  const lvl = Math.floor(store.exp / 100) + 1, into = store.exp % 100;
+  lv.innerHTML = `<span class="badge-lv">${lvl}</span><span class="meter" aria-hidden="true"><i style="width:${into}%"></i></span><span class="exp">Lv.${lvl} · ${store.exp} EXP</span>`;
+  lv.setAttribute('aria-label', `เลเวล ${lvl} · ${store.exp} EXP`);
+  measureLevel();
+}
+function measureLevel() {
+  const lv = $('#lv'); if (!lv) return;
+  lv.classList.add('measure');
+  lv.parentNode.style.setProperty('--lv-w', lv.offsetWidth + 'px');
+  lv.classList.remove('measure');
+}
+/* The bar unrolls when the page opens (also on the way back), when tapped and when EXP is won, then folds after 5 s.
+   While a mouse rests on it the 5 s wait does not start (it starts when the mouse leaves);
+   tapping it while open folds it at once. Fingers on the iPad never count as resting on it. */
+let openLevel = () => {};
+function wireLevel(openAfter) {
+  const lv = $('#lv'); if (!lv) return;
+  let t = 0, hover = false;
+  const isUp = () => lv.classList.contains('open');
+  const fold = () => { clearTimeout(t); lv.classList.remove('open'); lv.setAttribute('aria-expanded', 'false'); };
+  const waitThenFold = ms => { clearTimeout(t); if (!hover) t = setTimeout(fold, ms); };
+  openLevel = (delay = 0) => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      lv.classList.add('open'); lv.setAttribute('aria-expanded', 'true');
+      waitThenFold(550 + 5000);   // 5 s once fully open
+    }, delay);
+  };
+  drawLevel();
+  addEventListener('resize', measureLevel);
+  document.fonts?.ready.then(measureLevel);   // the display font changes the text width
+  lv.addEventListener('click', () => { sfx.tap(); isUp() ? fold() : openLevel(); });
+  lv.addEventListener('pointerenter', e => { if (e.pointerType !== 'mouse') return; hover = true; if (isUp()) clearTimeout(t); });
+  lv.addEventListener('pointerleave', e => { if (e.pointerType !== 'mouse') return; hover = false; if (isUp()) waitThenFold(5000); });
+  openLevel(openAfter);
+  addEventListener('pageshow', e => { if (e.persisted) { lv.classList.remove('open'); drawLevel(); openLevel(openAfter); } });
 }
 function drawSound() {
   const b = $('#sound'); if (!b) return;
@@ -175,8 +217,9 @@ function drawSound() {
     : '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
   b.setAttribute('aria-label', store.sound ? 'ปิดเสียง' : 'เปิดเสียง');
 }
-function wireChips() {
+function wireChips(openAfter = 400) {
   drawSound();
+  wireLevel(openAfter);
   const b = $('#sound');
   if (b) b.addEventListener('click', () => { store.sound = !store.sound; save(); drawSound(); sfx.tap(); });
 }

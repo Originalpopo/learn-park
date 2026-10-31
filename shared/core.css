@@ -206,7 +206,9 @@ html.scratching body * { user-select: none; -webkit-user-select: none; -webkit-t
 .scratch .tool.more { width: 30px; margin-left: -4px; }
 .scratch .tool.on { background: rgba(255, 255, 255, .16); }
 /* the pen colour dot (not .dot: that name is the story step dots, whose ::after drew a cream circle on top) */
-.scratch .tool .ink { position: absolute; right: 8px; bottom: 8px; width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 2px #fff; }   /* white ring so the black pen shows on the dark bar */
+/* its width follows the chosen size (JS); it grows around a fixed centre so the icon corner stays put */
+.scratch .tool .ink { position: absolute; right: 14px; bottom: 14px; width: 10px; height: 10px; transform: translate(50%, 50%); border-radius: 50%; box-shadow: 0 0 0 2px #fff; }   /* white ring so the black pen shows on the dark bar */
+.scratch .tool .ink.ring { background: #26231F; }   /* the eraser's size: a ring, like its sizes in the menu */
 .scratch .sep { width: 1px; height: 26px; background: rgba(255, 255, 255, .2); margin: 0 4px; }
 .scratch-menu { bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 72px); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .scratch-menu .row { display: flex; gap: 8px; justify-content: center; }

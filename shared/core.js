@@ -378,6 +378,7 @@ const ICON = {
 const icon = (n, s = 22) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true">${ICON[n]}</svg>`;
 const PENS = [['#2B2620', 'ดำ'], ['#2F6FD6', 'น้ำเงิน'], ['#E0433A', 'แดง']];
 const SIZES = { pen: [3, 6, 11], eraser: [14, 28, 48] };
+const BADGE = [6, 10, 14];   // the size dot on the pen and eraser buttons, px
 
 function scratchPad() {
   const open = document.createElement('button');
@@ -393,7 +394,7 @@ function scratchPad() {
     <div class="scratch-bar" role="toolbar" aria-label="กระดาษทด">
       <button class="tool pen" data-tool="pen" aria-label="ปากกา">${icon('pen')}<span class="ink"></span></button>
       <button class="tool more" data-menu="pen" aria-label="เลือกสีและขนาดปากกา">${icon('chev', 18)}</button>
-      <button class="tool" data-tool="eraser" aria-label="ยางลบ">${icon('eraser')}</button>
+      <button class="tool" data-tool="eraser" aria-label="ยางลบ">${icon('eraser')}<span class="ink ring"></span></button>
       <button class="tool more" data-menu="eraser" aria-label="เลือกขนาดยางลบ">${icon('chev', 18)}</button>
       <span class="sep"></span>
       <button class="tool" data-act="clear" aria-label="ล้างทั้งหมด">${icon('trash')}</button>
@@ -442,6 +443,8 @@ function scratchPad() {
     if (st.menuFor) layer.querySelectorAll('[data-size]').forEach(b => b.classList.toggle('on', +b.dataset.size === st.size[st.menuFor]));
     layer.querySelectorAll('[data-menu]').forEach(b => b.classList.toggle('on', b.dataset.menu === st.menuFor));
     layer.querySelector('.pen .ink').style.background = PENS[st.pen][0];
+    // the dot on each tool grows with the chosen size (not to scale, just three steps you can tell apart)
+    layer.querySelectorAll('[data-tool] .ink').forEach(i => (i.style.width = i.style.height = BADGE[st.size[i.parentNode.dataset.tool]] + 'px'));
   }
   const at = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; };
 

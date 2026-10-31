@@ -43,12 +43,11 @@ const ZONES = {
     { box: [905, 322, 1118, 510], ground: [960, 520], skip: [[900, 318, 962, 405], [1100, 318, 1120, 388]],   // big quarter pipe, far end (9.5 test; rim behind)
       poly: [[965, 356], [1110, 395], [1035, 502], [914, 432]] },
   ] },
-  plaza: { tile: 5, stops: [                                       // chapter 10, the plaza (raspberry rim)
-    { box: [190, 312, 362, 462], ground: [300, 472], skip: [[185, 300, 232, 340], [225, 300, 262, 327], [262, 300, 276, 322]],   // yellow quarter pipe, left (bench + pot behind)
-      poly: [[232, 378], [302, 332], [358, 402], [272, 458]] },
-    { box: [515, 322, 735, 505], ground: [620, 512] },             // three boxes like a bar chart, middle
-    { box: [905, 322, 1118, 510], ground: [960, 520], skip: [[1100, 318, 1120, 388]],   // big quarter pipe, right (10.3 test)
-      poly: [[965, 356], [1110, 395], [1035, 502], [914, 432]] },
+  // chapter 10, the small oval plaza (raspberry rim), drawn by a second image AI on 2026-11-01 (1536x1024 webp)
+  plaza: { tile: 5, file: 'plaza.webp', stops: [
+    { box: [388, 375, 610, 552], ground: [560, 562], skip: [[330, 485, 412, 556], [386, 425, 408, 520]] },   // yellow-topped quarter pipe, left (planter, tree shadow)
+    { box: [655, 405, 880, 560], ground: [740, 575] },             // three boxes like a bar chart, middle
+    { box: [925, 420, 1170, 634], ground: [985, 618], skip: [[1140, 543, 1202, 625], [1132, 560, 1140, 610], [1153, 618, 1176, 656]] },   // big quarter pipe, right (10.3 test; tree in front)
   ] },
 };
 
@@ -60,7 +59,7 @@ const q = new URLSearchParams(location.search);
 (async () => {
   for (const [zone, cfg] of Object.entries(ZONES)) {
     if (q.get('zone') && q.get('zone') !== zone) continue;
-    const img = await load(`/incoming/${zone}.jpg?${Date.now()}`), W = img.width, H = img.height;
+    const img = await load(`/incoming/${cfg.file || zone + '.jpg'}?${Date.now()}`), W = img.width, H = img.height;
     const cv = Object.assign(document.createElement('canvas'), { width: W, height: H }), cx = cv.getContext('2d', { willReadFrequently: true });
     cx.drawImage(img, 0, 0);
     const src = cx.getImageData(0, 0, W, H), px = src.data;

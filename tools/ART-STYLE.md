@@ -36,5 +36,6 @@ Made for a children's learning app: friendly, clean, not busy.
 - AI often miscounts objects. Extra pieces are fine: Claude uses them as decoration.
 - Download the **largest size** offered (Upscale if there is a button). 1264px wide is the minimum.
 - Keep one chat for a set of pictures, so the style stays the same.
+- Switching to another image AI works (ch10 oval plaza, 2026-11-01): attach 3 parks as reference, start with "Redraw the LAST attached image ... match camera angle, object scale, lighting", and ask for simple shapes (oval, L). "Bean shape" was ignored. A .webp or other size is fine: set `file` for the zone in `tools/cut.html`.
 - For a title or poster scene (like the home page `tools/incoming/hero.webp`), skip the floor or island. Float big, bold objects around an empty middle; they don't need real scale. ChatGPT gave the best result for this.
 - Attach `tools/incoming/hero.webp` as the style reference for cute stand-alone objects. Attach `ramps.jpg` for whole parks.

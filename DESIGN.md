@@ -20,7 +20,7 @@ Pictures have their own guide in `tools/ART-STYLE.md`, with the prompt block for
 | `--ink` #2B2620 | text only |
 | `--muted` #6F6656 | hints, small print |
 | `--green` / `--blue` / `--orange` | cake slices, as in the textbook |
-| chapter colours on the map | ch6 `--red`, ch7 `--yellow-deep`, ch8 `--blue`, ch9 `--green`, ch10 `--pink` (#D9577E); each park picture has its own rim colour to match (ch9 green L-shape, ch10 raspberry) |
+| chapter colours on the map | ch6 `--red`, ch7 `--yellow-deep`, ch8 `--blue`, ch9 `--green`, ch10 `--pink` (#D9577E); each park picture has its own rim colour to match (ch9 green L-shape, ch10 raspberry oval) |
 | `--good` / `--bad` (+ `-soft`) | right / wrong feedback |
 
 There is only a light look; no dark mode.

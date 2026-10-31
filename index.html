@@ -80,7 +80,7 @@
 
 /* level map */
 .map-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-/* worlds: each chapter is one zone of the skate park (ramps / rails / bowl), drawn as a painted park picture.
+/* worlds: each chapter is one zone of the skate park (ramps / rails / bowl / boxes), drawn as a painted park picture.
    The base picture holds the plaza; every stop is its own layer on top, so locked ones can turn grey. */
 /* chapters sit side by side in a swipe slider (no frames); under it, arrows around the current chapter's name */
 .chap-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: -8px; }
@@ -252,7 +252,7 @@ const SK = n => IMG('skate/' + n);
 const PARK = n => `shared/img/park/${n}.webp`;
 
 // which park zone each chapter plays in
-const CHAPTER_ZONE = { 6: 'ramps', 7: 'rails', 8: 'bowl' };
+const CHAPTER_ZONE = { 6: 'ramps', 7: 'rails', 8: 'bowl', 9: 'boxes' };
 
 /* the child's skater: the boy in the cap (no choice of character) */
 const heroImg = () => SK('boy');

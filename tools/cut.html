@@ -35,6 +35,14 @@ const ZONES = {
     { box: [430, 230, 910, 510], ground: [670, 470], fill: true }, // the bowl (its inside is floor-coloured, so fill it)
     { box: [930, 360, 1112, 508], ground: [975, 512] },            // quarter pipe, right (8.6, added 2026-10-31)
   ] },
+  boxes: { tile: 5, stops: [                                       // chapter 9, the L-shaped park (green rim)
+    { box: [370, 240, 540, 360], ground: [450, 368] },             // pad with a rail, back
+    { box: [335, 435, 535, 575], ground: [480, 585], skip: [[330, 522, 415, 585]] },   // long ledge, front left (planter)
+    { box: [508, 345, 732, 498], ground: [610, 502] },             // funbox, the corner of the L
+    { box: [742, 476, 920, 628], ground: [790, 640] },             // stairs with handrails
+    { box: [905, 322, 1118, 510], ground: [960, 520], skip: [[900, 318, 962, 405], [1100, 318, 1120, 388]],   // big quarter pipe, far end (9.5 test; rim behind)
+      poly: [[965, 356], [1110, 395], [1035, 502], [914, 432]] },
+  ] },
 };
 
 const log = s => (document.getElementById('log').textContent += s + '\n');
@@ -90,6 +98,11 @@ const q = new URLSearchParams(location.search);
           if (x > 0) st.push(c - 1); if (x < w - 1) st.push(c + 1); if (c >= w) st.push(c - w); if (c < w * (h - 1)) st.push(c + w); }
         if (cnt > bestN) { bestN = cnt; best = id; } }
       for (let p = 0; p < w * h; p++) m[p] = lab[p] === best ? 1 : 0;
+      // poly = an outline drawn by hand for a face that is the floor's colour and not closed off (boxes 5's ramp)
+      if (s.poly) { const inside = (x, y) => { let c = false; for (let i = 0, j = s.poly.length - 1; i < s.poly.length; j = i++) {
+          const [xi, yi] = s.poly[i], [xj, yj] = s.poly[j];
+          if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (inside(x0 + x, y0 + y)) m[y * w + x] = 1; }
       // fill holes: whatever the box edge cannot reach is inside the obstacle
       const reach = new Uint8Array(w * h), st = [];
       for (let x = 0; x < w; x++) st.push(x, (h - 1) * w + x); for (let y = 0; y < h; y++) st.push(y * w, y * w + w - 1);

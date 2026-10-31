@@ -196,6 +196,9 @@ mark { background: linear-gradient(transparent 45%, var(--yellow) 45%); color: i
 html.scratching, html.scratching body { overflow: hidden; }
 /* iPad: a quick double tap or long press of the pencil would select the page's words under the layer */
 html.scratching body * { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* the dock is kept the size of what's on screen and scaled back by JS, so a pinch zoom never grows or hides the tools */
+.scratch-dock { position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform-origin: 0 0; pointer-events: none; }
+.scratch-bar, .scratch-menu { pointer-events: auto; }
 .scratch-bar, .scratch-menu { position: absolute; left: 50%; transform: translateX(-50%); background: #26231F; color: #fff; border-radius: 18px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .25); touch-action: manipulation; }
 .scratch-bar { bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 2px; padding: 6px; }

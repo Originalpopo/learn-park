@@ -387,6 +387,7 @@ function scratchPad() {
   layer.className = 'scratch';
   layer.hidden = true;
   layer.innerHTML = `<canvas></canvas>
+    <div class="scratch-dock">
     <div class="scratch-menu" hidden></div>
     <div class="scratch-bar" role="toolbar" aria-label="กระดาษทด">
       <button class="tool pen" data-tool="pen" aria-label="ปากกา">${icon('pen')}<span class="ink"></span></button>
@@ -396,7 +397,7 @@ function scratchPad() {
       <span class="sep"></span>
       <button class="tool" data-act="clear" aria-label="ล้างทั้งหมด">${icon('trash')}</button>
       <button class="tool" data-act="close" aria-label="ล้างแล้วปิดกระดาษทด">${icon('close')}</button>
-    </div>`;
+    </div></div>`;
   document.body.append(open, layer);
   document.body.classList.add('has-scratch');
 
@@ -498,6 +499,18 @@ function scratchPad() {
     clearTimeout(zoomT);
     zoomT = setTimeout(() => { if (!layer.hidden && !st.cur) fit(); }, 200);
   });
+  // the toolbar sits on the zoomed-in view at its normal size: the dock covers just the visible part, scaled back down
+  const dock = layer.querySelector('.scratch-dock');
+  function pinDock() {
+    const v = window.visualViewport;
+    if (!v || layer.hidden) return;
+    const z = v.scale || 1;
+    dock.style.width = v.width * z + 'px'; dock.style.height = v.height * z + 'px';
+    dock.style.transform = `translate(${v.offsetLeft}px, ${v.offsetTop}px) scale(${1 / z})`;
+  }
+  window.visualViewport?.addEventListener('resize', pinDock);
+  window.visualViewport?.addEventListener('scroll', pinDock);
+  open.addEventListener('click', pinDock);
 }
 
 return {

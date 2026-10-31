@@ -339,13 +339,13 @@ const worlds = [];
 const slider = $('#worlds');
 COURSES.forEach(c => c.chapters.forEach(ch => {
   const zone = CHAPTER_ZONE[ch.no] || 'ramps';
-  const readyN = ch.topics.filter(t => t.file).length;
+  const passedN = ch.topics.filter(t => t.file && best(lessonId(c, t)) > 0).length;
   const sec = document.createElement('section');
   sec.className = `world ${zone}`;
   sec.setAttribute('aria-label', `บทที่ ${ch.no} ${ch.title}`);
   sec.innerHTML = '<div class="park"></div>';
   slider.appendChild(sec);
-  worlds.push({ c, ch, zone, sec, park: sec.querySelector('.park'), sub: `เปิดแล้ว ${readyN}/${ch.topics.length} ด่าน` });
+  worlds.push({ c, ch, zone, sec, park: sec.querySelector('.park'), sub: `ผ่านแล้ว ${passedN}/${ch.topics.length} ด่าน` });
 }));
 
 function drawWorld({ c, ch, zone, park }) {

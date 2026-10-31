@@ -282,25 +282,32 @@ $('#lv').innerHTML = `<span class="badge-lv">${lvl}</span><span class="meter" ar
 $('#lv').setAttribute('aria-label', `เลเวล ${lvl} · ${store.exp} EXP`);
 L.wireChips();
 
-/* level bar: unrolls when the home page opens (also on the way back) and when tapped, stays 5 s, then folds */
+/* level bar: unrolls when the home page opens (also on the way back) and when tapped, then folds after 5 s.
+   While a mouse rests on it the 5 s wait does not start (it starts when the mouse leaves);
+   tapping it while open folds it at once. Fingers on the iPad never count as resting on it. */
 const lv = $('#lv');
-let lvT = 0;
+let lvT = 0, lvHover = false;
 function measureLv() {
   lv.classList.add('measure');
   lv.parentNode.style.setProperty('--lv-w', lv.offsetWidth + 'px');
   lv.classList.remove('measure');
 }
+const isOpenLv = () => lv.classList.contains('open');
+function closeLv() { clearTimeout(lvT); lv.classList.remove('open'); lv.setAttribute('aria-expanded', 'false'); }
+function waitThenClose(ms) { clearTimeout(lvT); if (!lvHover) lvT = setTimeout(closeLv, ms); }
 function openLv(delay = 0) {
   clearTimeout(lvT);
   lvT = setTimeout(() => {
     lv.classList.add('open'); lv.setAttribute('aria-expanded', 'true');
-    lvT = setTimeout(() => { lv.classList.remove('open'); lv.setAttribute('aria-expanded', 'false'); }, 550 + 5000);   // 5 s once fully open
+    waitThenClose(550 + 5000);   // 5 s once fully open
   }, delay);
 }
 measureLv();
 addEventListener('resize', measureLv);
 document.fonts?.ready.then(measureLv);   // the display font changes the text width
-lv.addEventListener('click', () => { sfx.tap(); openLv(); });
+lv.addEventListener('click', () => { sfx.tap(); isOpenLv() ? closeLv() : openLv(); });
+lv.addEventListener('pointerenter', e => { if (e.pointerType !== 'mouse') return; lvHover = true; if (isOpenLv()) clearTimeout(lvT); });
+lv.addEventListener('pointerleave', e => { if (e.pointerType !== 'mouse') return; lvHover = false; if (isOpenLv()) waitThenClose(5000); });
 openLv(700);   // after the top bar has slid in
 addEventListener('pageshow', e => { if (e.persisted) { lv.classList.remove('open'); openLv(700); } });
 

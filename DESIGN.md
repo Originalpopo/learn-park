@@ -27,7 +27,7 @@ There is only a light look; no dark mode.
 ## Boxes and buttons
 - **Never a black outline.** `--ink` is for text, not for borders or shadows.
 - **One exception:** the level pill at the top right of the home page (level number, EXP bar, "Lv.1 · 0 EXP") is solid `--ink` with white text and a yellow level circle. The owner wants it dark.
-- **Level bar** (what the owner calls it) folds to just the yellow level circle in a thick dark ring (the yellow circle keeps its size), right-aligned beside the sound button. It unrolls to the left into the full dark bar, pushing the sound button along, each time the home page opens (also on the way back) and when tapped, stays 5 seconds, then folds again.
+- **Level bar** (what the owner calls it) folds to just the yellow level circle in a thick dark ring (the yellow circle keeps its size), right-aligned beside the sound button. It unrolls to the left into the full dark bar, pushing the sound button along, each time the home page opens (also on the way back) and when tapped, then folds 5 seconds later. While the mouse rests on it the 5 seconds do not start (they start when it leaves); tapping it while open folds it at once.
 - **Second exception:** the scratch-pad toolbar in lessons is dark (#26231F) with white icons, like the drawing tools in the Claude app. The owner asked for this.
 - **White box or ghost button:** `background: var(--card); border: 2px solid var(--line); box-shadow: 0 4px 0 var(--line);`. This is the "ดูแผนที่ด่าน" look.
 - **Yellow button:** `background: var(--yellow); box-shadow: 0 4px 0 var(--yellow-deep);`, with no border. This is the "เล่นด่าน" look. Use one yellow button per screen, for the main action.

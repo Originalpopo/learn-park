@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>การเปรียบเทียบและเรียงลำดับ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<style>
+/* 6.6 only: comparing fractions (same bottom, same top, one bottom a multiple of the other), the > < = signs and putting fractions in order */
+.rulebox { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.arrow-note { font-size: 1rem; background: var(--yellow-soft); border-radius: 12px; padding: 4px 12px; text-align: center; }
+.times { display: inline-flex; align-items: center; gap: .3em; font-family: var(--display); }
+.times .by { display: flex; flex-direction: column; justify-content: space-between; height: 2.6em; font-size: .55em; color: var(--orange); }
+.kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+.kind { border-radius: 22px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.kind h3 { font-size: 1.15rem; }
+.kind .ex { font-size: 1.4rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.kind.a { background: #E6F4EA; }
+.kind.b { background: #FDEBDD; }
+.kind.c { background: #E8F3FB; }
+.pair { display: flex; gap: 18px; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
+.sign { font-family: var(--display); font-size: 2.4rem; color: var(--orange); line-height: 1; align-self: center; }
+.signs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; }
+.signs > div { background: var(--bg); border-radius: 18px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.signs b { font-family: var(--display); font-size: 2.6rem; line-height: 1; color: var(--orange); }
+.line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; font-family: var(--display); font-size: 1.5rem; }
+.line .lt { color: var(--muted); font-size: .8em; }
+.opts:has(.line) { grid-template-columns: 1fr 1fr; }   /* the order answers are wide: two per row */
+.opts .line { font-size: 1.3rem; gap: 6px; }
+
+.match { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+.fcard { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 14px 26px; box-shadow: 0 6px 0 var(--line); font-size: 2.8rem; display: flex; align-items: center; gap: .4em; }
+.fcard .box { font-family: var(--display); color: var(--orange); min-width: 1.2em; text-align: center; }
+.fcard.shake, .pool .opt.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+.choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 420px; }
+.choices .opt { font-size: 2.4rem; }
+.msg { min-height: 1.6em; text-align: center; font-size: 1.05rem; }
+.msg.bad { color: var(--bad); }
+.msg.good { color: var(--good); }
+.sort-progress { text-align: center; color: var(--muted); font-size: .95rem; }
+.pool { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; max-width: 560px; }
+.pool .opt { font-size: 1.9rem; min-height: 96px; }
+.pool .opt.gone { visibility: hidden; }
+.row { display: flex; align-items: center; gap: 8px; min-height: 80px; flex-wrap: wrap; justify-content: center; font-size: 1.6rem; background: var(--bg); border-radius: 20px; padding: 8px 14px; width: 100%; max-width: 560px; }
+.row .lt { font-family: var(--display); color: var(--orange); font-size: 1.3rem; }
+.row .empty { color: var(--muted); font-size: 1rem; }
+
+@media (max-width: 440px) {
+  .kinds { grid-template-columns: 1fr; }
+  .pool { grid-template-columns: 1fr 1fr; }
+  .signs b { font-size: 2rem; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script>
+(() => {
+const { frac, fade, pie, ri, pick, shuffle, sfx, addExp, ava, G, B, O } = L;
+const $ = s => document.querySelector(s);
+
+const KIDS = { khun: ['ขุน', G, 'ข'], bua: ['ใบบัว', B, 'บ'] };
+const kid = k => `<span class="who-row">${ava(KIDS[k][2], KIDS[k][1])}<span>${KIDS[k][0]}</span></span>`;
+/* one cake cut into d slices with the first n shaded (more than d: one more cake per d slices) */
+const cake = (n, d, o = {}) => n <= d
+  ? pie(d, Array.from({ length: d }, (_, i) => i < n ? (o.col || G) : null), o)
+  : L.piesSeg(d, [[n, o.col || G]], o);
+const timesEq = (n, d, k) => `<span class="times">${frac(n, d)}<span class="by"><span>×${k}</span><span>×${k}</span></span><span class="op">=</span>${frac(n * k, d * k)}</span>`;
+// a fraction is [n, d]; compare by cross-multiplying (the bottoms here always share a common multiple we name)
+const cmp = (a, b) => Math.sign(a[0] * b[1] - b[0] * a[1]);
+const SIGN = { 1: '&gt;', '-1': '&lt;', 0: '=' };
+const WORD = { 1: 'มากกว่า', '-1': 'น้อยกว่า', 0: 'เท่ากับ' };
+const f = x => frac(x[0], x[1]);
+// the same fraction written over the bottom L (L is a multiple of its bottom)
+const over = (x, L) => [x[0] * L / x[1], L];
+
+/* why a ? b: same bottom, same top, or bring both to the bigger bottom first */
+function why(a, b) {
+  const s = cmp(a, b);
+  if (a[1] === b[1]) return `ตัวส่วนเท่ากัน ดูตัวเศษ: ${a[0]} ${WORD[s]} ${b[0]} จึงได้ ${f(a)} ${SIGN[s]} ${f(b)}`;
+  if (a[0] === b[0]) return `ตัวเศษเท่ากัน ตัวส่วน${a[1] < b[1] ? 'น้อยกว่า ชิ้นใหญ่กว่า' : 'มากกว่า ชิ้นเล็กกว่า'} จึงได้ ${f(a)} ${SIGN[s]} ${f(b)}`;
+  const L = Math.max(a[1], b[1]), A = over(a, L), Bv = over(b, L);
+  const conv = a[1] === L ? `${f(b)} = ${f(Bv)}` : `${f(a)} = ${f(A)}`;
+  return `ทำตัวส่วนให้เท่ากันก่อน: ${conv} แล้ว ${f(A)} ${SIGN[s]} ${f(Bv)} จึงได้ ${f(a)} ${SIGN[s]} ${f(b)}`;
+}
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(3, 8, { anim: 'filled' })}<div class="cap">${kid('khun')} ${frac(3, 8)}</div></div>
+        <div class="fig">${cake(5, 8, { anim: 'filled', delay0: .4, col: B })}<div class="cap">${kid('bua')} ${frac(5, 8)}</div></div>
+      </div>`,
+    say: () => `<h2>ใครได้เค้กมากกว่า</h2>
+      <p>เค้กสองก้อนขนาดเท่ากัน ตัดก้อนละ <b>8 ชิ้น</b></p>
+      <p>ขุนได้ ${frac(3, 8)} ก้อน ใบบัวได้ ${frac(5, 8)} ก้อน</p>
+      <p class="hint">ลองนับชิ้นดูสิ</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="eq">${frac(5, 8, { nc: B })}<span class="sign">&gt;</span>${frac(3, 8, { nc: G })}</div>
+        <span class="arrow-note">ชิ้นขนาดเท่ากัน 5 ชิ้น มากกว่า 3 ชิ้น</span>
+      </div>`,
+    say: () => `<h2>ตัวส่วนเท่ากัน ดูที่ตัวเศษ</h2>
+      <p>ทั้งสองก้อนตัด 8 ชิ้นเท่ากัน ทุกชิ้นจึงขนาดเท่ากัน</p>
+      <p>ใบบัวได้ 5 ชิ้น ขุนได้ 3 ชิ้น</p>
+      <p class="callout">ตัวส่วนเท่ากัน <b>ตัวเศษมากกว่า</b> เศษส่วนนั้นก็ <b>มากกว่า</b></p>`
+  },
+  {
+    vis: () => `<div class="signs">
+        <div><b>&gt;</b><span>มากกว่า</span></div>
+        <div><b>&lt;</b><span>น้อยกว่า</span></div>
+        <div><b>=</b><span>เท่ากับ</span></div>
+      </div>`,
+    say: () => `<h2>เครื่องหมายเปรียบเทียบ</h2>
+      <p>${frac(5, 8)} &gt; ${frac(3, 8)} อ่านว่า ห้าส่วนแปด <b>มากกว่า</b> สามส่วนแปด</p>
+      <p>${frac(3, 8)} &lt; ${frac(5, 8)} อ่านว่า สามส่วนแปด <b>น้อยกว่า</b> ห้าส่วนแปด</p>
+      <p class="hint">จำง่ายๆ: ปากเครื่องหมายอ้ากว้าง หันไปหาตัวที่มากกว่าเสมอ</p>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(1, 2, { cls: 'sm', anim: 'filled' })}<div class="cap">${frac(1, 2)}</div></div>
+        <span class="sign">&gt;</span>
+        <div class="fig">${cake(1, 4, { cls: 'sm', anim: 'filled', delay0: .3 })}<div class="cap">${frac(1, 4)}</div></div>
+      </div>`,
+    say: () => `<h2>ตัวเศษเท่ากัน ดูที่ตัวส่วน</h2>
+      <p>${frac(1, 2)} กับ ${frac(1, 4)} ได้ 1 ชิ้นเท่ากัน</p>
+      <p>แต่ตัด 2 ชิ้น ได้ <b>ชิ้นใหญ่กว่า</b> ตัด 4 ชิ้น</p>
+      <p class="callout">ตัวเศษเท่ากัน <b>ตัวส่วนน้อยกว่า</b> เศษส่วนนั้น <b>มากกว่า</b></p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="pair">
+          <div class="fig">${cake(4, 8, { cls: 'sm', anim: 'all', step: .1 })}<div class="cap">${frac(1, 2)} = ${frac(4, 8)}</div></div>
+          <div class="fig">${cake(3, 8, { cls: 'sm', col: B })}<div class="cap">${frac(3, 8)}</div></div>
+        </div>
+        <div class="eq">${fade(timesEq(1, 2, 4), .4)}</div>
+      </div>`,
+    say: () => `<h2>ตัวส่วนไม่เท่ากัน</h2>
+      <p>${frac(1, 2)} กับ ${frac(3, 8)} ตัดชิ้นไม่เท่ากัน เทียบตรงๆ ไม่ได้</p>
+      <p>8 เป็น 4 เท่าของ 2 จึงทำ ${frac(1, 2)} ให้ตัวส่วนเป็น 8 ก่อน ได้ ${frac(4, 8)}</p>
+      <p>${frac(4, 8)} &gt; ${frac(3, 8)} ดังนั้น <b>${frac(1, 2)} &gt; ${frac(3, 8)}</b></p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="eq">${timesEq(2, 3, 2)}</div>
+        <div class="eq">${frac(4, 6)}<span class="sign">&lt;</span>${frac(5, 6)}</div>
+        <span class="arrow-note">ดังนั้น ${frac(2, 3)} &lt; ${frac(5, 6)}</span>
+      </div>`,
+    say: () => `<h2>ลองอีกข้อ</h2>
+      <p>${frac(2, 3)} กับ ${frac(5, 6)}</p>
+      <p>ทำตัวส่วนให้เท่ากับ <b>ตัวส่วนที่มากกว่า</b> คือ 6: คูณ 2 ทั้งบนและล่าง</p>
+      <p>${frac(4, 6)} &lt; ${frac(5, 6)} จึงได้ ${frac(2, 3)} &lt; ${frac(5, 6)}</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="line">${frac(3, 8)}${frac(1, 2)}${frac(1, 4)}</div>
+        <div class="line">${fade(frac(3, 8), .3)}${fade(frac(4, 8), .5)}${fade(frac(2, 8), .7)}</div>
+        <span class="arrow-note">${fade('ตัวส่วนเป็น 8 ทั้งหมดแล้ว ดูตัวเศษ 2, 3, 4', 1)}</span>
+        <div class="line">${fade(`${frac(1, 4)}<span class="lt">&lt;</span>${frac(3, 8)}<span class="lt">&lt;</span>${frac(1, 2)}`, 1.4)}</div>
+      </div>`,
+    say: () => `<h2>เรียงจากน้อยไปมาก</h2>
+      <p>ทำตัวส่วนทุกตัวให้เท่ากับตัวส่วนที่มากที่สุดก่อน (คือ 8)</p>
+      <p>แล้วเรียงตามตัวเศษ จากน้อยไปมาก</p>
+      <p class="hint">เรียงจากมากไปน้อย ก็แค่กลับด้าน: ${frac(1, 2)} &gt; ${frac(3, 8)} &gt; ${frac(1, 4)}</p>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cake(3, 4, { cls: 'sm', anim: 'filled' })}<div class="cap">${frac(3, 4)}</div></div>
+        <span class="sign">&lt;</span>
+        <div class="fig">${cake(4, 4, { cls: 'sm', anim: 'filled', delay0: .3, col: O })}<div class="cap">1</div></div>
+        <span class="sign">&lt;</span>
+        <div class="fig">${cake(5, 4, { cls: 'sm', anim: 'filled', delay0: .6, col: B })}<div class="cap">${frac(5, 4)}</div></div>
+      </div>`,
+    say: () => `<h2>เคล็ดลับ: เทียบกับ 1</h2>
+      <p><b>เศษส่วนแท้</b> น้อยกว่า 1 เสมอ</p>
+      <p><b>เศษเกิน</b> มากกว่าหรือเท่ากับ 1</p>
+      <p>จึงได้ ${frac(3, 4)} &lt; 1 &lt; ${frac(5, 4)} ไม่ต้องคิดนานเลย</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>ตัวส่วนเท่ากัน</h3><span>ตัวเศษมาก ก็มาก</span><div class="ex">${frac(5, 8)} &gt; ${frac(3, 8)}</div></div>
+        <div class="kind c"><h3>ตัวเศษเท่ากัน</h3><span>ตัวส่วนน้อย ชิ้นใหญ่ ก็มาก</span><div class="ex">${frac(1, 2)} &gt; ${frac(1, 4)}</div></div>
+        <div class="kind b" style="grid-column:1/-1"><h3>ตัวส่วนไม่เท่ากัน</h3><span>ทำตัวส่วนให้เท่ากันก่อน แล้วดูตัวเศษ</span><div class="ex">${frac(2, 3)} = ${frac(4, 6)} &lt; ${frac(5, 6)}</div></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p>เปรียบเทียบเศษส่วน ใช้เครื่องหมาย &gt; &lt; =</p>
+      <p>ตัวส่วนไม่เท่ากัน ให้ <b>ทำตัวส่วนให้เท่ากัน</b> ก่อนเสมอ</p>
+      <p class="hint">ไปลองเทียบและเรียงเค้กในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- fraction pickers (shared by play and quiz) ---------- */
+// two fractions that can be compared in this lesson: same bottom, same top, or one bottom a multiple of the other
+function pair(kind = pick(['sameD', 'sameN', 'mult', 'mult', 'eq'])) {
+  if (kind === 'sameD') { const d = ri(3, 10); let a, b; do { a = ri(1, d + 2); b = ri(1, d + 2); } while (a === b); return [[a, d], [b, d]]; }
+  if (kind === 'sameN') { const n = ri(1, 4); let c, d; do { c = ri(n + 1, 10); d = ri(n + 1, 10); } while (c === d); return [[n, c], [n, d]]; }
+  // one bottom a multiple of the other (equal values when kind is 'eq')
+  let d, k, a, b;
+  do {
+    d = ri(2, 6); k = ri(2, d <= 3 ? 4 : 2);
+    a = ri(1, d - 1);
+    b = kind === 'eq' ? a * k : ri(1, d * k - 1);
+  } while (d * k > 12 || (kind !== 'eq' && b === a * k));
+  const p = [[a, d], [b, d * k]];
+  return Math.random() < .5 ? p : p.reverse();
+}
+// a set of fractions whose biggest bottom is a multiple of all the others, all different values
+const FAMILY = { 6: [2, 3, 6], 8: [2, 4, 8], 10: [2, 5, 10], 12: [2, 3, 4, 6, 12] };
+function family(count) {
+  for (;;) {
+    const L = pick([6, 8, 8, 10, 12, 12]), ds = FAMILY[L], out = [], seen = new Set();
+    for (let t = 0; out.length < count && t < 50; t++) {
+      const d = pick(ds), n = ri(1, d - 1), v = n * L / d;
+      if (seen.has(v)) continue;
+      seen.add(v); out.push([n, d]);
+    }
+    const bottoms = new Set(out.map(x => x[1])), big = Math.max(...bottoms);
+    if (out.length === count && bottoms.size >= 2 && [...bottoms].every(d => big % d === 0)) return out;
+  }
+}
+const sorted = (xs, down) => [...xs].sort((a, b) => down ? cmp(b, a) : cmp(a, b));
+const ordLine = (xs, down) => xs.map(f).join(` <span class="lt">${down ? '&gt;' : '&lt;'}</span> `);
+
+/* ---------- 2. play ---------- */
+// compare game: 8 cards, pick the sign
+let cmpG = null;
+function newCompare() {
+  const rounds = shuffle(['sameD', 'sameD', 'sameN', 'sameN', 'mult', 'mult', 'mult', 'eq']).map(k => pair(k));
+  return { rounds, i: 0, got: 0, miss: false, hint: false, msg: '', msgCls: '', busy: false };
+}
+function compareHTML() {
+  const s = cmpG;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">เทียบครบ 8 ใบแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} ใบ</p>
+      <button class="btn" data-act="cmp-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const [a, b] = s.rounds[s.i];
+  return `<div class="match">
+      <p>เลือกเครื่องหมายให้ถูก</p>
+      <div class="fcard" id="fcard">${f(a)}<span class="box">?</span>${f(b)}</div>
+      ${s.hint ? `<div class="pair">${cake(...a, { cls: 'sm' })}${cake(...b, { cls: 'sm', col: B })}</div>` : '<button class="link" data-act="hint">ดูภาพช่วย</button>'}
+      <div class="choices">${[1, -1, 0].map(v => `<button class="opt" data-sign="${v}">${SIGN[v]}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">ใบที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+function answerCompare(v) {
+  const s = cmpG;
+  if (s.busy || s.i >= s.rounds.length) return;
+  const [a, b] = s.rounds[s.i];
+  if (cmp(a, b) === v) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true;
+    s.msg = `${pick(['เก่งมาก!', 'ถูกต้อง!', 'ใช่เลย!'])} ${f(a)} ${SIGN[v]} ${f(b)}`; s.msgCls = 'good';
+    drawCompare();
+    setTimeout(() => {
+      s.i++; s.miss = false; s.hint = false; s.busy = false; s.msg = ''; s.msgCls = '';
+      if (s.i >= s.rounds.length) sfx.win();
+      drawCompare();
+    }, 1000);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = `${why(a, b)} ลองใหม่นะ`; s.msgCls = 'bad';
+    drawCompare();
+    $('#fcard').classList.add('shake');
+  }
+}
+
+// order game: 4 rounds of 4 cards, tap them from smallest to biggest (or the other way round)
+let ord = null;
+function newOrder() {
+  return { rounds: [0, 1, 2, 3].map(i => ({ xs: shuffle(family(4)), down: i % 2 === 1, done: [] })), i: 0, msg: '', msgCls: '', bad: -1 };
+}
+function orderHTML() {
+  const s = ord;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">เรียงครบ 4 ชุดแล้ว!</h3>
+      <button class="btn" data-act="ord-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const r = s.rounds[s.i];
+  const row = r.done.length ? r.done.map(j => f(r.xs[j])).join(`<span class="lt">${r.down ? '&gt;' : '&lt;'}</span>`) : `<span class="empty">แตะเศษส่วนที่${r.down ? 'มาก' : 'น้อย'}ที่สุดก่อน</span>`;
+  return `<div class="match">
+      <p>เรียงจาก<mark>${r.down ? 'มากไปน้อย' : 'น้อยไปมาก'}</mark></p>
+      <div class="row">${row}</div>
+      <div class="pool">${r.xs.map((x, j) => `<button class="opt${r.done.includes(j) ? ' gone' : ''}${s.bad === j ? ' shake' : ''}" data-ord="${j}">${f(x)}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">ชุดที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+function tapOrder(j) {
+  const s = ord, r = s.rounds[s.i];
+  if (!r || r.done.includes(j)) return;
+  const left = r.xs.map((x, k) => k).filter(k => !r.done.includes(k));
+  const want = sorted(left.map(k => r.xs[k]), r.down)[0];
+  s.bad = -1;
+  if (cmp(r.xs[j], want) === 0) {
+    r.done.push(j); sfx.tap();
+    s.msg = ''; s.msgCls = '';
+    if (r.done.length === r.xs.length) {
+      sfx.good(); addExp(5);
+      const L = Math.max(...r.xs.map(x => x[1]));
+      s.msg = `เยี่ยม! ตัวส่วนเป็น ${L}: ${sorted(r.xs, r.down).map(x => f(over(x, L))).join(' ')}`; s.msgCls = 'good';
+      drawOrder();
+      setTimeout(() => { s.i++; s.msg = ''; s.msgCls = ''; if (s.i >= s.rounds.length) sfx.win(); drawOrder(); }, 1800);
+      return;
+    }
+  } else {
+    sfx.bad(); s.bad = j;
+    const L = Math.max(...r.xs.map(x => x[1]));
+    s.msg = `ยังมีเศษส่วนที่${r.down ? 'มาก' : 'น้อย'}กว่า ${f(r.xs[j])} ลองทำตัวส่วนเป็น ${L} ดูนะ`; s.msgCls = 'bad';
+  }
+  drawOrder();
+}
+
+function playHTML() {
+  if (!cmpG) cmpG = newCompare();
+  if (!ord) ord = newOrder();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>อันไหนมากกว่า</h2><p>เลือกเครื่องหมาย &gt; &lt; หรือ = ให้ถูก</p></div>
+      <div id="cmp">${compareHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>เรียงเค้ก</h2><p>แตะเศษส่วนทีละใบตามลำดับ</p></div>
+      <div id="ord">${orderHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawCompare = () => { const el = $('#cmp'); if (el) el.innerHTML = compareHTML(); };
+const drawOrder = () => { const el = $('#ord'); if (el) el.innerHTML = orderHTML(); };
+
+function playClick(e) {
+  const sg = e.target.closest('[data-sign]');
+  if (sg) { answerCompare(+sg.dataset.sign); return; }
+  const od = e.target.closest('[data-ord]');
+  if (od) { tapOrder(+od.dataset.ord); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  switch (a.dataset.act) {
+    case 'hint': cmpG.hint = true; drawCompare(); break;
+    case 'cmp-again': cmpG = newCompare(); drawCompare(); break;
+    case 'ord-again': ord = newOrder(); drawOrder(); break;
+  }
+}
+
+/* ---------- 3. quiz ---------- */
+const signOpts = s => [1, -1, 0].map(v => ({ html: SIGN[v], ok: v === s }));
+// pictures of two cakes, pick the sign
+function qA() {
+  const [a, b] = pair(pick(['sameD', 'sameN']));
+  const s = cmp(a, b);
+  return {
+    ask: `${f(a)}<span class="sign">?</span>${f(b)} ใส่เครื่องหมายใด`,
+    pic: `<div class="pair">${cake(...a, { cls: 'sm' })}${cake(...b, { cls: 'sm', col: B })}</div>`,
+    opts: signOpts(s),
+    explain: why(a, b),
+    review: `${f(a)} ${SIGN[s]} ${f(b)}`
+  };
+}
+// no picture, bottoms differ (sometimes equal values)
+function qB() {
+  const [a, b] = pair(Math.random() < .25 ? 'eq' : 'mult');
+  const s = cmp(a, b);
+  return {
+    ask: `${f(a)}<span class="sign">?</span>${f(b)} ใส่เครื่องหมายใด`,
+    pic: '',
+    opts: signOpts(s),
+    explain: why(a, b),
+    after: `<div class="pair">${cake(...a, { cls: 'sm' })}${cake(...b, { cls: 'sm', col: B })}</div>`,
+    review: `${f(a)} ${SIGN[s]} ${f(b)}`
+  };
+}
+// biggest / smallest of four
+function qC() {
+  const xs = family(4), big = Math.random() < .5, L = Math.max(...xs.map(x => x[1]));
+  const right = sorted(xs, big)[0];
+  return {
+    ask: `ข้อใด<mark>${big ? 'มากที่สุด' : 'น้อยที่สุด'}</mark>`,
+    pic: '',
+    opts: shuffle(xs.map(x => ({ html: f(x), ok: x === right }))),
+    explain: `ทำตัวส่วนเป็น ${L} ทั้งหมด: ${xs.map(x => f(over(x, L))).join(' ')} ตัวเศษ${big ? 'มาก' : 'น้อย'}ที่สุดคือ ${f(over(right, L))} = ${f(right)}`,
+    review: `${big ? 'มากที่สุด' : 'น้อยที่สุด'} คือ ${f(right)}`
+  };
+}
+// which order is right
+function qD() {
+  const xs = family(3), down = Math.random() < .5, L = Math.max(...xs.map(x => x[1]));
+  const good = sorted(xs, down), [p, q, r] = good;
+  const wrongs = [[r, q, p], [q, p, r], [p, r, q], [q, r, p], [r, p, q]];
+  const opts = [{ x: good, ok: true }];
+  for (const w of shuffle(wrongs)) { if (opts.length >= 4) break; opts.push({ x: w, ok: false }); }
+  return {
+    ask: `เรียง ${xs.map(f).join(' ')} จาก<mark>${down ? 'มากไปน้อย' : 'น้อยไปมาก'}</mark>`,
+    pic: '',
+    opts: shuffle(opts.map(o => ({ html: `<span class="line">${ordLine(o.x, down)}</span>`, ok: o.ok }))),
+    explain: `ทำตัวส่วนเป็น ${L}: ${xs.map(x => f(over(x, L))).join(' ')} เรียงตามตัวเศษได้ ${ordLine(good, down)}`,
+    review: ordLine(good, down)
+  };
+}
+
+L.lesson({
+  id: 'math-p4/6.6',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
+});
+})();
+</script>
+</body>
+</html>

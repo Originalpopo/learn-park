@@ -15,9 +15,9 @@ const COURSES = [{
       { no: '6.3', title: 'เศษส่วนที่เท่ากับจำนวนนับ', file: 'math/p4/6-3.html' },
       { no: '6.4', title: 'เศษส่วนที่เท่ากัน', file: 'math/p4/6-4.html' },
       { no: '6.5', title: 'เศษส่วนอย่างต่ำ', file: 'math/p4/6-5.html' },
-      { no: '6.6', title: 'การเปรียบเทียบและเรียงลำดับ' },
-      { no: '6.7', title: 'การบวก การลบ' },
-      { no: '6.8', title: 'โจทย์ปัญหา' }
+      { no: '6.6', title: 'การเปรียบเทียบและเรียงลำดับ', file: 'math/p4/6-6.html' },
+      { no: '6.7', title: 'การบวก การลบ', file: 'math/p4/6-7.html' },
+      { no: '6.8', title: 'โจทย์ปัญหา', file: 'math/p4/6-8.html' }
     ] },
     { no: 7, title: 'ทศนิยม', color: 'var(--yellow-deep)', topics: [
       { no: '7.1', title: 'การอ่าน การเขียนทศนิยมไม่เกิน 3 ตำแหน่ง' },

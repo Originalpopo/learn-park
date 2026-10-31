@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>การบวก การลบ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<style>
+/* 6.7 only: adding and taking away fractions (same bottom, or one bottom a multiple of the other), the cake calculator and quick sums */
+.rulebox { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.arrow-note { font-size: 1rem; background: var(--yellow-soft); border-radius: 12px; padding: 4px 12px; text-align: center; }
+.times { display: inline-flex; align-items: center; gap: .3em; font-family: var(--display); }
+.times .by { display: flex; flex-direction: column; justify-content: space-between; height: 2.6em; font-size: .55em; color: var(--orange); }
+.kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+.kind { border-radius: 22px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.kind h3 { font-size: 1.15rem; }
+.kind .ex { font-size: 1.3rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.kind.a { background: #E6F4EA; }
+.kind.b { background: #FDEBDD; }
+.kind.c { background: #E8F3FB; }
+.pair { display: flex; gap: 18px; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
+.not-eq { color: var(--bad); font-family: var(--display); font-size: 2rem; }
+.mixed { display: inline-flex; align-items: center; vertical-align: middle; font-family: var(--display); font-weight: 500; }
+.mixed .w { font-size: 1.75em; line-height: 1; margin-right: .04em; }
+
+.calc { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: center; }
+.ctrls { display: flex; flex-direction: column; gap: 12px; }
+.ctrl { display: flex; align-items: center; gap: 12px; justify-content: space-between; background: var(--bg); border-radius: 20px; padding: 10px 12px 10px 18px; }
+.ctrl .lab { font-family: var(--display); white-space: nowrap; }
+.ctrl .val { font-family: var(--display); font-size: 1.6rem; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.ops { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ops .btn { min-height: 52px; font-size: 1.1rem; }
+.readout { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; font-size: 2.2rem; font-family: var(--display); }
+.readout .op { color: var(--muted); font-size: .8em; }
+.pie-zone { display: flex; flex-direction: column; gap: 14px; align-items: center; min-width: 0; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; font-size: .95rem; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; margin-right: 4px; }
+
+.match { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.fcard { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 14px 26px; box-shadow: 0 6px 0 var(--line); font-size: 2.6rem; display: flex; align-items: center; gap: .3em; flex-wrap: wrap; justify-content: center; }
+.fcard .op { color: var(--muted); font-family: var(--display); font-size: .7em; }
+.fcard .gap { font-family: var(--display); color: var(--orange); }
+.fcard.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+.choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 560px; }
+.choices .opt { font-size: 1.6rem; }
+.msg { min-height: 1.6em; text-align: center; font-size: 1.05rem; }
+.msg.bad { color: var(--bad); }
+.msg.good { color: var(--good); }
+.sort-progress { text-align: center; color: var(--muted); font-size: .95rem; }
+.num { font-family: var(--display); font-size: 1.75em; line-height: 1; }
+
+@media (max-width: 760px) {
+  .calc { grid-template-columns: 1fr; }
+}
+@media (max-width: 440px) {
+  .kinds { grid-template-columns: 1fr; }
+  .choices .opt { font-size: 1.3rem; }
+  .fcard { font-size: 2.1rem; padding: 12px 18px; }
+  .readout { font-size: 1.6rem; gap: 6px; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script>
+(() => {
+const { frac, fade, pie, piesSeg, ri, pick, shuffle, sfx, addExp, ava, G, B, O } = L;
+const $ = s => document.querySelector(s);
+
+const KIDS = { khun: ['ขุน', G, 'ข'], bua: ['ใบบัว', B, 'บ'] };
+const kid = k => `<span class="who-row">${ava(KIDS[k][2], KIDS[k][1])}<span>${KIDS[k][0]}</span></span>`;
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+const low = ([n, d]) => { const g = gcd(n, d); return [n / g, d / g]; };
+const f = x => frac(x[0], x[1]);
+const mix = (w, n, d) => n ? `<span class="mixed"><span class="w">${w}</span>${frac(n, d)}</span>` : `<span class="mixed"><span class="w">${w}</span></span>`;
+// a result in lowest terms, plus "= mixed number" when it is more than 1
+const showAns = x => { const [n, d] = low(x); return d === 1 ? `${n}` : n > d ? `${f([n, d])} = ${mix(Math.floor(n / d), n % d, d)}` : f([n, d]); };
+// an answer in lowest terms: a whole number when the bottom is 1
+const fx = x => x[1] === 1 ? `<span class="num">${x[0]}</span>` : f(x);
+const timesEq = (n, d, k) => `<span class="times">${frac(n, d)}<span class="by"><span>×${k}</span><span>×${k}</span></span><span class="op">=</span>${frac(n * k, d * k)}</span>`;
+/* parts: [[count, color], ...] in one or more cakes of d slices; 'ate' slices get a pale pink of their own (eaten) */
+const ATE = 'var(--bad-soft)';
+const cakes = (d, parts, o = {}) => piesSeg(d, parts.map(([n, c]) => [n, c === 'ate' ? ATE : c]), o);
+
+/* a sum or difference of two fractions whose bottoms are equal, or one a multiple of the other.
+   Returns { a, b, op, L, A, Bv, r }: A and Bv are a and b over the common bottom L, r the answer over L. */
+function problem(o = {}) {
+  for (;;) {
+    const op = o.op || pick(['+', '−']);
+    let a, b;
+    if (o.same ?? Math.random() < .5) {
+      const d = ri(3, 10);
+      a = [ri(1, d - 1), d]; b = [ri(1, d - 1), d];
+    } else {
+      const d = ri(2, 6), k = ri(2, 4), D = d * k;
+      if (D > 12) continue;
+      a = [ri(1, d - 1), d]; b = [ri(1, D - 1), D];
+      if (b[0] % k === 0) continue;   // b would just be a smaller fraction over d
+      if (Math.random() < .5) [a, b] = [b, a];
+    }
+    const L = Math.max(a[1], b[1]), A = [a[0] * L / a[1], L], Bv = [b[0] * L / b[1], L];
+    if (op === '−' && A[0] <= Bv[0]) { if (A[0] === Bv[0]) continue; [a, b] = [b, a]; return finish(op, a, b); }
+    if (op === '+' && A[0] + Bv[0] > (o.maxOver ?? 1.5) * L) continue;
+    return finish(op, a, b);
+  }
+}
+function finish(op, a, b) {
+  const L = Math.max(a[1], b[1]), A = [a[0] * L / a[1], L], Bv = [b[0] * L / b[1], L];
+  return { a, b, op, L, A, Bv, r: [op === '+' ? A[0] + Bv[0] : A[0] - Bv[0], L] };
+}
+const sumHTML = p => `${f(p.a)}<span class="op">${p.op}</span>${f(p.b)}`;
+// the worked answer: (bring to the same bottom) → add/take the tops → lowest terms
+function how(p) {
+  const conv = p.a[1] !== p.L ? `ทำ ${f(p.a)} = ${f(p.A)} ก่อน ` : p.b[1] !== p.L ? `ทำ ${f(p.b)} = ${f(p.Bv)} ก่อน ` : '';
+  const r = low(p.r), lowNote = r[1] !== p.L ? ` = ${fx(r)}` : '';
+  return `${conv}ตัวส่วนเท่ากันคือ ${p.L} แล้ว${p.op === '+' ? 'บวก' : 'ลบ'}ตัวเศษ ${p.A[0]} ${p.op} ${p.Bv[0]} = ${p.r[0]} ได้ ${f(p.r)}${lowNote}`
+    + (r[0] > r[1] && r[0] % r[1] ? ` = ${mix(Math.floor(r[0] / r[1]), r[0] % r[1], r[1])}` : '');
+}
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => `<div class="fig">${cakes(8, [[2, G], [3, B]], { cls: 'big', anim: 'filled', step: .15 })}<div class="cap">${kid('khun')} ${frac(2, 8)} ${kid('bua')} ${frac(3, 8)}</div></div>`,
+    say: () => `<h2>กินเค้กรวมกันเท่าไร</h2>
+      <p>เค้กตัด 8 ชิ้นเท่าๆ กัน</p>
+      <p>ขุนกิน ${frac(2, 8)} ก้อน ใบบัวกิน ${frac(3, 8)} ก้อน</p>
+      <p class="hint">นับชิ้นที่มีสีดูสิ ได้กี่ชิ้น</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="eq">${frac(2, 8, { nc: G })}<span class="op">+</span>${frac(3, 8, { nc: B })}<span class="op">=</span>${frac('2 + 3', 8)}<span class="op">=</span>${frac(5, 8)}</div>
+        <span class="arrow-note">ตัวส่วนเท่ากัน: บวกตัวเศษ ตัวส่วนเหมือนเดิม</span>
+      </div>`,
+    say: () => `<h2>บวก: ตัวส่วนเท่ากัน</h2>
+      <p>ชิ้นทุกชิ้นขนาดเท่ากัน (1 ใน 8) จึงนับรวมได้เลย 2 + 3 = 5 ชิ้น</p>
+      <p class="callout">บวกเฉพาะ <b>ตัวเศษ</b> ส่วน <b>ตัวส่วน</b> คงเดิม</p>
+      <p class="hint">ระวัง! อย่าบวกตัวส่วน ${frac(2, 8)} + ${frac(3, 8)} ไม่ใช่ ${frac(5, 16)} เพราะเค้กยังตัด 8 ชิ้นเท่าเดิม</p>`
+  },
+  {
+    vis: () => `<div class="fig">${cakes(8, [[4, G], [3, 'ate']], { cls: 'big', anim: 'filled', step: .1 })}<div class="cap">เหลือ ${frac(4, 8)} ก้อน</div></div>`,
+    say: () => `<h2>ลบ: กินไปแล้วเหลือเท่าไร</h2>
+      <p>มีเค้ก ${frac(7, 8)} ก้อน กินไป ${frac(3, 8)} ก้อน</p>
+      <div class="eq">${frac(7, 8)}<span class="op">−</span>${frac(3, 8)}<span class="op">=</span>${frac('7 − 3', 8)}<span class="op">=</span>${frac(4, 8)}</div>
+      <p>ลบเฉพาะ <b>ตัวเศษ</b> ตัวส่วนคงเดิม เหมือนการบวก</p>
+      <p class="hint">ชิ้นสีชมพู คือชิ้นที่กินไปแล้ว</p>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${cakes(8, [[4, G]], { cls: 'sm' })}<div class="cap">${frac(4, 8)}</div></div>
+        <div class="fig">${cakes(2, [[1, G]], { cls: 'sm', anim: 'all', step: .2 })}<div class="cap">${frac(1, 2)}</div></div>
+      </div>`,
+    say: () => `<h2>ตอบเป็นเศษส่วนอย่างต่ำ</h2>
+      <p>${frac(4, 8)} ยังหารด้วย 4 ได้ทั้งบนและล่าง</p>
+      <div class="eq">${frac(4, 8)}<span class="op">=</span>${frac(1, 2)}</div>
+      <p class="callout">ได้คำตอบแล้ว ให้ดูว่าทำเป็น <b>เศษส่วนอย่างต่ำ</b> ได้ไหม (จากด่าน 6.5)</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="pair">
+          <div class="fig">${cakes(4, [[2, G]], { cls: 'sm', anim: 'all', step: .15 })}<div class="cap">${frac(1, 2)} = ${frac(2, 4)}</div></div>
+          <div class="fig">${cakes(4, [[1, B]], { cls: 'sm' })}<div class="cap">${frac(1, 4)}</div></div>
+        </div>
+        <div class="eq">${fade(timesEq(1, 2, 2), .4)}</div>
+      </div>`,
+    say: () => `<h2>ตัวส่วนไม่เท่ากัน</h2>
+      <p>${frac(1, 2)} + ${frac(1, 4)} ชิ้นขนาดไม่เท่ากัน บวกตรงๆ ไม่ได้</p>
+      <p>4 เป็น 2 เท่าของ 2 จึงทำ ${frac(1, 2)} ให้ตัวส่วนเป็น 4 ก่อน ได้ ${frac(2, 4)}</p>
+      <div class="eq">${frac(2, 4)}<span class="op">+</span>${frac(1, 4)}<span class="op">=</span>${frac(3, 4)}</div>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="eq">${timesEq(1, 3, 2)}</div>
+        <div class="eq">${frac(5, 6)}<span class="op">−</span>${frac(2, 6)}<span class="op">=</span>${frac(3, 6)}<span class="op">=</span>${frac(1, 2)}</div>
+      </div>`,
+    say: () => `<h2>ลบก็ทำแบบเดียวกัน</h2>
+      <p>${frac(5, 6)} − ${frac(1, 3)}</p>
+      <p>ทำ ${frac(1, 3)} ให้ตัวส่วนเป็น 6 ก่อน ได้ ${frac(2, 6)}</p>
+      <p>แล้วลบตัวเศษ 5 − 2 = 3 ได้ ${frac(3, 6)} ทำเป็นอย่างต่ำได้ ${frac(1, 2)}</p>`
+  },
+  {
+    vis: () => `<div class="fig">${cakes(4, [[3, G], [2, B]], { anim: 'filled', step: .15 })}<div class="cap">${frac(5, 4)} = ${mix(1, 1, 4)}</div></div>`,
+    say: () => `<h2>ได้เกิน 1 ก้อน</h2>
+      <p>${frac(3, 4)} + ${frac(2, 4)} = ${frac(5, 4)}</p>
+      <p>${frac(5, 4)} เป็นเศษเกิน เขียนเป็นจำนวนคละได้ ${mix(1, 1, 4)} (จากด่าน 6.2)</p>
+      <p class="hint">เต็ม 1 ก้อน กับอีก ${frac(1, 4)} ก้อน</p>`
+  },
+  {
+    vis: () => `<div class="fig">${cakes(8, [[5, G], [3, 'ate']], { cls: 'big', anim: 'filled', step: .1 })}<div class="cap">เหลือ ${frac(5, 8)} ก้อน</div></div>`,
+    say: () => `<h2>เอา 1 ก้อน มาลบ</h2>
+      <p>เค้ก 1 ก้อน กินไป ${frac(3, 8)} ก้อน เหลือเท่าไร</p>
+      <p>1 ก้อนตัด 8 ชิ้น คือ ${frac(8, 8)}</p>
+      <div class="eq">1<span class="op">−</span>${frac(3, 8)}<span class="op">=</span>${frac(8, 8)}<span class="op">−</span>${frac(3, 8)}<span class="op">=</span>${frac(5, 8)}</div>
+      <p class="hint">ชิ้นสีชมพู คือชิ้นที่กินไปแล้ว</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>ตัวส่วนเท่ากัน</h3><span>บวกหรือลบตัวเศษ ตัวส่วนคงเดิม</span><div class="ex">${frac(2, 8)} + ${frac(3, 8)} = ${frac(5, 8)}</div></div>
+        <div class="kind b"><h3>ตัวส่วนไม่เท่ากัน</h3><span>ทำตัวส่วนให้เท่ากันก่อน</span><div class="ex">${frac(1, 2)} + ${frac(1, 4)} = ${frac(2, 4)} + ${frac(1, 4)} = ${frac(3, 4)}</div></div>
+        <div class="kind c" style="grid-column:1/-1"><h3>สุดท้าย</h3><span>ทำคำตอบเป็นเศษส่วนอย่างต่ำ ถ้าเป็นเศษเกิน เขียนเป็นจำนวนคละได้</span></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p>บวกลบเศษส่วน ต้องมี <b>ตัวส่วนเท่ากัน</b> ก่อนเสมอ</p>
+      <p>แล้วบวกหรือลบเฉพาะ <b>ตัวเศษ</b></p>
+      <p class="hint">ไปลองบวกลบเค้กเองในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+// cake calculator: same bottom d, tops n1 and n2, add or take away
+const calc = { d: 6, n1: 4, n2: 1, op: '+' };
+function calcHTML() {
+  const { d, n1, n2, op } = calc;
+  const r = op === '+' ? n1 + n2 : n1 - n2;
+  const pic = op === '+' ? cakes(d, [[n1, G], [n2, B]], { anim: 'filled', step: .04 }) : cakes(d, [[r, G], [n2, 'ate']], {});
+  return `
+    <div class="pie-zone">
+      ${pic}
+      <div class="legend">${op === '+' ? `<span><i style="background:${G}"></i>${frac(n1, d)}</span><span><i style="background:${B}"></i>${frac(n2, d)}</span>` : `<span><i style="background:${G}"></i>เหลือ</span><span><i style="background:${ATE}"></i>กินไป ${frac(n2, d)}</span>`}</div>
+    </div>
+    <div class="ctrls">
+      <div class="readout">${frac(n1, d)}<span class="op">${op}</span>${frac(n2, d)}<span class="op">=</span>${frac(r, d)}${gcd(r, d) > 1 || r > d ? `<span class="op">=</span>${r === 0 ? '0' : showAns([r, d])}` : ''}</div>
+      <div class="ops"><button class="btn ${op === '+' ? '' : 'ghost'}" data-op="+">บวก +</button><button class="btn ${op === '−' ? '' : 'ghost'}" data-op="−">ลบ −</button></div>
+      <div class="ctrl"><span class="lab">ตัวส่วน</span><span class="stepper"><button class="btn ghost round" data-act="d-" aria-label="ลดตัวส่วน">−</button><span class="val">${d}</span><button class="btn ghost round" data-act="d+" aria-label="เพิ่มตัวส่วน">+</button></span></div>
+      <div class="ctrl"><span class="lab">ตัวเศษตัวแรก</span><span class="stepper"><button class="btn ghost round" data-act="a-" aria-label="ลดตัวเศษตัวแรก">−</button><span class="val">${n1}</span><button class="btn ghost round" data-act="a+" aria-label="เพิ่มตัวเศษตัวแรก">+</button></span></div>
+      <div class="ctrl"><span class="lab">ตัวเศษตัวที่สอง</span><span class="stepper"><button class="btn ghost round" data-act="b-" aria-label="ลดตัวเศษตัวที่สอง">−</button><span class="val">${n2}</span><button class="btn ghost round" data-act="b+" aria-label="เพิ่มตัวเศษตัวที่สอง">+</button></span></div>
+    </div>`;
+}
+function calcStep(act) {
+  const c = calc, up = act[1] === '+' ? 1 : -1;
+  if (act[0] === 'd') c.d = Math.max(2, Math.min(10, c.d + up));
+  if (act[0] === 'a') c.n1 = Math.max(1, Math.min(c.d, c.n1 + up));
+  if (act[0] === 'b') c.n2 = Math.max(1, Math.min(c.d, c.n2 + up));
+  c.n1 = Math.min(c.n1, c.d); c.n2 = Math.min(c.n2, c.d);
+  if (c.op === '−' && c.n2 > c.n1) { if (act[0] === 'a') c.n2 = c.n1; else c.n1 = c.n2; }
+}
+
+// quick sums: 8 cards, pick the answer (in lowest terms) out of 3
+let quick = null;
+function newQuick() {
+  const rounds = [0, 1, 2, 3, 4, 5, 6, 7].map(i => {
+    const p = problem({ op: i % 2 ? '−' : '+', same: i < 4, maxOver: 1 });
+    const r = low(p.r), wrong = wrongs(p).slice(0, 2);
+    return { p, opts: shuffle([{ x: r, ok: true }, ...wrong.map(x => ({ x, ok: false }))]) };
+  });
+  return { rounds: shuffle(rounds), i: 0, got: 0, miss: false, hint: false, msg: '', msgCls: '', busy: false };
+}
+// believable wrong answers (all different values from the right one), in lowest terms
+function wrongs(p) {
+  const r = p.r, val = x => x[0] / x[1], right = val(r);
+  const add = (x, y) => p.op === '+' ? x + y : x - y;
+  const c = [
+    [add(p.a[0], p.b[0]), add(p.a[1], p.b[1])],          // tops and bottoms both added / taken
+    [add(p.a[0], p.b[0]), p.L],                           // tops used without changing to the same bottom
+    [r[0] + 1, r[1]], [r[0] - 1, r[1]],
+    [p.op === '+' ? Math.abs(p.A[0] - p.Bv[0]) : p.A[0] + p.Bv[0], p.L],   // the other operation
+    [r[0] + 2, r[1]], [r[0], r[1] + 1]
+  ];
+  const seen = new Set([right]), out = [];
+  for (const x of c) {
+    if (!(x[0] > 0 && x[1] > 1)) continue;
+    const y = low(x), v = val(y);
+    if (seen.has(v)) continue;
+    seen.add(v); out.push(y);
+  }
+  return out;
+}
+function quickHTML() {
+  const s = quick;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">ทำครบ 8 ข้อแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} ข้อ</p>
+      <button class="btn" data-act="quick-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const { p, opts } = s.rounds[s.i];
+  return `<div class="match">
+      <p>เลือกคำตอบที่ถูก (เศษส่วนอย่างต่ำ)</p>
+      <div class="fcard" id="fcard">${sumHTML(p)}<span class="op">=</span><span class="gap">?</span></div>
+      ${s.hint ? `<div class="pair">${cakes(p.L, [[p.A[0], G]], { cls: 'sm' })}${cakes(p.L, [[p.Bv[0], B]], { cls: 'sm' })}</div>` : '<button class="link" data-act="hint">ดูภาพช่วย</button>'}
+      <div class="choices">${opts.map((o, i) => `<button class="opt" data-pick="${i}">${fx(o.x)}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">ข้อที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+function answerQuick(i) {
+  const s = quick;
+  if (s.busy || s.i >= s.rounds.length) return;
+  const { p, opts } = s.rounds[s.i];
+  if (opts[i].ok) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true;
+    s.msg = pick(['เก่งมาก!', 'ถูกต้อง!', 'ใช่เลย!', 'เยี่ยม!']); s.msgCls = 'good';
+    drawQuick();
+    setTimeout(() => {
+      s.i++; s.miss = false; s.hint = false; s.busy = false; s.msg = ''; s.msgCls = '';
+      if (s.i >= s.rounds.length) sfx.win();
+      drawQuick();
+    }, 800);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = `${how(p)} ลองใหม่นะ`; s.msgCls = 'bad';
+    drawQuick();
+    $('#fcard').classList.add('shake');
+  }
+}
+
+function playHTML() {
+  if (!quick) quick = newQuick();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>เครื่องคิดเลขเค้ก</h2><p>เลือกบวกหรือลบ แล้วเปลี่ยนตัวเลข ดูเค้กเปลี่ยนตาม</p></div>
+      <div class="calc" id="calc">${calcHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>คิดเร็ว</h2><p>บวกลบเศษส่วน แล้วเลือกคำตอบที่ถูก</p></div>
+      <div id="quick">${quickHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawCalc = () => { const el = $('#calc'); if (el) el.innerHTML = calcHTML(); };
+const drawQuick = () => { const el = $('#quick'); if (el) el.innerHTML = quickHTML(); };
+
+function playClick(e) {
+  const pk = e.target.closest('[data-pick]');
+  if (pk) { answerQuick(+pk.dataset.pick); return; }
+  const op = e.target.closest('[data-op]');
+  if (op) { calc.op = op.dataset.op; if (calc.op === '−' && calc.n2 > calc.n1) [calc.n1, calc.n2] = [calc.n2, calc.n1]; sfx.tap(); drawCalc(); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  const act = a.dataset.act;
+  if (/^[dab][+-]$/.test(act)) { calcStep(act); sfx.tap(); drawCalc(); return; }
+  switch (act) {
+    case 'hint': quick.hint = true; drawQuick(); break;
+    case 'quick-again': quick = newQuick(); drawQuick(); break;
+  }
+}
+
+/* ---------- 3. quiz ---------- */
+const ansOpts = p => shuffle([{ html: fx(low(p.r)), ok: true }, ...wrongs(p).slice(0, 3).map(x => ({ html: fx(x), ok: false }))]);
+// pictures, same bottom
+function qA() {
+  const p = problem({ same: true, maxOver: 1 });
+  const pic = p.op === '+' ? cakes(p.L, [[p.A[0], G], [p.Bv[0], B]]) : cakes(p.L, [[p.r[0], G], [p.Bv[0], 'ate']]);
+  return {
+    ask: `${sumHTML(p)} = ?`,
+    pic: `<div class="fig">${pic}</div>`,
+    opts: ansOpts(p),
+    explain: how(p),
+    review: `${sumHTML(p)} = ${showAns(p.r)}`
+  };
+}
+// no picture, same bottom (the answer may be more than 1)
+function qB() {
+  const p = problem({ same: true });
+  return {
+    ask: `${sumHTML(p)} = ?`,
+    pic: '',
+    opts: ansOpts(p),
+    explain: how(p),
+    after: `<div class="pair">${cakes(p.L, [[p.A[0], G]], { cls: 'sm' })}${cakes(p.L, [[p.Bv[0], B]], { cls: 'sm' })}</div>`,
+    review: `${sumHTML(p)} = ${showAns(p.r)}`
+  };
+}
+// bottoms differ (one a multiple of the other)
+function qC() {
+  const p = problem({ same: false });
+  return {
+    ask: `${sumHTML(p)} = ?`,
+    pic: '',
+    opts: ansOpts(p),
+    explain: how(p),
+    after: `<div class="pair">${cakes(p.L, [[p.A[0], G]], { cls: 'sm' })}${cakes(p.L, [[p.Bv[0], B]], { cls: 'sm' })}</div>`,
+    review: `${sumHTML(p)} = ${showAns(p.r)}`
+  };
+}
+// the missing top: a/d ± ?/d = c/d, or 1 − a/d
+function qD() {
+  if (Math.random() < .35) {
+    const d = ri(3, 10), n = ri(1, d - 1), r = d - n;
+    const wrong = [...new Set([r + 1, r - 1, n, d, d + n, r + 2, r + 3])].filter(x => x > 0 && x !== r);
+    return {
+      ask: `1 − ${frac(n, d)} = ${frac('?', d)}`,
+      pic: '',
+      opts: shuffle([{ html: `<span class="num">${r}</span>`, ok: true }, ...wrong.slice(0, 3).map(x => ({ html: `<span class="num">${x}</span>`, ok: false }))]),
+      explain: `1 ก้อน = ${frac(d, d)} แล้ว ${frac(d, d)} − ${frac(n, d)} = ${frac(r, d)} (${d} − ${n} = ${r})`,
+      review: `1 − ${frac(n, d)} = ${frac(r, d)}`
+    };
+  }
+  const p = problem({ same: true }), d = p.L, [x, y, z] = [p.A[0], p.Bv[0], p.r[0]];
+  const wrong = [...new Set([z, x, y + 1, y - 1, p.op === '+' ? x + z : Math.abs(x - z) + 1, y + 2, y + 3, y + 4])].filter(v => v > 0 && v !== y);
+  return {
+    ask: `${frac(x, d)}<span class="op">${p.op}</span>${frac('?', d)}<span class="op">=</span>${frac(z, d)}`,
+    pic: '',
+    opts: shuffle([{ html: `<span class="num">${y}</span>`, ok: true }, ...wrong.slice(0, 3).map(v => ({ html: `<span class="num">${v}</span>`, ok: false }))]),
+    explain: p.op === '+' ? `${x} + ? = ${z} ดังนั้น ? = ${z} − ${x} = ${y}` : `${x} − ? = ${z} ดังนั้น ? = ${x} − ${z} = ${y}`,
+    review: `${frac(x, d)} ${p.op} ${frac(y, d)} = ${frac(z, d)}`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/6.7',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
+});
+})();
+</script>
+</body>
+</html>

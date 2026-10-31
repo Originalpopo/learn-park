@@ -154,6 +154,7 @@ mark { background: linear-gradient(transparent 45%, var(--yellow) 45%); color: i
 .qpic { display: flex; justify-content: center; margin: 18px 0 6px; }
 .opts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; }
 .opts.n2 { grid-template-columns: 1fr 1fr; }
+.opts.n3 { grid-template-columns: repeat(3, 1fr); }   /* e.g. the > < = choice in 6.6 */
 .opt {
   min-height: 100px; border-radius: 22px; border: 3px solid var(--line); background: var(--card);
   box-shadow: 0 5px 0 var(--line); font-family: var(--display); font-size: 2rem;
@@ -220,6 +221,7 @@ html.scratching, html.scratching body { overflow: hidden; }
   .play-nav { grid-template-columns: auto 1fr; }
   .play-nav > span { display: none; }
   .opts { grid-template-columns: 1fr 1fr; }
+  .opts.n3 { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 440px) {
   .tab .n { display: none; }

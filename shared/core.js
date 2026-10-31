@@ -222,14 +222,13 @@ function lesson(cfg) {
 
   // the exam's start card: what it covers, how many questions, what it takes to pass
   function renderStart() {
-    const n = cfg.exam.count, nx = nextId(cfg.id) && findLesson(nextId(cfg.id));
+    const n = cfg.exam.count;
     view.innerHTML = `
       <section class="card result exam-start">
         <img src="${root}shared/img/glowing-star.png" alt="" width="84" height="84">
         <h2>ด่านสุดท้ายของบทที่ ${chapter.no}</h2>
         <p>${cfg.exam.intro}</p>
         <div class="exam-facts"><span><b>${n}</b> ข้อ</span><span>ถูก <b>${passMark(n)}</b> ข้อขึ้นไป ผ่านด่าน</span></div>
-        ${nx ? `<p class="hint">ผ่านแล้วจะเปิดด่าน ${nx.topic.no} ${nx.topic.title}</p>` : ''}
         <button class="btn" data-act="start-exam">เริ่มทำ</button>
       </section>`;
   }

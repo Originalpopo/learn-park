@@ -43,11 +43,14 @@ There is only a light look; no dark mode.
 - Fonts: Mitr for headings, numbers and buttons (`--display`); Anuphan for body text (`--body`).
 
 ## Lessons
-- Copy the newest lesson (`math/p4/6-7.html`) and keep the same shape:
-  - **เนื้อหา:** about 9 tap-through steps with animated pictures. The cake story continues across chapter 6.
+- Copy the newest lesson of the same chapter and keep the same shape:
+  - **เนื้อหา:** about 9 tap-through steps with animated pictures. The cake story runs through chapter 6; chapter 7 paints the skate-park floor (100 tiles = 1) and uses rails, ropes and baht; chapter 8 uses ramps, rails, spotlights and clocks.
   - **ลองเล่น:** a hands-on builder, a matching game, then the bottom bar to the quiz.
   - **ตอบคำถาม:** 10 random questions with 4 options each, and stars (5 right = 1 star, 8 = 2, 10 = 3).
-- **Every chapter ends with a โจทย์ปัญหา stop** (`exam: true` in COURSES, e.g. 6.8, 7.4): no เนื้อหา or ลองเล่น, just a start card and 20 word problems over the whole chapter in book order, each tagged with the lesson it comes from. Stars: half right = 1 (opens the next chapter), 80% = 2, all = 3. Build it with `L.lesson({ id, exam: { count, intro }, quiz })` (see `math/p4/6-8.html`).
+- **Chapter helpers:** a chapter whose lessons share pictures or maths gets `math/p4/ch<N>.js` + `ch<N>.css`, loaded after `shared/core.js`. `ch7.js` (window.D7) keeps every decimal as whole thousandths so sums are exact, and draws floor grids, place-value tables, number lines and column sums. `ch8.js` (window.G8) draws lines, rays, segments, angles, the protractor and the clock.
+- **Decimal point:** Mitr's point is tiny, so decimals are drawn with `dn()` (an orange point, 1.3× size). Never print a decimal as plain text in a big font: 1.5 must not read as 15.
+- **Protractor:** inner scale blue (0 on the right), outer scale orange (0 on the left). Lessons say "เลขสีฟ้า (วงใน)" / "เลขสีส้ม (วงนอก)" and a story step with a protractor stacks the picture above the words so the numbers stay readable.
+- **Every chapter ends with a โจทย์ปัญหา stop** (`exam: true` in COURSES: 6.8, 7.4, 8.6): no เนื้อหา or ลองเล่น, just a start card and 20 word problems over the whole chapter in book order, each tagged with the lesson it comes from. Stars: half right = 1 (opens the next chapter), 80% = 2, all = 3. Build it with `L.lesson({ id, exam: { count, intro }, quiz })` (see `math/p4/6-8.html`). The book has no โจทย์ปัญหา for chapter 8; 8.6 was added at the owner's wish, on the spare quarter pipe of the bowl park.
 - Lessons open in book order. The next one unlocks at 1 star, with the unlock show on the map.
 - Before release, bulk-test the quiz: options are all different, exactly one is right, and every right answer is worked out.
 

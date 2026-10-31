@@ -1,0 +1,114 @@
+/* บทที่ 8 มุม: looks shared by lessons 8.1-8.6 (figures, angle symbols, protractor, clock).
+   Each lesson adds its own activity styles on top. */
+.geo { width: clamp(220px, 40vw, 340px); height: auto; display: block; overflow: visible; }
+.geo.sm { width: clamp(120px, 22vw, 170px); }
+.geo.big { width: clamp(260px, 48vw, 400px); }
+.geo .ln { stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; }
+.geo .ah { fill: none; stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.geo .ln.blue, .geo .ah.blue { stroke: var(--blue); }
+.geo .ln.green, .geo .ah.green { stroke: var(--green); }
+.geo .ln.arm { stroke-width: 3; }
+.geo .pt { fill: var(--ink); }
+.geo .pt.v { fill: var(--orange); }
+.geo .lb { font-family: var(--display); font-size: 22px; font-weight: 500; text-anchor: middle; fill: var(--ink); }
+.geo .lb.v { fill: var(--orange); }
+.geo .arc { fill: none; stroke: var(--orange); stroke-width: 3; }
+.geo .arc.hot { fill: rgba(232, 130, 58, .14); }
+.geo .arc.blue { stroke: var(--blue); fill: rgba(91, 166, 218, .14); }
+.geo .sq { fill: none; stroke: var(--orange); stroke-width: 3; }
+.geo .paper { fill: rgba(255, 205, 46, .28); stroke: var(--yellow-deep); stroke-width: 2; stroke-dasharray: 6 5; }
+.geo.pop .ln, .geo.pop .ah { animation: fadeup .5s both; }
+
+/* the symbol over two letters: a bar (segment), an arrow (ray), a double arrow (line) */
+.sym { display: inline-flex; flex-direction: column; align-items: center; font-family: var(--display); font-weight: 500; line-height: 1; vertical-align: middle; margin: 0 .1em; }
+.sym svg { width: 1.25em; height: .45em; overflow: visible; margin-bottom: .08em; }
+.sym svg line, .sym svg path { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ang { font-family: var(--display); font-weight: 500; white-space: nowrap; }
+
+/* protractor */
+.prot { width: clamp(280px, 60vw, 460px); }
+/* a story step with a protractor puts the picture above the words, so the protractor gets the full width and its numbers stay readable */
+.story:has(.prot) { grid-template-columns: 1fr; }
+.stage .prot { width: 100%; max-width: 520px; }
+.prot .pr { fill: #FFF6D6; stroke: var(--yellow-deep); stroke-width: 2; }
+.prot .tick { stroke: #B9A777; stroke-width: 1.2; }
+.prot .base { stroke: var(--yellow-deep); stroke-width: 2; }
+.prot .ctr { fill: var(--ink); }
+.prot .sc { font-family: var(--display); font-size: 11.5px; text-anchor: middle; }
+.prot .sc.out { fill: var(--orange); }
+.prot .sc.in { fill: #2F7FB8; font-size: 10px; }   /* the inner ring has less room */
+.prot .ring { fill: none; stroke: var(--good); stroke-width: 3; }
+.prot .mk { fill: var(--orange); }
+.prot .lb.mk { fill: var(--orange); font-size: 20px; }
+.prot .mk.bad, .prot .lb.mk.bad { fill: var(--bad); }
+.prot .mk.blue, .prot .lb.mk.blue { fill: #2F7FB8; }
+.prot .ln.arm { stroke: var(--ink); }
+.scale-out { color: var(--orange); font-weight: 600; }
+.scale-in { color: #2F7FB8; font-weight: 600; }
+
+/* clock */
+.clock { width: clamp(110px, 20vw, 150px); }
+.clock .face { fill: var(--card); stroke: var(--ink); stroke-width: 3; }
+.clock .cmark { stroke: var(--ink); stroke-width: 2; }
+.clock .hand { stroke: var(--ink); stroke-linecap: round; }
+.clock .hand.h { stroke-width: 5; }
+.clock .hand.m { stroke-width: 3.5; stroke: var(--blue); }
+.clock .pin { fill: var(--ink); }
+.clock .cn { font-family: var(--display); font-size: 13px; text-anchor: middle; fill: var(--muted); }
+
+/* layout bits (same as chapter 7) */
+.pair { display: flex; gap: 18px; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
+.kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+.kind { border-radius: 22px; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.kind h3 { font-size: 1.15rem; }
+.kind .geo { width: 100%; max-width: 150px; }
+.kind.a { background: #E6F4EA; }
+.kind.b { background: #FDEBDD; }
+.kind.c { background: #E8F3FB; }
+.kind.d { background: var(--yellow-soft); }
+.rulebox { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.arrow-note { font-size: 1rem; background: var(--yellow-soft); border-radius: 12px; padding: 4px 12px; text-align: center; }
+.big-word { font-family: var(--display); font-size: clamp(1.6rem, 5vw, 2.2rem); }
+
+/* options holding a picture or words */
+.opts .geo { width: 100%; max-width: 160px; }
+.opts:has(.geo) .opt { min-height: 130px; }
+.opts:has(.txt) { grid-template-columns: 1fr 1fr; }
+.opts .txt { font-size: 1.2rem; line-height: 1.4; }
+.opts:has(.txt) .opt { min-height: 76px; }
+.opts .sym, .opts .ang { font-size: 1.8rem; }
+.qask .sym, .qask .ang { font-size: 1.2em; }
+.qpic .geo { width: clamp(220px, 50vw, 340px); }
+.qpic .prot { width: clamp(280px, 70vw, 460px); }
+.fb .geo, .fb .prot { margin: 6px auto 0; }
+
+/* play-tab games */
+.match { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+.fcard { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 14px 22px; box-shadow: 0 6px 0 var(--line); display: flex; align-items: center; justify-content: center; }
+.fcard.shake, .opt.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+.choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 560px; }
+.choices.four { grid-template-columns: repeat(4, 1fr); }
+.choices .opt { font-size: 1.15rem; min-height: 72px; }
+.msg { min-height: 1.6em; text-align: center; font-size: 1.05rem; }
+.msg.bad { color: var(--bad); }
+.msg.good { color: var(--good); }
+.sort-progress { text-align: center; color: var(--muted); font-size: .95rem; }
+.ctrls { display: flex; flex-direction: column; gap: 12px; }
+.ctrl { display: flex; align-items: center; gap: 12px; justify-content: space-between; background: var(--bg); border-radius: 20px; padding: 10px 12px 10px 18px; }
+.ctrl .lab { font-family: var(--display); white-space: nowrap; }
+.ctrl .val { font-family: var(--display); font-size: 1.6rem; min-width: 3ch; text-align: center; font-variant-numeric: tabular-nums; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.ops { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ops .btn { min-height: 52px; font-size: 1.05rem; padding: 0 12px; }
+
+@media (max-width: 560px) {
+  .opts:has(.txt) { grid-template-columns: 1fr; }
+  .opts:has(.geo) { grid-template-columns: 1fr 1fr; }
+  .choices.four { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 440px) {
+  .kinds { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kind { padding: 10px; }
+  .opts .sym, .opts .ang { font-size: 1.4rem; }
+}

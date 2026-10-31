@@ -21,7 +21,7 @@ Pushing to `main` builds `_site/` with `node build.js` and deploys it to GitHub 
 
 - `index.html` home page (written without `<!doctype>`/`<head>`; `serve.js`, `build.js` and the Claude
   artifact publish add them)
-- `math/p4/6-1.html` lessons, at `<subject>/<grade>/<topic>.html`
+- `math/p4/6-1.html` lessons, at `<subject>/<grade>/<topic>.html`; `math/p4/ch7.js`/`ch8.js` (+ `.css`) helpers shared by one chapter's lessons
 - `shared/core.css`, `shared/core.js` shared look and lesson shell; the lesson list `COURSES` is in core.js
 - `shared/parks.js` where each skate-park stop sits on its picture (generated)
 - `DESIGN.md` the look of the site (colours, buttons, lessons, map): follow it for anything new

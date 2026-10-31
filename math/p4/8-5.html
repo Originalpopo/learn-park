@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>การสร้างมุมโดยใช้โพรแทรกเตอร์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<link rel="stylesheet" href="ch8.css">
+<style>
+/* 8.5 only: building an angle of a given size with a protractor (4 steps); tap-to-build and the step-order game */
+.make { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.make .prot { width: clamp(280px, 80vw, 520px); cursor: crosshair; touch-action: manipulation; }
+.goal { font-family: var(--display); font-size: clamp(1.4rem, 4vw, 1.8rem); text-align: center; }
+.goal b { color: var(--orange); font-weight: 500; }
+.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; }
+.order { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 560px; }
+.order .opt { min-height: 64px; font-size: 1.05rem; font-family: var(--body); text-align: left; justify-content: start; display: flex; align-items: center; gap: 10px; padding: 10px 16px; }
+.order .opt .no { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--line); display: grid; place-items: center; font-family: var(--display); }
+.order .opt.done { background: var(--good-soft); border-color: var(--good); box-shadow: 0 5px 0 var(--good); }
+.order .opt.done .no { background: var(--good); color: #fff; }
+.opts .txt.step { font-size: 1.05rem; text-align: left; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script src="ch8.js"></script>
+<script>
+(() => {
+const { ri, pick, shuffle, sfx, addExp, ava, G, B } = L;
+const { shape, angle, kindOf, KIND, protractor, letters, txt } = G8;
+const $ = s => document.querySelector(s);
+
+const KIDS = { khun: ['ขุน', G, 'ข'], bua: ['ใบบัว', B, 'บ'] };
+const kid = k => `<span class="who-row">${ava(KIDS[k][2], KIDS[k][1])}<span>${KIDS[k][0]}</span></span>`;
+const OUT = '<span class="scale-out">เลขสีส้ม (วงนอก)</span>', IN = '<span class="scale-in">เลขสีฟ้า (วงใน)</span>';
+const STEPS = ['ลากรังสี BA', 'วางจุดศูนย์กลางของโพรแทรกเตอร์ที่จุด B ให้เส้นฐานทับรังสี BA', 'นับจาก 0 ที่อยู่บนรังสี BA ไปจนถึงขนาดที่ต้องการ แล้วทำจุด C', 'ยกโพรแทรกเตอร์ออก แล้วลากรังสี BC'];
+// where on the protractor (direction t) a size d is, counting from the 0 on the arm's side
+const tOf = (d, side) => side === 'right' ? d : 180 - d;
+const sizeAt = (t, side) => side === 'right' ? t : 180 - t;
+// the base ray alone, then with a protractor and marks
+const baseOnly = (side, marks = [], o = {}) => protractor({ angle: { deg: null, side }, names: ['A', 'B'], marks, ...o });
+const scaleFor = side => side === 'right' ? IN : OUT;
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => shape({ arms: [{ d: 0, n: 'A', side: -1 }], v: 'B', ray: true, len: 220, svgCls: 'big pop' }),
+    say: () => `<h2>สร้างมุม 60° ขั้นที่ 1</h2>
+      <p>${kid('khun')} อยากสร้าง ∠ABC ให้มีขนาด 60°</p>
+      <p class="callout">ลาก<b>รังสี BA</b> ก่อน (B เป็นจุดยอดมุม)</p>`
+  },
+  {
+    vis: () => baseOnly('right'),
+    say: () => `<h2>ขั้นที่ 2</h2>
+      <p>วาง<b>จุดศูนย์กลาง</b>ของโพรแทรกเตอร์ที่จุด B</p>
+      <p>ให้<b>เส้นฐาน</b>ทับรังสี BA</p>`
+  },
+  {
+    vis: () => baseOnly('right', [{ t: 60, n: 'C' }]),
+    say: () => `<h2>ขั้นที่ 3</h2>
+      <p>รังสี BA ชี้ไปทางขวา ตรงกับ 0 ของ${IN}</p>
+      <p>นับ${IN} 0, 10, 20, ... ไปจนถึง <b>60</b> แล้วทำจุด C ตรงนั้น</p>`
+  },
+  {
+    vis: () => angle(60, { names: ['A', 'B', 'C'], ray: true, svgCls: 'big pop' }),
+    say: () => `<h2>ขั้นที่ 4</h2>
+      <p>ยกโพรแทรกเตอร์ออก แล้วลาก<b>รังสี BC</b></p>
+      <p class="callout">ได้ ∠ABC = <b>60°</b></p>`
+  },
+  {
+    vis: () => baseOnly('right', [{ t: 60, n: 'C' }, { t: 120, n: 'D', cls: 'bad' }]),
+    say: () => `<h2>ระวังนับผิดวง!</h2>
+      <p>ถ้านับ${OUT} ถึง 60 จะได้จุด D ซึ่งทำให้มุมมีขนาด <b>120°</b></p>
+      <p class="callout">ต้องนับวงที่เริ่ม <b>0 ตรงรังสี BA</b> เสมอ</p>
+      <p class="hint">60° เป็นมุมแหลม ถ้ามุมที่ได้ใหญ่กว่ามุมฉาก แปลว่านับผิดวง</p>`
+  },
+  {
+    vis: () => baseOnly('left', [{ t: 180 - 50, n: 'C' }]),
+    say: () => `<h2>รังสีชี้ไปทางซ้าย</h2>
+      <p>สร้าง ∠ABC = 50° โดยรังสี BA ชี้ไปทาง<b>ซ้าย</b></p>
+      <p>0 ที่อยู่บนรังสี BA คือ 0 ของ${OUT}</p>
+      <p class="callout">จึงนับ${OUT} ไปถึง 50 แล้วทำจุด C</p>`
+  },
+  {
+    vis: () => `<div class="pair"><div class="fig">${baseOnly('right', [{ t: 135, n: 'C' }])}</div></div>`,
+    say: () => `<h2>สร้างมุมป้าน 135°</h2>
+      <p>ทำเหมือนเดิมทุกขั้น นับ${IN}ไปถึง 135 (อยู่ระหว่าง 130 กับ 140)</p>
+      <p class="hint">ขีดสั้นระหว่างเลข คือทีละ 5°</p>`
+  },
+  {
+    vis: () => protractor({ angle: { deg: 135, side: 'right' }, names: ['A', 'B', 'C'], read: 'in' }),
+    say: () => `<h2>ตรวจด้วยการวัดซ้ำ</h2>
+      <p>สร้างเสร็จแล้ว ลองวัดอีกครั้ง ต้องได้ 135° พอดี</p>
+      <p class="callout">135° มากกว่า 90° เป็น<b>มุมป้าน</b> ถูกต้อง</p>`
+  },
+  {
+    vis: () => `<ol class="steps">${STEPS.map(s => `<li>${s}</li>`).join('')}</ol>`,
+    say: () => `<h2>สรุป 4 ขั้นตอน</h2>
+      <p>ลากรังสี วางโพรแทรกเตอร์ นับจาก 0 ทำจุด ลากรังสี</p>
+      <p class="hint">ไปลองสร้างมุมเองในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+// build an angle: tap the protractor edge to put C (snaps to 5°), then draw ray BC and see if the size is right
+let make = null;
+const newMake = () => ({ goal: pick([ri(2, 8), ri(10, 17)]) * 10 + (Math.random() < .3 ? 5 : 0), side: pick(['right', 'left']), t: null, drawn: false, ok: false, msg: '', msgCls: '' });
+function makeHTML() {
+  const m = make, got = m.t == null ? null : sizeAt(m.t, m.side);
+  const pic = m.drawn ? protractor({ angle: { deg: got, side: m.side }, names: ['A', 'B', 'C'], read: m.side === 'right' ? 'in' : 'out' })
+    : baseOnly(m.side, m.t == null ? [] : [{ t: m.t, n: 'C' }]);
+  return `<div class="make">
+      <div class="goal">สร้าง ∠ABC ขนาด <b>${m.goal}°</b></div>
+      <div id="makepic">${pic}</div>
+      <p class="msg ${m.msgCls}">${m.msg || (m.t == null ? `แตะบนโพรแทรกเตอร์ เพื่อทำจุด C (รังสี BA ชี้${m.side === 'right' ? 'ขวา' : 'ซ้าย'})` : `จุด C อยู่ที่ ${got}° แล้ว ลากรังสี BC ได้เลย`)}</p>
+      <div class="row-btns">
+        ${m.ok ? '<button class="btn" data-act="make-again">มุมใหม่</button>'
+          : m.drawn ? '<button class="btn" data-act="make-retry">ลองใหม่</button>'
+          : `<button class="btn" data-act="make-draw" ${m.t == null ? 'disabled' : ''}>ลากรังสี BC</button>`}
+      </div>
+    </div>`;
+}
+function makeTap(e, svg) {
+  const m = make;
+  if (m.drawn) return;
+  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  if (p.y > 8) return;   // below the base line
+  const t = Math.max(5, Math.min(175, Math.round(Math.atan2(-p.y, p.x) * 180 / Math.PI / 5) * 5));
+  m.t = t; m.msg = ''; m.msgCls = ''; sfx.tap(); drawMake();
+}
+function makeDraw() {
+  const m = make, got = sizeAt(m.t, m.side);
+  m.drawn = true;
+  if (got === m.goal) { m.ok = true; sfx.good(); addExp(10); m.msg = `เก่งมาก! ได้ ∠ABC = ${got}° พอดี (${KIND[kindOf(got)]})`; m.msgCls = 'good'; }
+  else {
+    sfx.bad();
+    m.msg = got === 180 - m.goal ? `ได้ ${got}° นับผิดวงแล้ว รังสี BA ชี้${m.side === 'right' ? 'ขวา' : 'ซ้าย'} ต้องนับ${scaleFor(m.side)}` : `ได้ ${got}° ยังไม่ใช่ ${m.goal}° ลองนับใหม่จาก 0 บนรังสี BA`;
+    m.msgCls = 'bad';
+  }
+  drawMake();
+}
+
+// step order: tap the 4 steps from first to last
+let order = null;
+const newOrder = () => ({ cards: shuffle([0, 1, 2, 3]), done: [], miss: false, msg: '', msgCls: '', bad: -1 });
+function orderHTML() {
+  const o = order, fin = o.done.length === 4;
+  return `<div class="match">
+      <div class="order">${o.cards.map(i => {
+        const k = o.done.indexOf(i);
+        return `<button class="opt${k >= 0 ? ' done' : ''}${o.bad === i ? ' shake' : ''}" data-step-card="${i}"><span class="no">${k >= 0 ? k + 1 : '?'}</span>${STEPS[i]}</button>`;
+      }).join('')}</div>
+      <p class="msg ${o.msgCls}">${o.msg || (fin ? '' : `แตะขั้นที่ ${o.done.length + 1}`)}</p>
+      ${fin ? '<button class="btn" data-act="order-again">เล่นอีกรอบ</button>' : ''}
+    </div>`;
+}
+function orderPick(i) {
+  const o = order;
+  if (o.done.includes(i) || o.done.length === 4) return;
+  if (i === o.done.length) {
+    o.done.push(i); o.bad = -1; sfx.good(); o.msg = ''; o.msgCls = '';
+    if (o.done.length === 4) { sfx.win(); if (!o.miss) addExp(10); o.msg = 'เรียงครบ 4 ขั้นแล้ว เก่งมาก!'; o.msgCls = 'good'; }
+  } else {
+    sfx.bad(); o.miss = true; o.bad = i;
+    o.msg = `ยังไม่ใช่ขั้นที่ ${o.done.length + 1} ลองใหม่นะ`; o.msgCls = 'bad';
+  }
+  drawOrder();
+}
+
+function playHTML() {
+  if (!make) make = newMake();
+  if (!order) order = newOrder();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>สร้างมุมเอง</h2><p>นับจาก 0 ที่อยู่บนรังสี BA แล้วแตะตรงขนาดที่ต้องการ</p></div>
+      <div id="make">${makeHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>เรียงขั้นตอน</h2><p>แตะขั้นตอนการสร้างมุม จากขั้นแรกไปขั้นสุดท้าย</p></div>
+      <div id="order">${orderHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawMake = () => { const el = $('#make'); if (el) el.innerHTML = makeHTML(); };
+const drawOrder = () => { const el = $('#order'); if (el) el.innerHTML = orderHTML(); };
+
+function playClick(e) {
+  const sc = e.target.closest('[data-step-card]');
+  if (sc) { orderPick(+sc.dataset.stepCard); return; }
+  const svg = e.target.closest('#makepic svg');
+  if (svg) { makeTap(e, svg); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  switch (a.dataset.act) {
+    case 'make-draw': if (make.t != null) makeDraw(); break;
+    case 'make-retry': make.drawn = false; make.t = null; make.msg = ''; make.msgCls = ''; sfx.tap(); drawMake(); break;
+    case 'make-again': make = newMake(); sfx.tap(); drawMake(); break;
+    case 'order-again': order = newOrder(); drawOrder(); break;
+  }
+}
+
+/* ---------- 3. quiz ---------- */
+// which marked point makes the angle
+function qA() {
+  const d = pick([ri(2, 8), ri(10, 16)]) * 10, side = pick(['right', 'left']), t = tOf(d, side);
+  const ts = [t, 180 - t, t + 10, t - 10].filter(x => x > 0 && x < 180);
+  const n = letters(4), marks = ts.map((x, i) => ({ t: x, n: n[i] }));
+  return {
+    ask: `จะสร้าง ∠ABC ขนาด ${d}° ต้องทำจุด C ที่จุดใด`,
+    pic: baseOnly(side, marks),
+    opts: shuffle(marks.map(m => ({ html: `<span class="big-word">${m.n}</span>`, ok: m.t === t }))),
+    explain: `รังสี BA ชี้${side === 'right' ? 'ขวา' : 'ซ้าย'} จึงนับ${scaleFor(side)}จาก 0 ไปถึง ${d} คือจุด ${n[0]}`,
+    after: protractor({ angle: { deg: d, side }, names: ['A', 'B', 'C'], read: side === 'right' ? 'in' : 'out' }),
+    review: `${d}° (รังสี BA ชี้${side === 'right' ? 'ขวา' : 'ซ้าย'}) → นับ${side === 'right' ? 'วงใน' : 'วงนอก'}`
+  };
+}
+// the steps in order
+function qB() {
+  const k = ri(0, 3);
+  return {
+    ask: `การสร้างมุมด้วยโพรแทรกเตอร์ ขั้นที่ ${k + 1} คือข้อใด`,
+    pic: '',
+    opts: shuffle(STEPS.map((s, i) => ({ html: `<span class="txt step">${s}</span>`, ok: i === k }))),
+    explain: STEPS.map((s, i) => `${i + 1}. ${s}`).join(' · '),
+    review: `ขั้นที่ ${k + 1}: ${STEPS[k]}`
+  };
+}
+// which scale to count, or what kind of angle comes out
+function qC() {
+  if (Math.random() < .5) {
+    const side = pick(['right', 'left']);
+    return {
+      ask: `รังสี BA ชี้ไปทาง${side === 'right' ? 'ขวา' : 'ซ้าย'} ต้องนับตัวเลขวงไหน`,
+      pic: baseOnly(side),
+      opts: [{ html: txt('เลขสีฟ้า (วงใน)'), ok: side === 'right' }, { html: txt('เลขสีส้ม (วงนอก)'), ok: side === 'left' }],
+      explain: `นับวงที่มีเลข 0 อยู่บนรังสี BA: รังสีชี้${side === 'right' ? 'ขวา ตรงกับ 0 ของ' + IN : 'ซ้าย ตรงกับ 0 ของ' + OUT}`,
+      review: `รังสีชี้${side === 'right' ? 'ขวา → วงใน' : 'ซ้าย → วงนอก'}`
+    };
+  }
+  const d = pick([ri(2, 8) * 10, 90, ri(10, 17) * 10, 180, ri(4, 16) * 10 + 5].filter(x => x !== 180 || Math.random() < .5));
+  return {
+    ask: `สร้าง ∠PQR ขนาด ${d}° จะได้มุมชนิดใด`,
+    pic: '',
+    opts: ['acute', 'right', 'obtuse', 'straight'].map(k => ({ html: txt(KIND[k]), ok: k === kindOf(d) })),
+    explain: `${d}° ${d < 90 ? 'น้อยกว่า 90° เป็นมุมแหลม' : d === 90 ? 'เท่ากับ 90° เป็นมุมฉาก' : d < 180 ? 'มากกว่า 90° แต่น้อยกว่า 180° เป็นมุมป้าน' : 'เท่ากับ 180° เป็นมุมตรง'}`,
+    review: `${d}° → ${KIND[kindOf(d)]}`
+  };
+}
+// counted on the wrong scale: what size comes out
+function qD() {
+  const d = pick([ri(2, 8), ri(10, 16)]) * 10, side = pick(['right', 'left']), got = 180 - d, [x] = shuffle(['ขุน', 'ใบบัว', 'ต้นกล้า']);
+  const wrong = [d, got + 10, got - 10, 90].filter(v => v !== got && v > 0 && v < 180);
+  return {
+    ask: `${x}จะสร้างมุม ${d}° แต่นับผิดวง ทำจุดตรงเลข ${d} ของ${side === 'right' ? OUT : IN} จะได้มุมกี่องศา`,
+    pic: baseOnly(side, [{ t: tOf(got, side), n: 'C', cls: 'bad' }]),
+    opts: shuffle([got, ...[...new Set(wrong)].slice(0, 3)].map(v => ({ html: `<span class="big-word">${v}°</span>`, ok: v === got }))),
+    explain: `ตรงจุดนั้น ถ้าอ่านวงที่ถูก (เริ่ม 0 บนรังสี BA) จะได้ ${got}° เพราะ ${d} + ${got} = 180 มุมที่ได้จึงเป็น ${got}° ไม่ใช่ ${d}°`,
+    after: protractor({ angle: { deg: got, side }, names: ['A', 'B', 'C'], read: side === 'right' ? 'in' : 'out' }),
+    review: `นับผิดวง: ได้ ${got}° แทน ${d}°`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/8.5',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
+});
+})();
+</script>
+</body>
+</html>

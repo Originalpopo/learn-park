@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>โจทย์ปัญหามุม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<link rel="stylesheet" href="ch8.css">
+<style>
+/* 8.6 only: the last stop of chapter 8, a test of 20 problems over 8.1-8.5 set in the skate park (no story or play) */
+.qask.word { font-family: var(--body, inherit); font-size: clamp(1.1rem, 2.8vw, 1.3rem); line-height: 1.9; text-align: left; display: block; width: 100%; }
+.qask.word .topic { display: inline-block; font-size: .8rem; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 0 10px; margin-bottom: 4px; line-height: 1.8; }
+.qask.word .sym, .qask.word .ang { font-size: 1.1em; }
+.opts .txt.step { font-size: 1.05rem; text-align: left; }
+.deg { font-family: var(--display); font-size: 1.8rem; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script src="ch8.js"></script>
+<script>
+(() => {
+const { ri, pick, shuffle } = L;
+const { fig, sym, KIND1, dots, shape, angle, kindOf, KIND, sizeOf, protractor, clock, clockGap, letters, txt } = G8;
+
+const NAMES = ['ขุน', 'ใบบัว', 'ต้นกล้า', 'แก้วตา'];
+const who = () => shuffle(NAMES);
+const word = (topic, s) => `<div class="qask word"><span class="topic">${topic}</span><br>${s}</div>`;
+const plain = s => s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+const ang = s => `<span class="ang">∠${s}</span>`;
+const deg = d => `<span class="deg">${d}°</span>`;
+const big = s => `<span class="big-word">${s}</span>`;
+const KINDS = ['acute', 'right', 'obtuse', 'straight'];
+const kindOpts = d => KINDS.map(k => ({ html: txt(KIND[k]), ok: k === kindOf(d) }));
+const SIZE = { acute: 'มากกว่า 0° แต่น้อยกว่า 90°', right: 'เท่ากับ 90°', obtuse: 'มากกว่า 90° แต่น้อยกว่า 180°', straight: 'เท่ากับ 180°' };
+const OUT = '<span class="scale-out">เลขสีส้ม (วงนอก)</span>', IN = '<span class="scale-in">เลขสีฟ้า (วงใน)</span>';
+// up to 3 different wrong numbers
+const nums = (right, wrong) => { const out = []; for (const w of wrong) if (out.length < 3 && w !== right && w > 0 && !out.includes(w)) out.push(w); return shuffle([right, ...out]); };
+
+/* ---------- 8.1 จุด เส้นตรง รังสี ส่วนของเส้นตรง ---------- */
+function q81a() {
+  const [x] = who(), [a, b] = letters(2);
+  return {
+    ask: word('8.1 ส่วนของเส้นตรง', `ราวเหล็กในลานสเก็ตมีปลาย 2 ข้าง คือจุด ${a} และจุด ${b} ${x}ไถสเก็ตไปตามราวเหล็กจากปลายหนึ่งถึงอีกปลายหนึ่ง ราวเหล็กเขียนแทนด้วยสัญลักษณ์ใด`),
+    pic: fig('seg', [a, b], { cls: 'blue' }),
+    opts: shuffle([['seg', a + b], ['ray', a + b], ['line', a + b], ['ray', b + a]].map((s, i) => ({ html: sym(...s), ok: i === 0 }))),
+    explain: `ราวเหล็กมีปลาย 2 ข้าง วัดความยาวได้ จึงเป็นส่วนของเส้นตรง ${sym('seg', a + b)}`,
+    review: `ราวเหล็กมีปลาย 2 ข้าง → ส่วนของเส้นตรง ${a}${b}`
+  };
+}
+function q81b() {
+  const [a, b] = letters(2);
+  return {
+    ask: word('8.1 รังสี', `ไฟสปอตไลต์ที่จุด ${a} ส่องแสงผ่านจุด ${b} ออกไปไกลไม่สิ้นสุด แสงไฟนี้เขียนแทนด้วยสัญลักษณ์ใด`),
+    pic: fig('ray', [a, b], { d: pick([0, 20, 160, 180]) }),
+    opts: shuffle([['ray', a + b], ['ray', b + a], ['seg', a + b], ['line', a + b]].map((s, i) => ({ html: sym(...s), ok: i === 0 }))),
+    explain: `แสงเริ่มที่ ${a} แล้วไปไม่สิ้นสุดทางเดียว จึงเป็นรังสี ชื่อขึ้นต้นด้วยจุดปลาย: ${sym('ray', a + b)}`,
+    review: `แสงไฟจาก ${a} ผ่าน ${b} → รังสี ${a}${b}`
+  };
+}
+function q81c() {
+  const [x] = who(), n = letters(4), four = Math.random() < .5;
+  const pts = four ? [[0, 0], [70, 0], [150, 0], [230, 0]] : [[0, 0], [ri(70, 110), 0], [200, 0]];
+  const k = pts.length, right = k * (k - 1) / 2;
+  const names = n.slice(0, k);
+  return {
+    ask: word('8.1 ส่วนของเส้นตรง', `${x}วางกรวย ${k} อันเรียงเป็นแนวตรง ที่จุด ${names.join(' ')} แล้วขึงเชือกระหว่างกรวย<b>ทุกคู่</b> คู่ละ 1 เส้น ต้องใช้เชือกกี่เส้น`),
+    pic: dots(pts.map((p, i) => [...p, names[i], 270]), { open: true }),
+    opts: nums(right, [k - 1, right + 1, right - 1, k]).map(v => ({ html: big(v), ok: v === right })),
+    explain: `จับคู่กรวยทุกคู่: ${names.flatMap((p, i) => names.slice(i + 1).map(q => p + q)).join(', ')} รวม ${right} เส้น`,
+    review: `กรวย ${k} อันเรียงแนวตรง → ${right} เส้น`
+  };
+}
+function q81d() {
+  const want = pick(['seg', 'ray', 'line']);
+  const kinds = ['seg', 'ray', 'line'], [a, b] = letters(2);
+  return {
+    ask: word('8.1 เส้นตรง รังสี ส่วนของเส้นตรง', `ข้อใดเป็น<b>${KIND1[want]}</b>`),
+    pic: '',
+    opts: shuffle(kinds).map(k => ({ html: fig(k, [a, b], { len: 110, ext: 45 }), ok: k === want })),
+    explain: `${KIND1[want]} มีจุดปลาย ${{ seg: '2 จุด', ray: '1 จุด (หัวลูกศรข้างเดียว)', line: '0 จุด (หัวลูกศรทั้งสองข้าง)' }[want]}`,
+    review: `${KIND1[want]}: จุดปลาย ${{ seg: 2, ray: 1, line: 0 }[want]} จุด`
+  };
+}
+
+/* ---------- 8.2 มุม ส่วนประกอบของมุม การเรียกชื่อ ---------- */
+const ramp = () => ({ d: ri(20, 40), n: letters(3) });
+function q82a() {
+  const r = ramp(), [p, q, s] = r.n;
+  return {
+    ask: word('8.2 จุดยอดมุม', `มองทางลาดจากด้านข้าง พื้นกับทางลาดทำให้เกิดมุม จุดยอดมุมคือจุดใด`),
+    pic: angle(r.d, { names: r.n }),
+    opts: shuffle(r.n.map(c => ({ html: big(c), ok: c === q }))),
+    explain: `จุดยอดมุมคือจุดที่แขนทั้งสองมาเจอกัน (ตรงที่ทางลาดเริ่มขึ้น) คือจุด ${q}`,
+    review: `จุดยอดของ ${ang(p + q + s)} คือ ${q}`
+  };
+}
+function q82b() {
+  const r = ramp(), [p, q, s] = r.n, right = Math.random() < .5 ? p + q + s : s + q + p;
+  return {
+    ask: word('8.2 การเรียกชื่อมุม', `มุมระหว่างพื้นกับทางลาดในรูป เขียนเป็นสัญลักษณ์ได้อย่างไร`),
+    pic: angle(r.d, { names: r.n }),
+    opts: shuffle([right, q + p + s, p + s + q, s + p + q].map((w, i) => ({ html: ang(w), ok: i === 0 }))),
+    explain: `จุดยอดคือ ${q} ต้องอยู่ตรงกลาง: ${ang(p + q + s)} หรือ ${ang(s + q + p)}`,
+    review: `${ang(p + q + s)} (จุดยอด ${q} อยู่กลาง)`
+  };
+}
+function q82c() {
+  const n = letters(4), [i, j] = pick([[0, 1], [1, 2], [0, 2]]), o = n[3];
+  const right = n[i] + o + n[j], others = [[0, 1], [1, 2], [0, 2]].filter(([p, q]) => !(p === i && q === j)).map(([p, q]) => n[p] + o + n[q]);
+  return {
+    ask: word('8.2 การเรียกชื่อมุม', `ไฟสปอตไลต์ที่จุด ${o} ส่องแสง 3 ทาง มุมที่แรเงาชื่ออะไร`),
+    pic: shape({ arms: [{ d: 0, n: n[0], side: -1 }, { d: 50, n: n[1] }, { d: 125, n: n[2] }], v: o, ray: true, arcs: [[i, j, 'hot']] }),
+    opts: shuffle([{ html: ang(right), ok: true }, ...others.map(w => ({ html: ang(w), ok: false })), { html: ang(o), ok: false }]),
+    explain: `มุมที่แรเงาอยู่ระหว่างแขน ${o}${n[i]} กับ ${o}${n[j]} จึงชื่อ ${ang(right)} (เรียก ${ang(o)} ไม่ได้ เพราะที่ ${o} มีหลายมุม)`,
+    review: `มุมที่แรเงา ${ang(right)}`
+  };
+}
+function q82d() {
+  const r = ramp(), [p, q, s] = r.n, pair = (a, b) => `${sym('ray', a)} และ ${sym('ray', b)}`;
+  return {
+    ask: word('8.2 แขนของมุม', `แขนของ ${ang(p + q + s)} คือข้อใด`),
+    pic: angle(r.d, { names: r.n, ray: true }),
+    opts: shuffle([{ html: txt(pair(q + p, q + s)), ok: true }, { html: txt(pair(p + q, s + q)), ok: false }, { html: txt(pair(p + q, p + s)), ok: false }, { html: txt(pair(s + p, s + q)), ok: false }]),
+    explain: `แขนของมุมเริ่มที่จุดยอด ${q}: ${pair(q + p, q + s)}`,
+    review: `แขนของ ${ang(p + q + s)}: ${q}${p} และ ${q}${s}`
+  };
+}
+
+/* ---------- 8.3 มุมฉาก มุมตรง มุมแหลม มุมป้าน ---------- */
+function q83clock() {
+  const [x] = who(), h = pick([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), d = clockGap(h);
+  return {
+    ask: word('8.3 ชนิดของมุม', `${x}มาเล่นสเก็ตตอน ${h} นาฬิกา ตอนนั้นเข็มสั้นกับเข็มยาวทำมุมชนิดใด`),
+    pic: clock(h),
+    opts: kindOpts(d),
+    explain: `ตอน ${h} นาฬิกา เข็มทั้งสองห่างกัน ${Math.min(h, 12 - h)} ช่องตัวเลข จึงเป็น${KIND[kindOf(d)]} (3 ช่อง = มุมฉาก, 6 ช่อง = มุมตรง)`,
+    review: `${h} นาฬิกา → ${KIND[kindOf(d)]}`
+  };
+}
+function q83paper() {
+  const [x] = who(), k = pick(['acute', 'right', 'obtuse']), d = sizeOf(k);
+  return {
+    ask: word('8.3 ชนิดของมุม', `${x}เอามุมของกระดาษ (สีเหลือง) ไปทาบมุมของทางลาด ได้ดังรูป มุมนี้เป็นมุมชนิดใด`),
+    pic: angle(d, { paper: true, rot: pick([0, 0, 15]) }),
+    opts: kindOpts(d),
+    explain: k === 'acute' ? 'แขนอีกข้างอยู่ข้างในมุมกระดาษ มุมเล็กกว่ามุมฉาก จึงเป็นมุมแหลม' : k === 'right' ? 'แขนอีกข้างทับขอบกระดาษพอดี จึงเป็นมุมฉาก' : 'แขนอีกข้างอยู่ข้างนอกมุมกระดาษ แต่ยังไม่เป็นเส้นตรง จึงเป็นมุมป้าน',
+    review: `ทาบมุมกระดาษ → ${KIND[k]}`
+  };
+}
+
+/* ---------- 8.4 การวัดขนาดของมุม ---------- */
+function q84read() {
+  const [x] = who(), d = pick([ri(1, 8), ri(10, 17)]) * 10, side = pick(['right', 'left']), n = letters(3);
+  return {
+    ask: word('8.4 การวัดขนาดของมุม', `${x}วัด ${ang(n.join(''))} ด้วยโพรแทรกเตอร์ ได้ดังรูป มุมนี้มีขนาดกี่องศา`),
+    pic: protractor({ angle: { deg: d, side }, names: n }),
+    opts: nums(d, [180 - d, d + 10, d - 10, d + 20]).map(v => ({ html: deg(v), ok: v === d })),
+    explain: side === 'right' ? `แขนข้างหนึ่งชี้ขวา ตรงกับ 0 ของ${IN} จึงอ่าน${IN} ได้ ${d}°` : `แขนข้างหนึ่งชี้ซ้าย ตรงกับ 0 ของ${OUT} จึงอ่าน${OUT} ได้ ${d}°`,
+    after: protractor({ angle: { deg: d, side }, names: n, read: side === 'right' ? 'in' : 'out' }),
+    review: `${ang(n.join(''))} = ${d}°`
+  };
+}
+function q84kind() {
+  const k = pick(KINDS), d = k === 'acute' ? ri(10, 85) : k === 'obtuse' ? ri(95, 175) : k === 'right' ? 90 : 180;
+  const [x] = who(), thing = pick(['ประตูลานสเก็ตเปิดออก', 'ขาบันไดพับกางออก', 'กรรไกรอ้าออก']);
+  return {
+    ask: word('8.4 การจำแนกชนิดของมุม', `${x}วัดมุมที่${thing}ได้ ${d}° เป็นมุมชนิดใด`),
+    pic: '',
+    opts: kindOpts(d),
+    explain: `${KIND[k]} มีขนาด${SIZE[k]}`,
+    review: `${d}° → ${KIND[k]}`
+  };
+}
+function q84split() {
+  const a = ri(2, 7) * 10 + pick([0, 5]), n = letters(4), b = 180 - a;
+  return {
+    ask: word('8.4 ขนาดของมุม', `พื้นลานเรียบเป็นเส้นตรง ${n[0]}${n[3]}${n[2]} (มุมตรง) ทางลาด ${n[3]}${n[1]} ทำมุม ${ang(n[0] + n[3] + n[1])} = ${a}° อีกด้าน ${ang(n[1] + n[3] + n[2])} มีขนาดกี่องศา`),
+    pic: shape({ arms: [{ d: 0, n: n[0], side: -1 }, { d: a, n: n[1] }, { d: 180, n: n[2] }], v: n[3], arcs: [[0, 1, 'hot'], [1, 2, 'blue']], arcR: 34, square: false }),
+    opts: nums(b, [a, b + 10, b - 10, 90]).map(v => ({ html: deg(v), ok: v === b })),
+    explain: `มุมตรงมีขนาด 180° จึงได้ 180 − ${a} = ${b}°`,
+    review: `180° − ${a}° = ${b}°`
+  };
+}
+function q84steep() {
+  const [x, y] = who(), a = ri(15, 35), b = a + pick([5, 10, 15]), s = Math.random() < .5;
+  const [dx, dy] = s ? [a, b] : [b, a], steep = dx > dy ? x : y;
+  return {
+    ask: word('8.4 การวัดขนาดของมุม', `ทางลาดของ${x}ทำมุมกับพื้น ${dx}° ทางลาดของ${y}ทำมุมกับพื้น ${dy}° ทางลาดของใครชันกว่า`),
+    pic: `<div class="pair">${angle(dx, { len: 110 })}${angle(dy, { len: 110 })}</div>`,
+    opts: [x, y].map(n => ({ html: txt(n), ok: n === steep })),
+    explain: `มุมกับพื้นยิ่งใหญ่ ทางลาดยิ่งชัน ${Math.max(dx, dy)}° มากกว่า ${Math.min(dx, dy)}° ทางลาดของ${steep}จึงชันกว่า`,
+    review: `${Math.max(dx, dy)}° > ${Math.min(dx, dy)}° → ${steep}`
+  };
+}
+
+/* ---------- 8.5 การสร้างมุม ---------- */
+const STEPS = ['ลากรังสี BA', 'วางจุดศูนย์กลางของโพรแทรกเตอร์ที่จุด B ให้เส้นฐานทับรังสี BA', 'นับจาก 0 ที่อยู่บนรังสี BA ไปจนถึงขนาดที่ต้องการ แล้วทำจุด C', 'ยกโพรแทรกเตอร์ออก แล้วลากรังสี BC'];
+const tOf = (d, side) => side === 'right' ? d : 180 - d;
+const baseOnly = (side, marks = []) => protractor({ angle: { deg: null, side }, names: ['A', 'B'], marks });
+function q85point() {
+  const [x] = who(), d = pick([ri(2, 8), ri(10, 16)]) * 10, side = pick(['right', 'left']), t = tOf(d, side);
+  const n = letters(4), marks = [t, 180 - t, t + 10, t - 10].map((v, i) => ({ t: v, n: n[i] }));
+  return {
+    ask: word('8.5 การสร้างมุม', `${x}จะสร้าง ∠ABC ขนาด ${d}° สำหรับทางลาดใหม่ ต้องทำจุด C ที่จุดใด`),
+    pic: baseOnly(side, marks),
+    opts: shuffle(marks.map(m => ({ html: big(m.n), ok: m.t === t }))),
+    explain: `รังสี BA ชี้${side === 'right' ? 'ขวา จึงนับ' + IN : 'ซ้าย จึงนับ' + OUT}จาก 0 ไปถึง ${d} คือจุด ${n[0]}`,
+    review: `${d}° → จุด ${n[0]}`
+  };
+}
+function q85wrong() {
+  const [x] = who(), d = pick([ri(2, 8), ri(10, 16)]) * 10, got = 180 - d;
+  return {
+    ask: word('8.5 การสร้างมุม', `${x}จะสร้างมุม ${d}° แต่นับตัวเลขผิดวง จะได้มุมกี่องศา`),
+    pic: '',
+    opts: nums(got, [d, got + 10, got - 10, 90]).map(v => ({ html: deg(v), ok: v === got })),
+    explain: `ตรงจุดเดียวกัน เลข 2 วงรวมกันได้ 180 เสมอ นับผิดวงจึงได้ 180 − ${d} = ${got}°`,
+    review: `นับผิดวง: ${got}° แทน ${d}°`
+  };
+}
+function q85step() {
+  const k = ri(1, 3);
+  return {
+    ask: word('8.5 ขั้นตอนการสร้างมุม', `${STEPS[k - 1]} แล้ว<b>ขั้นต่อไป</b>คือข้อใด`),
+    pic: '',
+    opts: shuffle(STEPS.map((s, i) => ({ html: `<span class="txt step">${s}</span>`, ok: i === k }))).filter(o => o.ok || !o.html.includes(STEPS[k - 1])),
+    explain: STEPS.map((s, i) => `${i + 1}. ${s}`).join(' · '),
+    review: `ต่อจาก "${STEPS[k - 1]}" คือ "${STEPS[k]}"`
+  };
+}
+function q85kind() {
+  const want = pick(['acute', 'obtuse']), [x] = who();
+  const list = shuffle([want === 'acute' ? ri(3, 8) * 10 : ri(10, 17) * 10, 90, 180, want === 'acute' ? ri(10, 17) * 10 : ri(3, 8) * 10]);
+  return {
+    ask: word('8.5 การสร้างมุม', `${x}อยากสร้าง<b>${KIND[want]}</b> ควรสร้างมุมขนาดเท่าไร`),
+    pic: '',
+    opts: list.map(v => ({ html: deg(v), ok: kindOf(v) === want })),
+    explain: `${KIND[want]} มีขนาด${SIZE[want]}`,
+    review: `${KIND[want]}: ${SIZE[want]}`
+  };
+}
+
+// 20 questions in book order, 4 from each lesson 8.1-8.5
+L.lesson({
+  id: 'math-p4/8.6',
+  exam: { count: 20, intro: 'โจทย์ปัญหาทบทวนเนื้อหาบทที่ 8 มุม ทั้งหมด' },
+  quiz: () => [...shuffle([q81a(), q81b(), q81c(), q81d()]), ...shuffle([q82a(), q82b(), q82c(), q82d()]),
+    ...shuffle([q83clock(), q83clock(), q83paper(), q83paper()]), ...shuffle([q84read(), q84kind(), q84split(), q84steep()]),
+    ...shuffle([q85point(), q85wrong(), q85step(), q85kind()])]
+});
+})();
+</script>
+</body>
+</html>

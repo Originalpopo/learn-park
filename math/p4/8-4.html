@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>การวัดขนาดของมุม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<link rel="stylesheet" href="ch8.css">
+<style>
+/* 8.4 only: degrees, reading a protractor (inner scale from the right, outer from the left), kinds of angle by size;
+   the protractor to play with and the reading game */
+.measure { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: center; }
+.measure-pic { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
+.deg-big { font-family: var(--display); font-size: clamp(2rem, 6vw, 2.8rem); line-height: 1.1; }
+.fcard .prot { width: clamp(260px, 60vw, 420px); }
+.deg { font-family: var(--display); font-size: 1.6rem; }
+.opts .deg { font-size: 1.8rem; }
+.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 760px) { .measure { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script src="ch8.js"></script>
+<script>
+(() => {
+const { ri, pick, shuffle, sfx, addExp, ava, G, B } = L;
+const { shape, angle, kindOf, KIND, sizeOf, protractor, letters, txt } = G8;
+const $ = s => document.querySelector(s);
+
+const KIDS = { khun: ['ขุน', G, 'ข'], bua: ['ใบบัว', B, 'บ'] };
+const kid = k => `<span class="who-row">${ava(KIDS[k][2], KIDS[k][1])}<span>${KIDS[k][0]}</span></span>`;
+const KINDS = ['acute', 'right', 'obtuse', 'straight'];
+const SIZE = { acute: 'มากกว่า 0° แต่น้อยกว่า 90°', right: 'เท่ากับ 90°', obtuse: 'มากกว่า 90° แต่น้อยกว่า 180°', straight: 'เท่ากับ 180°' };
+const deg = d => `<span class="deg">${d}°</span>`;
+const OUT = '<span class="scale-out">เลขสีส้ม (วงนอก)</span>', IN = '<span class="scale-in">เลขสีฟ้า (วงใน)</span>';
+// which scale to read and why, for an angle whose base arm lies to the right or left
+const readHow = (d, side) => side === 'right'
+  ? `แขนข้างหนึ่งทับเส้นฐานไปทาง<b>ขวา</b> ตรงเลข 0 ของ${IN} จึงอ่าน${IN} ได้ ${d}°`
+  : `แขนข้างหนึ่งทับเส้นฐานไปทาง<b>ซ้าย</b> ตรงเลข 0 ของ${OUT} จึงอ่าน${OUT} ได้ ${d}°`;
+const onProt = (d, side, o = {}) => protractor({ angle: { deg: d, side }, ...o });
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => `<div class="pair"><div class="fig">${angle(90, { svgCls: 'sm' })}<div class="cap">90°</div></div><div class="fig">${angle(180, { svgCls: 'sm' })}<div class="cap">180°</div></div></div>`,
+    say: () => `<h2>หน่วยวัดมุม: องศา</h2>
+      <p>ขนาดของมุม วัดเป็น <b>องศา</b> เขียนว่า <b>°</b> เช่น 30° อ่านว่า สามสิบองศา</p>
+      <p class="callout">มุมฉาก = <b>90°</b> มุมตรง = <b>180°</b></p>
+      <p class="hint">ขนาดของมุมดูที่ความกว้างระหว่างแขน ไม่ได้ดูที่ความยาวของแขน</p>`
+  },
+  {
+    vis: () => protractor(),
+    say: () => `<h2>โพรแทรกเตอร์</h2>
+      <p>เครื่องมือวัดมุม รูปครึ่งวงกลม มีตัวเลข 0 ถึง 180</p>
+      <p>มี<b>จุดศูนย์กลาง</b> (จุดดำตรงกลางด้านล่าง) และ<b>เส้นฐาน</b> (เส้นตรงด้านล่าง)</p>`
+  },
+  {
+    vis: () => protractor(),
+    say: () => `<h2>ตัวเลข 2 วง</h2>
+      <p>${IN} เริ่ม 0 ทาง<b>ขวา</b> แล้วนับขึ้นไปทางซ้าย</p>
+      <p>${OUT} เริ่ม 0 ทาง<b>ซ้าย</b> แล้วนับขึ้นไปทางขวา</p>
+      <p class="hint">ดูให้ดีว่าวงไหนเริ่มที่ 0 ตรงแขนของมุม</p>`
+  },
+  {
+    vis: () => onProt(50, 'right', { names: ['A', 'B', 'C'] }),
+    say: () => `<h2>วิธีวัด ขั้นที่ 1-2</h2>
+      <p>${kid('bua')} วัด ∠ABC</p>
+      <ol class="steps"><li>วาง<b>จุดศูนย์กลาง</b>ตรงจุดยอดมุม B</li><li>ให้<b>เส้นฐาน</b>ทับแขน BA</li></ol>`
+  },
+  {
+    vis: () => onProt(50, 'right', { names: ['A', 'B', 'C'], read: 'in' }),
+    say: () => `<h2>ขั้นที่ 3 อ่านค่า</h2>
+      <p>แขน BA ชี้ไปทางขวา ตรงกับ 0 ของ${IN}</p>
+      <p>ไล่ตาม${IN} 0, 10, 20, ... ไปจนถึงแขน BC</p>
+      <p class="callout">∠ABC = <b>50°</b></p>`
+  },
+  {
+    vis: () => onProt(120, 'left', { names: ['P', 'Q', 'R'], read: 'out' }),
+    say: () => `<h2>แขนชี้ไปทางซ้าย</h2>
+      <p>แขน QP ชี้ไปทางซ้าย ตรงกับ 0 ของ${OUT}</p>
+      <p>จึงอ่าน${OUT} ไปจนถึงแขน QR</p>
+      <p class="callout">∠PQR = <b>120°</b></p>`
+  },
+  {
+    vis: () => onProt(50, 'right', { read: 'in' }),
+    say: () => `<h2>ระวังอ่านผิดวง!</h2>
+      <p>ตรงแขนอีกข้าง มีเลข 2 ตัว คือ 50 กับ 130</p>
+      <p>มุมนี้เล็กกว่ามุมฉาก (90°) จึงต้องเป็น <b>50°</b> ไม่ใช่ 130°</p>
+      <p class="callout">ดูชนิดของมุมก่อน ช่วยเช็กว่าอ่านถูกวง</p>`
+  },
+  {
+    vis: () => `<div class="kinds">${KINDS.map((k, i) => `<div class="kind ${'abcd'[i]}"><h3>${KIND[k]}</h3>${angle([40, 90, 130, 180][i], { len: 90 })}<span>${SIZE[k]}</span></div>`).join('')}</div>`,
+    say: () => `<h2>บอกชนิดจากขนาด</h2>
+      <p>มุมแหลม: <b>มากกว่า 0° แต่น้อยกว่า 90°</b></p>
+      <p>มุมฉาก: <b>90°</b> · มุมตรง: <b>180°</b></p>
+      <p>มุมป้าน: <b>มากกว่า 90° แต่น้อยกว่า 180°</b></p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>1. จุดศูนย์กลาง</h3><span>วางตรงจุดยอดมุม</span></div>
+        <div class="kind b"><h3>2. เส้นฐาน</h3><span>ทับแขนข้างหนึ่ง</span></div>
+        <div class="kind c" style="grid-column:1/-1"><h3>3. อ่านวงที่เริ่มจาก 0</h3><span>แขนชี้ขวา อ่าน${IN} · แขนชี้ซ้าย อ่าน${OUT}</span></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p>วัดมุมด้วยโพรแทรกเตอร์ได้ 3 ขั้น</p>
+      <p class="hint">ไปลองวัดมุมเองในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+// a protractor to play with: open or close the angle 5° at a time, put the fixed arm on either side
+const meas = { deg: 40, side: 'right' };
+function measHTML() {
+  const { deg: d, side } = meas;
+  return `
+    <div class="measure-pic">
+      ${onProt(d, side, { names: ['A', 'B', 'C'], read: d === 180 || d === 0 ? false : side === 'right' ? 'in' : 'out' })}
+      <div class="deg-big">∠ABC = ${d}°</div>
+      <p class="hint">${KIND[kindOf(d)]}</p>
+    </div>
+    <div class="ctrls">
+      <div class="ctrl"><span class="lab">กางมุม</span><span class="stepper"><button class="btn ghost round" data-act="m-" aria-label="หุบ 5 องศา">−</button><span class="val">${d}°</span><button class="btn ghost round" data-act="m+" aria-label="กาง 5 องศา">+</button></span></div>
+      <div class="ops"><button class="btn ${side === 'right' ? '' : 'ghost'}" data-side="right">แขน BA ชี้ขวา</button><button class="btn ${side === 'left' ? '' : 'ghost'}" data-side="left">แขน BA ชี้ซ้าย</button></div>
+      <p class="hint">${side === 'right' ? `อ่าน${IN}` : `อ่าน${OUT}`} เพราะเริ่ม 0 ตรงแขน BA</p>
+    </div>`;
+}
+
+// reading game: 8 angles on a protractor, pick the size out of 3
+let quick = null;
+const readOpts = d => {
+  const out = [d], cands = shuffle([180 - d, d + 10, d - 10, d + 20, d - 5]);
+  for (const c of [180 - d, ...cands]) if (out.length < 3 && c > 0 && c < 180 && !out.includes(c)) out.push(c);
+  return shuffle(out);
+};
+function newQuick() {
+  return { rounds: [0, 1, 2, 3, 4, 5, 6, 7].map(i => { const d = ri(2, 16) * 10 + (i > 5 ? 5 : 0); return { d, side: i % 2 ? 'left' : 'right', opts: readOpts(d) }; }), i: 0, got: 0, miss: false, msg: '', msgCls: '', busy: false };
+}
+function quickHTML() {
+  const s = quick;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">วัดครบ 8 มุมแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} มุม</p>
+      <button class="btn" data-act="quick-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const r = s.rounds[s.i];
+  return `<div class="match">
+      <p>มุมนี้มีขนาดกี่องศา</p>
+      <div class="fcard" id="fcard">${onProt(r.d, r.side, { read: s.miss ? (r.side === 'right' ? 'in' : 'out') : false })}</div>
+      <div class="choices">${r.opts.map(d => `<button class="opt" data-read="${d}">${deg(d)}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">มุมที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+function answerQuick(d) {
+  const s = quick;
+  if (s.busy || s.i >= s.rounds.length) return;
+  const r = s.rounds[s.i];
+  if (d === r.d) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true; s.msg = pick(['เก่งมาก!', 'ถูกต้อง!', 'ใช่เลย!']); s.msgCls = 'good';
+    drawQuick();
+    setTimeout(() => { s.i++; s.miss = false; s.busy = false; s.msg = ''; s.msgCls = ''; if (s.i >= s.rounds.length) sfx.win(); drawQuick(); }, 800);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = `${r.side === 'right' ? `แขนข้างหนึ่งชี้ขวา อ่าน${IN}` : `แขนข้างหนึ่งชี้ซ้าย อ่าน${OUT}`} (วงกลมสีเขียว) ลองใหม่นะ`; s.msgCls = 'bad';
+    drawQuick();
+    $('#fcard').classList.add('shake');
+  }
+}
+
+function playHTML() {
+  if (!quick) quick = newQuick();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>ลองวัดมุม</h2><p>กด + หรือ − ให้มุมกางหรือหุบ แล้วดูว่าอ่านเลขวงไหน</p></div>
+      <div class="measure" id="meas">${measHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>อ่านโพรแทรกเตอร์</h2><p>ดูว่าแขนของมุมอยู่ตรง 0 ของวงไหน แล้วอ่านวงนั้น</p></div>
+      <div id="quick">${quickHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawMeas = () => { const el = $('#meas'); if (el) el.innerHTML = measHTML(); };
+const drawQuick = () => { const el = $('#quick'); if (el) el.innerHTML = quickHTML(); };
+
+function playClick(e) {
+  const rd = e.target.closest('[data-read]');
+  if (rd) { answerQuick(+rd.dataset.read); return; }
+  const sd = e.target.closest('[data-side]');
+  if (sd) { meas.side = sd.dataset.side; sfx.tap(); drawMeas(); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  switch (a.dataset.act) {
+    case 'm+': meas.deg = Math.min(180, meas.deg + 5); sfx.tap(); drawMeas(); break;
+    case 'm-': meas.deg = Math.max(5, meas.deg - 5); sfx.tap(); drawMeas(); break;
+    case 'quick-again': quick = newQuick(); drawQuick(); break;
+  }
+}
+
+/* ---------- 3. quiz ---------- */
+// read the protractor
+function qA() {
+  const d = pick([ri(1, 17) * 10, ri(1, 17) * 10, ri(2, 16) * 10 + 5].filter(x => x !== 90)), side = pick(['right', 'left']), n = letters(3);
+  const wrong = [180 - d, d + 10, d - 10, d + 5, d - 5, d + 20].filter(x => x > 0 && x < 180 && x !== d);
+  const w = [...new Set(wrong)].slice(0, 3);
+  return {
+    ask: `∠${n.join('')} มีขนาดกี่องศา`,
+    pic: onProt(d, side, { names: n }),
+    opts: shuffle([d, ...w].map(x => ({ html: deg(x), ok: x === d }))),
+    explain: readHow(d, side) + ` (${KIND[kindOf(d)]})`,
+    after: onProt(d, side, { names: n, read: side === 'right' ? 'in' : 'out' }),
+    review: `∠${n.join('')} = ${d}°`
+  };
+}
+// size → kind
+function qB() {
+  const k = pick(KINDS), d = k === 'acute' ? ri(1, 89) : k === 'obtuse' ? ri(91, 179) : k === 'right' ? 90 : 180;
+  return {
+    ask: `มุมที่มีขนาด ${d}° เป็นมุมชนิดใด`,
+    pic: '',
+    opts: KINDS.map(x => ({ html: txt(KIND[x]), ok: x === k })),
+    explain: `${KIND[k]} มีขนาด${SIZE[k]}`,
+    review: `${d}° → ${KIND[k]}`
+  };
+}
+// which size is the asked kind
+function qC() {
+  const want = pick(['acute', 'obtuse', 'obtuse', 'acute', 'right', 'straight']);
+  const sizes = { acute: () => ri(10, 85), right: () => 90, obtuse: () => ri(95, 175), straight: () => 180 };
+  const others = shuffle(KINDS.filter(k => k !== want));
+  const list = shuffle([[want, sizes[want]()], ...others.map(k => [k, sizes[k]()])]);
+  return {
+    ask: `ขนาดใดเป็น<b>${KIND[want]}</b>`,
+    pic: '',
+    opts: list.map(([k, d]) => ({ html: deg(d), ok: k === want })),
+    explain: `${KIND[want]} มีขนาด${SIZE[want]}`,
+    review: `${KIND[want]}: ${SIZE[want]}`
+  };
+}
+// facts, or a straight / right angle split in two
+function qD() {
+  const r = Math.random();
+  if (r < .3) {
+    const f = pick([['มุมฉากมีขนาดกี่องศา', 90, [45, 100, 180, 60]], ['มุมตรงมีขนาดกี่องศา', 180, [90, 100, 360, 150]], ['มุมตรง 1 มุม เท่ากับมุมฉากกี่มุม', 2, [1, 3, 4]]]);
+    const show = f[1] === 2 ? x => `<span class="deg">${x} มุม</span>` : deg;
+    return {
+      ask: f[0],
+      pic: '',
+      opts: shuffle([f[1], ...shuffle(f[2]).slice(0, 3)].map(x => ({ html: show(x), ok: x === f[1] }))),
+      explain: 'มุมฉากมีขนาด 90° มุมตรงมีขนาด 180° ซึ่งเท่ากับมุมฉาก 2 มุม (90° + 90°)',
+      review: `${f[0]} → ${f[1]}${f[1] === 2 ? ' มุม' : '°'}`
+    };
+  }
+  const whole = r < .7 ? 180 : 90, a = whole === 180 ? ri(3, 15) * 10 : ri(2, 7) * 10, b = whole - a, n = letters(4);
+  const arms = [{ d: 0, n: n[0], side: -1 }, { d: a, n: n[1] }, { d: whole, n: n[2] }];
+  const pic = shape({ arms, v: n[3], arcs: [[0, 1, 'hot'], [1, 2, 'blue']], arcR: 34, square: false });
+  const wrong = [whole - b + 10, b + 10, b - 10, whole === 180 ? 90 - Math.min(a, 80) : 180 - a, a].filter(x => x > 0 && x !== b);
+  return {
+    ask: `∠${n[0]}${n[3]}${n[2]} เป็น${whole === 180 ? 'มุมตรง' : 'มุมฉาก'} ถ้า ∠${n[0]}${n[3]}${n[1]} = ${a}° แล้ว ∠${n[1]}${n[3]}${n[2]} มีขนาดกี่องศา`,
+    pic,
+    opts: shuffle([b, ...[...new Set(wrong)].slice(0, 3)].map(x => ({ html: deg(x), ok: x === b }))),
+    explain: `${whole === 180 ? 'มุมตรง' : 'มุมฉาก'}มีขนาด ${whole}° จึงได้ ${whole} − ${a} = ${b}°`,
+    review: `${whole}° − ${a}° = ${b}°`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/8.4',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
+});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>จุด เส้นตรง รังสี และส่วนของเส้นตรง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<link rel="stylesheet" href="ch8.css">
+<style>
+/* 8.1 only: points, segments, rays and lines, their names and symbols; the line builder and the naming game */
+.builder { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: center; }
+.build-pic { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
+.build-pic .big-word { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.build-pic .sym { font-size: 2.2rem; }
+.ends { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ends .end { display: flex; flex-direction: column; gap: 8px; background: var(--bg); border-radius: 20px; padding: 12px; text-align: center; }
+.ends .end .lab { font-family: var(--display); }
+.ends .btn { min-height: 52px; padding: 0 10px; font-size: 1rem; }
+.facts { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; font-size: 1rem; }
+.facts span { background: var(--yellow-soft); border-radius: 999px; padding: 4px 12px; }
+.choices .opt .sym { font-size: 1.9rem; }
+@media (max-width: 760px) { .builder { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script src="ch8.js"></script>
+<script>
+(() => {
+const { ri, pick, shuffle, sfx, addExp, ava, G, B } = L;
+const { fig, sym, KIND1, dots, letters, txt } = G8;
+const $ = s => document.querySelector(s);
+
+const KIDS = { khun: ['ขุน', G, 'ข'], bua: ['ใบบัว', B, 'บ'] };
+const kid = k => `<span class="who-row">${ava(KIDS[k][2], KIDS[k][1])}<span>${KIDS[k][0]}</span></span>`;
+const ENDS = { seg: 2, ray: 1, line: 0 };
+const nameOf = (kind, n) => `${KIND1[kind]} ${n}`;
+// a random figure: kind, two letters (for a ray the first is where it starts), a direction
+function randFig(kind = pick(['seg', 'ray', 'line'])) {
+  return { kind, n: letters(2), d: pick([0, 0, 180, 20, -20, 160, 200, 35, -35]) };
+}
+const drawFig = (f, o = {}) => fig(f.kind, f.n, { d: f.d, ...o });
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => dots([[0, 0, 'A', 270], [120, 50, 'B', 90], [230, -10, 'C', 270]], { svgCls: 'big' }),
+    say: () => `<h2>จุด</h2>
+      <p>${kid('khun')} วางกรวยไว้ 3 ที่บนลานสเก็ต เขียนแทนด้วย<b>จุด</b></p>
+      <p>จุดบอก<b>ตำแหน่ง</b> ตั้งชื่อด้วยตัวอักษรภาษาอังกฤษพิมพ์ใหญ่</p>
+      <p class="callout">อ่านว่า จุด A จุด B จุด C</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">${fig('seg', ['A', 'B'], { svgCls: 'big pop' })}<div class="big-word">${sym('seg', 'AB')}</div></div>`,
+    say: () => `<h2>ส่วนของเส้นตรง</h2>
+      <p>ลากเส้นตรงจากจุด A ไปจุด B</p>
+      <p>มี<b>จุดปลาย 2 จุด</b> คือ A กับ B จึง<b>วัดความยาวได้</b></p>
+      <p class="callout">เขียน ${sym('seg', 'AB')} อ่านว่า ส่วนของเส้นตรง AB หรือ ส่วนของเส้นตรง BA ก็ได้</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">${fig('ray', ['A', 'B'], { svgCls: 'big pop' })}<div class="big-word">${sym('ray', 'AB')}</div></div>`,
+    say: () => `<h2>รังสี</h2>
+      <p>เริ่มที่จุด A ลากผ่านจุด B แล้วยาวต่อไป<b>ไม่สิ้นสุด</b>ทางเดียว เหมือนแสงไฟฉาย</p>
+      <p>มี<b>จุดปลาย 1 จุด</b> คือ A</p>
+      <p class="callout">เขียน ${sym('ray', 'AB')} อ่านว่า รังสี AB</p>
+      <p class="hint">ชื่อรังสี ต้องขึ้นต้นด้วยจุดปลายเสมอ</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="fig">${fig('ray', ['A', 'B'], { d: 0, svgCls: '' })}<div class="cap">${sym('ray', 'AB')}</div></div>
+        <div class="fig">${fig('ray', ['B', 'A'], { d: 180, cls: 'blue' })}<div class="cap">${sym('ray', 'BA')}</div></div>
+      </div>`,
+    say: () => `<h2>รังสี AB กับ รังสี BA</h2>
+      <p>${sym('ray', 'AB')} เริ่มที่ A ชี้ไปทางขวา</p>
+      <p>${sym('ray', 'BA')} เริ่มที่ B ชี้ไปทางซ้าย</p>
+      <p class="callout">เป็น<b>คนละรังสี</b>กัน ตัวอักษรตัวแรกบอกว่าเริ่มที่ไหน</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">${fig('line', ['A', 'B'], { svgCls: 'big pop' })}<div class="big-word">${sym('line', 'AB')}</div></div>`,
+    say: () => `<h2>เส้นตรง</h2>
+      <p>ลากผ่านจุด A และจุด B แล้วยาวต่อไป<b>ไม่สิ้นสุดทั้งสองทาง</b></p>
+      <p><b>ไม่มีจุดปลาย</b> จึงวัดความยาวไม่ได้</p>
+      <p class="callout">เขียน ${sym('line', 'AB')} อ่านว่า เส้นตรง AB หรือ เส้นตรง BA ก็ได้</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>ส่วนของเส้นตรง</h3>${fig('seg', ['A', 'B'], { len: 120 })}<span>จุดปลาย 2 จุด<br>วัดความยาวได้</span></div>
+        <div class="kind b"><h3>รังสี</h3>${fig('ray', ['A', 'B'], { len: 100, ext: 40 })}<span>จุดปลาย 1 จุด<br>ยาวไม่สิ้นสุด 1 ทาง</span></div>
+        <div class="kind c" style="grid-column:1/-1"><h3>เส้นตรง</h3>${fig('line', ['A', 'B'], { len: 120, ext: 50 })}<span>ไม่มีจุดปลาย ยาวไม่สิ้นสุดทั้งสองทาง</span></div>
+      </div>`,
+    say: () => `<h2>ดูความต่าง</h2>
+      <p>นับ<b>จุดปลาย</b>ก็รู้ว่าเป็นแบบไหน</p>
+      <p>ส่วนของเส้นตรง 2 จุด รังสี 1 จุด เส้นตรง ไม่มี</p>
+      <p class="hint">หัวลูกศร แปลว่า ยาวต่อไปไม่สิ้นสุด</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">${fig('seg', ['P', 'Q'], { cls: 'blue', svgCls: 'big' })}<span class="arrow-note">ราวเหล็กมีปลาย 2 ข้าง</span></div>`,
+    say: () => `<h2>ในลานสเก็ต</h2>
+      <p>${kid('bua')} ไถสเก็ตไปตามราวเหล็ก จากปลาย P ถึงปลาย Q</p>
+      <p>ราวเหล็กมีปลาย 2 ข้าง วัดความยาวได้ จึงเป็น<b>ส่วนของเส้นตรง</b> ${sym('seg', 'PQ')}</p>
+      <p class="hint">แสงไฟส่องสนามตอนกลางคืน ส่องออกไปไกลไม่สิ้นสุด เหมือน<b>รังสี</b></p>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${dots([[0, 0, 'A', 225], [160, 0, 'B', 315], [80, 120, 'C', 90]], { closed: true, fill: 'rgba(91,166,218,.12)' })}<div class="cap">3 เส้น</div></div>
+        <div class="fig">${dots([[0, 0, 'A', 270], [90, 0, 'B', 270], [180, 0, 'C', 270]], { open: true })}<div class="cap">3 เส้น</div></div>
+      </div>`,
+    say: () => `<h2>นับส่วนของเส้นตรง</h2>
+      <p>สามเหลี่ยม ABC มี ${sym('seg', 'AB')} ${sym('seg', 'BC')} ${sym('seg', 'CA')} รวม 3 เส้น</p>
+      <p>จุด A B C เรียงบนเส้นเดียวกัน มี ${sym('seg', 'AB')} ${sym('seg', 'BC')} และ ${sym('seg', 'AC')} (ยาวทั้งเส้น) รวม 3 เส้น</p>
+      <p class="hint">จับคู่จุดทีละคู่ ไม่ลืมเส้นยาวทั้งเส้น</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>${sym('seg', 'AB')}</h3><span>ส่วนของเส้นตรง AB</span></div>
+        <div class="kind b"><h3>${sym('ray', 'AB')}</h3><span>รังสี AB (เริ่มที่ A)</span></div>
+        <div class="kind c"><h3>${sym('line', 'AB')}</h3><span>เส้นตรง AB</span></div>
+        <div class="kind d"><h3>• A</h3><span>จุด A</span></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p>ดูสัญลักษณ์ข้างบนตัวอักษร: <b>ขีด</b> ส่วนของเส้นตรง <b>ลูกศรทางเดียว</b> รังสี <b>ลูกศรสองทาง</b> เส้นตรง</p>
+      <p class="hint">ไปลองสร้างเส้นเองในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+// line builder: each end is a point (it stops) or an arrow (it goes on forever)
+const build = { left: 'dot', right: 'arrow' };
+function buildHTML() {
+  const { left, right } = build;
+  const kind = left === 'dot' && right === 'dot' ? 'seg' : left === 'arrow' && right === 'arrow' ? 'line' : 'ray';
+  // a ray is named from its end point: arrow on the right → AB, arrow on the left → BA
+  const n = kind === 'ray' && left === 'arrow' ? ['B', 'A'] : ['A', 'B'];
+  const pic = kind === 'ray' && left === 'arrow' ? fig('ray', ['B', 'A'], { d: 180, svgCls: 'big' }) : fig(kind, ['A', 'B'], { svgCls: 'big' });
+  const name = n.join('');
+  const end = (side, lab) => `<div class="end"><span class="lab">${lab}</span>
+      <div class="ops"><button class="btn ${build[side] === 'dot' ? '' : 'ghost'}" data-end="${side}:dot">จุด</button><button class="btn ${build[side] === 'arrow' ? '' : 'ghost'}" data-end="${side}:arrow">ลูกศร</button></div></div>`;
+  return `
+    <div class="build-pic">
+      ${pic}
+      <div class="big-word">${sym(kind, name)} <span>${KIND1[kind]} ${name}</span></div>
+      <div class="facts"><span>จุดปลาย ${ENDS[kind]} จุด</span><span>${kind === 'seg' ? 'วัดความยาวได้' : 'ยาวไม่สิ้นสุด'}</span></div>
+    </div>
+    <div class="ends">${end('left', 'ปลายซ้าย (A)')}${end('right', 'ปลายขวา (B)')}</div>`;
+}
+
+// naming game: a figure, pick its name out of 3
+let quick = null;
+function newQuick() {
+  const kinds = shuffle(['seg', 'ray', 'ray', 'line', 'seg', 'ray', 'line', 'ray']);
+  const rounds = kinds.map(k => {
+    const f = randFig(k), [a, b] = f.n;
+    const right = [k, a + b];
+    const wrong = shuffle(k === 'ray' ? [['ray', b + a], ['line', a + b], ['seg', a + b]] : [['ray', a + b], ['ray', b + a], [k === 'seg' ? 'line' : 'seg', a + b]]).slice(0, 2);
+    return { f, opts: shuffle([{ x: right, ok: true }, ...wrong.map(x => ({ x, ok: false }))]) };
+  });
+  return { rounds, i: 0, got: 0, miss: false, msg: '', msgCls: '', busy: false };
+}
+function quickHTML() {
+  const s = quick;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">ทำครบ 8 ข้อแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} ข้อ</p>
+      <button class="btn" data-act="quick-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const { f, opts } = s.rounds[s.i];
+  return `<div class="match">
+      <p>รูปนี้ชื่ออะไร</p>
+      <div class="fcard" id="fcard">${drawFig(f)}</div>
+      <div class="choices">${opts.map((o, i) => `<button class="opt" data-pick="${i}">${sym(...o.x)}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">ข้อที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+function answerQuick(i) {
+  const s = quick;
+  if (s.busy || s.i >= s.rounds.length) return;
+  const { f, opts } = s.rounds[s.i];
+  if (opts[i].ok) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true;
+    s.msg = `${pick(['เก่งมาก!', 'ถูกต้อง!', 'ใช่เลย!'])} ${nameOf(f.kind, f.n.join(''))}`; s.msgCls = 'good';
+    drawQuick();
+    setTimeout(() => {
+      s.i++; s.miss = false; s.busy = false; s.msg = ''; s.msgCls = '';
+      if (s.i >= s.rounds.length) sfx.win();
+      drawQuick();
+    }, 900);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = `${why(f)} ลองใหม่นะ`; s.msgCls = 'bad';
+    drawQuick();
+    $('#fcard').classList.add('shake');
+  }
+}
+// why a figure has its name
+function why(f) {
+  const [a, b] = f.n;
+  return f.kind === 'seg' ? `มีจุดปลาย 2 จุด (${a} และ ${b}) จึงเป็นส่วนของเส้นตรง ${a}${b}`
+    : f.kind === 'ray' ? `มีจุดปลายจุดเดียวที่ ${a} แล้วยาวต่อไปทาง ${b} จึงเป็นรังสี ${a}${b} (ขึ้นต้นด้วยจุดปลาย)`
+    : `มีหัวลูกศรทั้งสองข้าง ไม่มีจุดปลาย จึงเป็นเส้นตรง ${a}${b}`;
+}
+
+function playHTML() {
+  if (!quick) quick = newQuick();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>สร้างเส้นเอง</h2><p>เลือกให้แต่ละปลายเป็นจุด (หยุด) หรือลูกศร (ยาวต่อไป) แล้วดูชื่อเปลี่ยน</p></div>
+      <div class="builder" id="build">${buildHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>ทายชื่อ</h2><p>ดูรูป แล้วเลือกชื่อที่ถูก</p></div>
+      <div id="quick">${quickHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawBuild = () => { const el = $('#build'); if (el) el.innerHTML = buildHTML(); };
+const drawQuick = () => { const el = $('#quick'); if (el) el.innerHTML = quickHTML(); };
+
+function playClick(e) {
+  const pk = e.target.closest('[data-pick]');
+  if (pk) { answerQuick(+pk.dataset.pick); return; }
+  const en = e.target.closest('[data-end]');
+  if (en) { const [side, v] = en.dataset.end.split(':'); build[side] = v; sfx.tap(); drawBuild(); return; }
+  const a = e.target.closest('[data-act]');
+  if (a && a.dataset.act === 'quick-again') { quick = newQuick(); drawQuick(); }
+}
+
+/* ---------- 3. quiz ---------- */
+// figure → what kind
+function qA() {
+  const f = randFig();
+  return {
+    ask: 'รูปนี้คืออะไร',
+    pic: drawFig(f),
+    opts: ['seg', 'ray', 'line'].map(k => ({ html: txt(KIND1[k]), ok: k === f.kind })),
+    explain: why(f),
+    review: `${nameOf(f.kind, f.n.join(''))} มีจุดปลาย ${ENDS[f.kind]} จุด`
+  };
+}
+// figure → its symbol
+function qB() {
+  const f = randFig(), [a, b] = f.n;
+  const all = f.kind === 'ray' ? [['ray', a + b], ['ray', b + a], ['seg', a + b], ['line', a + b]]
+    : [[f.kind, a + b], ['ray', a + b], ['ray', b + a], [f.kind === 'seg' ? 'line' : 'seg', a + b]];
+  return {
+    ask: 'เขียนเป็นสัญลักษณ์ได้อย่างไร',
+    pic: drawFig(f),
+    opts: shuffle(all.map((x, i) => ({ html: sym(...x), ok: i === 0 }))),
+    explain: why(f),
+    review: `${nameOf(f.kind, a + b)}`
+  };
+}
+// how many segments
+function qC() {
+  const type = pick(['tri', 'quad', 'line3', 'line4', 'tri']);
+  const n = letters(4);
+  let pic, right, how;
+  if (type === 'tri') { pic = dots([[0, 0, n[0], 225], [170, 0, n[1], 315], [pick([40, 90, 130]), 120, n[2], 90]], { closed: true }); right = 3; how = `${n[0]}${n[1]}, ${n[1]}${n[2]}, ${n[2]}${n[0]} รวม 3 เส้น`; }
+  else if (type === 'quad') { pic = dots([[0, 0, n[0], 225], [170, 0, n[1], 315], [170, 110, n[2], 45], [0, 110, n[3], 135]], { closed: true }); right = 4; how = `${n[0]}${n[1]}, ${n[1]}${n[2]}, ${n[2]}${n[3]}, ${n[3]}${n[0]} รวม 4 เส้น`; }
+  else if (type === 'line3') { pic = dots([[0, 0, n[0], 270], [ri(70, 110), 0, n[1], 270], [200, 0, n[2], 270]], { open: true }); right = 3; how = `${n[0]}${n[1]}, ${n[1]}${n[2]} และเส้นยาวทั้งเส้น ${n[0]}${n[2]} รวม 3 เส้น`; }
+  else { pic = dots([[0, 0, n[0], 270], [70, 0, n[1], 270], [150, 0, n[2], 270], [230, 0, n[3], 270]], { open: true }); right = 6; how = `${n[0]}${n[1]}, ${n[1]}${n[2]}, ${n[2]}${n[3]}, ${n[0]}${n[2]}, ${n[1]}${n[3]}, ${n[0]}${n[3]} รวม 6 เส้น`; }
+  const wrong = shuffle([right - 1, right + 1, right + 2, right - 2, right === 6 ? 3 : 2].filter(x => x > 0 && x !== right));
+  const seen = new Set([right]), w = [];
+  for (const x of wrong) { if (w.length < 3 && !seen.has(x)) { seen.add(x); w.push(x); } }
+  return {
+    ask: 'ในรูปนี้ มีส่วนของเส้นตรงกี่เส้น',
+    pic,
+    opts: shuffle([right, ...w].map(x => ({ html: `<span class="big-word">${x}</span>`, ok: x === right }))),
+    explain: `จับคู่จุดที่มีเส้นเชื่อมกัน: ${how}`,
+    review: `มีส่วนของเส้นตรง ${right} เส้น (${how})`
+  };
+}
+// true or not
+const TRUE = ['ส่วนของเส้นตรงมีจุดปลาย 2 จุด', 'รังสีมีจุดปลาย 1 จุด', 'เส้นตรงไม่มีจุดปลาย', 'ส่วนของเส้นตรงวัดความยาวได้', 'รังสี AB เริ่มต้นที่จุด A', 'เส้นตรง AB กับเส้นตรง BA เป็นเส้นเดียวกัน', 'ส่วนของเส้นตรง AB กับส่วนของเส้นตรง BA เป็นเส้นเดียวกัน'];
+const FALSE = ['รังสีมีจุดปลาย 2 จุด', 'เส้นตรงวัดความยาวได้', 'รังสีวัดความยาวได้', 'ส่วนของเส้นตรงยาวต่อไปไม่สิ้นสุด', 'รังสี AB เริ่มต้นที่จุด B', 'รังสี AB กับรังสี BA เป็นรังสีเดียวกัน', 'เส้นตรงมีจุดปลาย 1 จุด'];
+function qD() {
+  const right = Math.random() < .6, one = pick(right ? TRUE : FALSE), rest = shuffle(right ? FALSE : TRUE).slice(0, 3);
+  return {
+    ask: right ? 'ข้อใดถูกต้อง' : 'ข้อใด<b>ไม่</b>ถูกต้อง',
+    pic: '',
+    opts: shuffle([{ html: txt(one), ok: true }, ...rest.map(s => ({ html: txt(s), ok: false }))]),
+    explain: right ? `"${one}" ถูกต้อง` : `"${one}" ไม่ถูกต้อง`,
+    after: `<p class="hint">จุดปลาย: ส่วนของเส้นตรง 2 จุด, รังสี 1 จุด (ชื่อขึ้นต้นด้วยจุดปลาย), เส้นตรง ไม่มี · วัดความยาวได้เฉพาะส่วนของเส้นตรง</p>`,
+    review: `${right ? 'ถูก' : 'ไม่ถูก'}: ${one}`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/8.1',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
+});
+})();
+</script>
+</body>
+</html>

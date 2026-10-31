@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>มุม ส่วนประกอบของมุมและการเรียกชื่อมุม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<link rel="stylesheet" href="ch8.css">
+<style>
+/* 8.2 only: an angle from two rays, vertex and arms, naming with ∠ (vertex in the middle); naming games */
+.slots { display: flex; gap: 10px; align-items: center; font-family: var(--display); font-size: 2.2rem; }
+.slots .s { width: 1.6em; height: 1.6em; border-radius: 14px; background: var(--bg); border: 2px dashed var(--line); display: grid; place-items: center; }
+.slots .s.mid { border-color: var(--orange); }
+.slots .s.full { border-style: solid; background: var(--card); }
+.letters { display: flex; gap: 12px; justify-content: center; }
+.letters .opt { width: 76px; min-height: 76px; font-size: 2rem; }
+.parts { display: flex; flex-direction: column; gap: 6px; }
+.parts span { display: inline-flex; gap: 8px; align-items: center; }
+.parts i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script src="ch8.js"></script>
+<script>
+(() => {
+const { ri, pick, shuffle, sfx, addExp, ava, G, B } = L;
+const { sym, shape, angle, letters, txt } = G8;
+const $ = s => document.querySelector(s);
+
+const KIDS = { khun: ['ขุน', G, 'ข'], bua: ['ใบบัว', B, 'บ'] };
+const kid = k => `<span class="who-row">${ava(KIDS[k][2], KIDS[k][1])}<span>${KIDS[k][0]}</span></span>`;
+const ang = s => `<span class="ang">∠${s}</span>`;
+// a random angle: size, turn, letters [arm point, vertex, arm point]
+const randAngle = () => ({ deg: pick([ri(30, 80), ri(100, 150)]), rot: pick([0, 0, 20, 40, -15, 180, 200, 90]), n: letters(3) });
+const drawAngle = (a, o = {}) => angle(a.deg, { rot: a.rot, names: a.n, ray: true, ...o });
+// three arms from one vertex O, an arc on the pair (i, j)
+function fan(n, i, j, o = {}) {
+  return shape({ arms: [{ d: 0, n: n[0], side: -1 }, { d: 50, n: n[1] }, { d: 125, n: n[2] }], v: n[3], ray: true, arcs: [[i, j, 'hot']], ...o });
+}
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => angle(40, { names: ['A', 'B', 'C'], ray: true, svgCls: 'big pop' }),
+    say: () => `<h2>มุมเกิดจากรังสี 2 เส้น</h2>
+      <p>${sym('ray', 'BA')} กับ ${sym('ray', 'BC')} เริ่มที่จุด B เหมือนกัน</p>
+      <p>รังสี 2 เส้นที่มี<b>จุดปลายร่วมกัน</b> ทำให้เกิด<b>มุม</b></p>
+      <p class="hint">ช่องที่แรเงาสีส้ม คือมุม</p>`
+  },
+  {
+    vis: () => shape({ arms: [{ d: 0, n: 'A', side: -1, cls: 'blue' }, { d: 40, n: 'C', cls: 'green' }], v: 'B', ray: true, arcs: [[0, 1, 'hot']], svgCls: 'big' }),
+    say: () => `<h2>ส่วนประกอบของมุม</h2>
+      <div class="parts">
+        <span><i style="background:var(--orange)"></i><b>จุดยอดมุม</b> คือจุด B จุดที่แขนทั้งสองมาเจอกัน</span>
+        <span><i style="background:var(--blue)"></i><b>แขนของมุม</b> คือ ${sym('ray', 'BA')}</span>
+        <span><i style="background:var(--green)"></i><b>แขนของมุม</b> อีกข้างคือ ${sym('ray', 'BC')}</span>
+      </div>
+      <p class="callout">มุม 1 มุม มีจุดยอด 1 จุด และแขน 2 แขน</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">${angle(40, { names: ['A', 'B', 'C'], ray: true, svgCls: 'big' })}<div class="big-word">${ang('ABC')}</div></div>`,
+    say: () => `<h2>เรียกชื่อมุม</h2>
+      <p>ใช้สัญลักษณ์ <b>∠</b> แล้วตามด้วยตัวอักษร 3 ตัว</p>
+      <p class="callout">${ang('ABC')} อ่านว่า <b>มุม เอบีซี</b></p>
+      <p>ตัวอักษรของ<b>จุดยอดมุม</b> ต้องอยู่<b>ตรงกลาง</b>เสมอ</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">${angle(40, { names: ['A', 'B', 'C'], ray: true })}<div class="big-word">${ang('ABC')} = ${ang('CBA')}</div></div>`,
+    say: () => `<h2>เรียกได้ 2 แบบ</h2>
+      <p>เริ่มจากแขนข้างไหนก็ได้ ขอแค่จุดยอดอยู่ตรงกลาง</p>
+      <p class="callout">${ang('ABC')} กับ ${ang('CBA')} คือมุมเดียวกัน</p>
+      <p class="hint">ถ้าที่จุด B มีมุมเดียว จะเรียกสั้นๆ ว่า ${ang('B')} ก็ได้</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">${angle(40, { names: ['A', 'B', 'C'], ray: true })}<div class="big-word" style="color:var(--bad)">${ang('BAC')} ✕</div></div>`,
+    say: () => `<h2>ระวัง!</h2>
+      <p>${ang('BAC')} มี A อยู่ตรงกลาง แปลว่าจุดยอดคือ A</p>
+      <p>แต่มุมในรูปมีจุดยอดที่ <b>B</b></p>
+      <p class="callout">${ang('BAC')} <b>ไม่ใช่</b>ชื่อมุมนี้</p>`
+  },
+  {
+    vis: () => fan(['A', 'B', 'C', 'O'], 0, 1, { svgCls: 'big' }),
+    say: () => `<h2>หลายมุมที่จุดยอดเดียวกัน</h2>
+      <p>ที่จุด O มีแขน 3 เส้น เกิดมุม ${ang('AOB')} ${ang('BOC')} และ ${ang('AOC')}</p>
+      <p>มุมที่แรเงาคือ ${ang('AOB')}</p>
+      <p class="callout">แบบนี้ห้ามเรียก ${ang('O')} เพราะไม่รู้ว่าหมายถึงมุมไหน</p>`
+  },
+  {
+    vis: () => fan(['A', 'B', 'C', 'O'], 0, 2, { svgCls: 'big' }),
+    say: () => `<h2>มุมใหญ่ก็มีชื่อ</h2>
+      <p>มุมที่แรเงาตอนนี้ เริ่มจากแขน OA ไปถึงแขน OC</p>
+      <p class="callout">ชื่อ ${ang('AOC')} หรือ ${ang('COA')}</p>
+      <p class="hint">ดูว่ามุมอยู่ระหว่างแขนไหน แล้วเอาจุดยอดไว้ตรงกลาง</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">${angle(30, { names: ['P', 'Q', 'R'], svgCls: 'big' })}<span class="arrow-note">ทางลาดกับพื้น ทำมุมกัน</span></div>`,
+    say: () => `<h2>มุมในลานสเก็ต</h2>
+      <p>${kid('khun')} มองทางลาดจากด้านข้าง พื้นกับทางลาดทำให้เกิดมุม ${ang('PQR')}</p>
+      <p>จุดยอดมุมคือ Q ตรงที่ทางลาดเริ่มขึ้น</p>
+      <p class="hint">มุมยังมีที่อื่นอีก: กรรไกร เข็มนาฬิกา มุมโต๊ะ</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>จุดยอดมุม</h3><span>จุดที่แขนมาเจอกัน</span></div>
+        <div class="kind b"><h3>แขนของมุม</h3><span>รังสี 2 เส้น</span></div>
+        <div class="kind c" style="grid-column:1/-1"><h3>${ang('ABC')} หรือ ${ang('CBA')}</h3><span>จุดยอด (B) อยู่ตรงกลางเสมอ · มีมุมเดียวเรียก ${ang('B')} ได้</span></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p>มุมมี<b>จุดยอด</b> 1 จุด และ<b>แขน</b> 2 แขน</p>
+      <p>เรียกชื่อด้วย ∠ และให้จุดยอดอยู่ตรงกลาง</p>
+      <p class="hint">ไปลองตั้งชื่อมุมในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+// name builder: tap three letters in order; the vertex must land in the middle
+let namer = null;
+function newNamer() {
+  return { rounds: [0, 1, 2, 3, 4, 5].map(() => randAngle()), i: 0, got: 0, miss: false, picked: [], msg: '', msgCls: '', busy: false };
+}
+function namerHTML() {
+  const s = namer;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">ตั้งชื่อครบ 6 มุมแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} มุม</p>
+      <button class="btn" data-act="namer-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const a = s.rounds[s.i];
+  return `<div class="match">
+      <div class="fcard" id="ncard">${drawAngle(a)}</div>
+      <div class="slots">∠${[0, 1, 2].map(k => `<span class="s${k === 1 ? ' mid' : ''}${s.picked[k] ? ' full' : ''}">${s.picked[k] || ''}</span>`).join('')}</div>
+      <div class="letters">${shuffle(a.n.slice()).sort().map(c => `<button class="opt" data-letter="${c}" ${s.picked.includes(c) || s.busy ? 'aria-disabled="true"' : ''}>${c}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg || 'แตะตัวอักษรทีละตัว ให้จุดยอดอยู่ช่องกลาง (กรอบสีส้ม)'}</p>
+      <p class="sort-progress">มุมที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+function namerPick(c) {
+  const s = namer;
+  if (s.busy || s.picked.includes(c)) return;
+  s.picked.push(c); sfx.tap();
+  if (s.picked.length < 3) { s.msg = ''; drawNamer(); return; }
+  const a = s.rounds[s.i], [x, v, y] = a.n, p = s.picked.join('');
+  if (p === x + v + y || p === y + v + x) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true; s.msg = `ถูกต้อง! ${ang(p)} หรือ ${ang(p.split('').reverse().join(''))}`; s.msgCls = 'good';
+    drawNamer();
+    setTimeout(() => { s.i++; s.picked = []; s.miss = false; s.busy = false; s.msg = ''; s.msgCls = ''; if (s.i >= s.rounds.length) sfx.win(); drawNamer(); }, 1100);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = `จุดยอดมุมคือ ${v} ต้องอยู่ตรงกลาง เช่น ${ang(x + v + y)} ลองใหม่นะ`; s.msgCls = 'bad';
+    s.picked = [];
+    drawNamer();
+    $('#ncard').classList.add('shake');
+  }
+}
+
+// find the angle: three arms from one vertex, an arc on one pair; pick its name
+let finder = null;
+function newFinder() {
+  const rounds = [0, 1, 2, 3, 4, 5].map(() => {
+    const n = letters(4), pairs = [[0, 1], [1, 2], [0, 2]], [i, j] = pick(pairs);
+    const name = (p, q) => n[p] + n[3] + n[q];
+    return { n, i, j, opts: shuffle(pairs.map(([p, q]) => ({ name: Math.random() < .5 ? name(p, q) : name(q, p), ok: p === i && q === j }))) };
+  });
+  return { rounds, i: 0, got: 0, miss: false, msg: '', msgCls: '', busy: false };
+}
+function finderHTML() {
+  const s = finder;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">ทำครบ 6 ข้อแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} ข้อ</p>
+      <button class="btn" data-act="finder-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const r = s.rounds[s.i];
+  return `<div class="match">
+      <p>มุมที่แรเงาชื่ออะไร</p>
+      <div class="fcard" id="fcard">${fan(r.n, r.i, r.j)}</div>
+      <div class="choices">${r.opts.map((o, k) => `<button class="opt" data-find="${k}">${ang(o.name)}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">ข้อที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+function finderPick(k) {
+  const s = finder;
+  if (s.busy || s.i >= s.rounds.length) return;
+  const r = s.rounds[s.i];
+  if (r.opts[k].ok) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true; s.msg = pick(['เก่งมาก!', 'ถูกต้อง!', 'ใช่เลย!']); s.msgCls = 'good';
+    drawFinder();
+    setTimeout(() => { s.i++; s.miss = false; s.busy = false; s.msg = ''; s.msgCls = ''; if (s.i >= s.rounds.length) sfx.win(); drawFinder(); }, 800);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = `มุมที่แรเงาอยู่ระหว่างแขน ${r.n[3]}${r.n[r.i]} กับ ${r.n[3]}${r.n[r.j]} จึงเป็น ${ang(r.n[r.i] + r.n[3] + r.n[r.j])} ลองใหม่นะ`; s.msgCls = 'bad';
+    drawFinder();
+    $('#fcard').classList.add('shake');
+  }
+}
+
+function playHTML() {
+  if (!namer) namer = newNamer();
+  if (!finder) finder = newFinder();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>ตั้งชื่อมุม</h2><p>แตะตัวอักษร 3 ตัว เรียงให้เป็นชื่อมุม</p></div>
+      <div id="namer">${namerHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>หามุมในรูป</h2><p>มีหลายมุมที่จุดยอดเดียวกัน มุมที่แรเงาชื่ออะไร</p></div>
+      <div id="finder">${finderHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawNamer = () => { const el = $('#namer'); if (el) el.innerHTML = namerHTML(); };
+const drawFinder = () => { const el = $('#finder'); if (el) el.innerHTML = finderHTML(); };
+
+function playClick(e) {
+  const l = e.target.closest('[data-letter]');
+  if (l) { namerPick(l.dataset.letter); return; }
+  const f = e.target.closest('[data-find]');
+  if (f) { finderPick(+f.dataset.find); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  if (a.dataset.act === 'namer-again') { namer = newNamer(); drawNamer(); }
+  if (a.dataset.act === 'finder-again') { finder = newFinder(); drawFinder(); }
+}
+
+/* ---------- 3. quiz ---------- */
+// the vertex
+function qA() {
+  const a = randAngle(), [x, v, y] = a.n;
+  return {
+    ask: 'จุดยอดมุมคือจุดใด',
+    pic: drawAngle(a),
+    opts: shuffle(a.n.map(c => ({ html: `<span class="big-word">${c}</span>`, ok: c === v }))),
+    explain: `จุดยอดมุมคือจุดที่แขนทั้งสองมาเจอกัน คือจุด ${v}`,
+    review: `จุดยอดของ ${ang(x + v + y)} คือ ${v}`
+  };
+}
+// the name
+function qB() {
+  const a = randAngle(), [x, v, y] = a.n;
+  const right = Math.random() < .5 ? x + v + y : y + v + x;
+  const wrong = shuffle([v + x + y, x + y + v, v + y + x, y + x + v]).slice(0, 3);
+  return {
+    ask: 'มุมในรูป เขียนเป็นสัญลักษณ์ได้อย่างไร',
+    pic: drawAngle(a),
+    opts: shuffle([{ html: ang(right), ok: true }, ...wrong.map(w => ({ html: ang(w), ok: false }))]),
+    explain: `จุดยอดคือ ${v} ต้องอยู่ตรงกลาง: ${ang(x + v + y)} หรือ ${ang(y + v + x)}`,
+    review: `${ang(x + v + y)} หรือ ${ang(y + v + x)} (จุดยอด ${v} อยู่กลาง)`
+  };
+}
+// the arms
+function qC() {
+  const a = randAngle(), [x, v, y] = a.n;
+  const pair = (p, q) => `${sym('ray', p)} และ ${sym('ray', q)}`;
+  return {
+    ask: `แขนของ ${ang(x + v + y)} คือข้อใด`,
+    pic: drawAngle(a),
+    opts: shuffle([{ html: txt(pair(v + x, v + y)), ok: true }, { html: txt(pair(x + v, y + v)), ok: false },
+      { html: txt(pair(x + v, x + y)), ok: false }, { html: txt(pair(y + x, y + v)), ok: false }]),
+    explain: `แขนของมุมเริ่มที่จุดยอด ${v} ไปทาง ${x} และทาง ${y} คือ ${pair(v + x, v + y)}`,
+    review: `แขนของ ${ang(x + v + y)}: ${pair(v + x, v + y)}`
+  };
+}
+// a name that is not this angle's, or the shaded angle among three arms
+function qD() {
+  if (Math.random() < .5) {
+    const a = randAngle(), [x, v, y] = a.n, bad = pick([v + x + y, x + y + v, y + x + v]);
+    return {
+      ask: 'ข้อใด<b>ไม่ใช่</b>ชื่อของมุมนี้',
+      pic: drawAngle(a),
+      opts: shuffle([{ html: ang(bad), ok: true }, { html: ang(x + v + y), ok: false }, { html: ang(y + v + x), ok: false }, { html: ang(v), ok: false }]),
+      explain: `${ang(bad)} มี ${bad[1]} อยู่ตรงกลาง แต่จุดยอดของมุมนี้คือ ${v} (มุมนี้ชื่อ ${ang(x + v + y)}, ${ang(y + v + x)} หรือ ${ang(v)})`,
+      review: `${ang(bad)} ไม่ใช่ชื่อมุมนี้ (จุดยอดคือ ${v})`
+    };
+  }
+  const n = letters(4), [i, j] = pick([[0, 1], [1, 2], [0, 2]]), o = n[3];
+  const right = n[i] + o + n[j], others = [[0, 1], [1, 2], [0, 2]].filter(([p, q]) => !(p === i && q === j)).map(([p, q]) => n[p] + o + n[q]);
+  return {
+    ask: 'มุมที่แรเงาชื่ออะไร',
+    pic: fan(n, i, j),
+    opts: shuffle([{ html: ang(right), ok: true }, ...others.map(w => ({ html: ang(w), ok: false })), { html: ang(o), ok: false }]),
+    explain: `มุมที่แรเงาอยู่ระหว่างแขน ${o}${n[i]} กับ ${o}${n[j]} จึงชื่อ ${ang(right)} (เรียก ${ang(o)} ไม่ได้ เพราะที่ ${o} มีหลายมุม)`,
+    review: `มุมที่แรเงาคือ ${ang(right)}`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/8.2',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
+});
+})();
+</script>
+</body>
+</html>

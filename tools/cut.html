@@ -43,6 +43,13 @@ const ZONES = {
     { box: [905, 322, 1118, 510], ground: [960, 520], skip: [[900, 318, 962, 405], [1100, 318, 1120, 388]],   // big quarter pipe, far end (9.5 test; rim behind)
       poly: [[965, 356], [1110, 395], [1035, 502], [914, 432]] },
   ] },
+  plaza: { tile: 5, stops: [                                       // chapter 10, the plaza (raspberry rim)
+    { box: [190, 312, 362, 462], ground: [300, 472], skip: [[185, 300, 232, 340], [225, 300, 262, 327], [262, 300, 276, 322]],   // yellow quarter pipe, left (bench + pot behind)
+      poly: [[232, 378], [302, 332], [358, 402], [272, 458]] },
+    { box: [515, 322, 735, 505], ground: [620, 512] },             // three boxes like a bar chart, middle
+    { box: [905, 322, 1118, 510], ground: [960, 520], skip: [[1100, 318, 1120, 388]],   // big quarter pipe, right (10.3 test)
+      poly: [[965, 356], [1110, 395], [1035, 502], [914, 432]] },
+  ] },
 };
 
 const log = s => (document.getElementById('log').textContent += s + '\n');

@@ -40,6 +40,11 @@ const COURSES = [{
       { no: '9.3', title: 'ความยาวรอบรูป' },
       { no: '9.4', title: 'พื้นที่ของรูปสี่เหลี่ยมมุมฉาก' },
       { no: '9.5', title: 'โจทย์ปัญหา', exam: true }
+    ] },
+    { no: 10, title: 'การนำเสนอข้อมูล', color: 'var(--pink)', topics: [
+      { no: '10.1', title: 'การเก็บรวบรวมข้อมูลและการจำแนกข้อมูล' },
+      { no: '10.2', title: 'การนำเสนอข้อมูล' },
+      { no: '10.3', title: 'โจทย์ปัญหา', exam: true }   // not in the book: added at the owner's wish, like 8.6
     ] }
   ]
 }];

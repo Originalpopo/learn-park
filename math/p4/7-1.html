@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>การอ่าน การเขียนทศนิยม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<link rel="stylesheet" href="ch7.css">
+<style>
+/* 7.1 only: tenths, hundredths and thousandths on the skate-park floor, reading them out, place values; the floor painter */
+.paint { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: center; }
+.paint-pic { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; }
+.paint-out { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.paint-out .eqs { font-family: var(--display); font-size: 1.2rem; color: var(--muted); }
+@media (max-width: 760px) { .paint { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script src="ch7.js"></script>
+<script>
+(() => {
+const { frac, fade, ri, pick, shuffle, sfx, addExp, ava, G, B } = L;
+const { fmt, dn, places, digitAt, PLACE, valueAt, DIG, thaiInt, read, grid, grids, table, expand, rnd, opts } = D7;
+const $ = s => document.querySelector(s);
+
+const KIDS = { khun: ['ขุน', G, 'ข'], bua: ['ใบบัว', B, 'บ'] };
+const kid = k => `<span class="who-row">${ava(KIDS[k][2], KIDS[k][1])}<span>${KIDS[k][0]}</span></span>`;
+const txt = s => `<span class="txt">${s}</span>`;
+// v as a fraction over 10, 100 or 1000 (the bottom follows how many digits are after the point)
+const asFrac = (v, p = places(v)) => frac(Math.round(v / 10 ** (3 - p)), 10 ** p);
+// up to 3 wrong options, told apart by a key (readings are strings, fractions by their value)
+function optsBy(right, wrong, show, key) {
+  const seen = new Set([key(right)]), out = [];
+  for (const w of wrong) { const k = key(w); if (out.length >= 3 || seen.has(k)) continue; seen.add(k); out.push(w); }
+  return shuffle([{ html: show(right), ok: true }, ...out.map(w => ({ html: show(w), ok: false }))]);
+}
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => `<div class="fig">${grid(3, { tenths: true, cls: 'big', anim: true })}<div class="cap">${kid('khun')} ทาสี ${frac(3, 10)} แผ่น</div></div>`,
+    say: () => `<h2>แบ่งพื้นเป็น 10 ส่วน</h2>
+      <p>ขุนแบ่งพื้นลานสเก็ต 1 แผ่น เป็น 10 ส่วนเท่าๆ กัน แล้วทาสีฟ้า 3 ส่วน</p>
+      <p>ทาสีไป ${frac(3, 10)} ของแผ่น</p>
+      <p class="callout">${frac(3, 10)} เขียนเป็น<b>ทศนิยม</b>ได้ ${dn(300)} อ่านว่า <b>ศูนย์จุดสาม</b></p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="eq">${frac(1, 10)}<span class="op">=</span>${dn(100)}</div>
+        <div class="eq">${fade(`${frac(3, 10)}<span class="op">=</span>${dn(300)}`, .3)}</div>
+        <div class="eq">${fade(`${frac(7, 10)}<span class="op">=</span>${dn(700)}`, .6)}</div>
+      </div>`,
+    say: () => `<h2>ทศนิยม 1 ตำแหน่ง</h2>
+      <p>มีตัวเลขหลังจุด 1 ตัว บอกว่ามีกี่ <b>ส่วนสิบ</b></p>
+      <p>จุด ( <b style="color:var(--orange)">.</b> ) เรียกว่า <b>จุดทศนิยม</b> คั่นระหว่างจำนวนเต็มกับส่วนที่ไม่เต็ม</p>
+      <p class="hint">${dn(700)} คือ 7 ส่วนใน 10 ส่วน</p>`
+  },
+  {
+    vis: () => `<div class="fig">${grid(25, { cls: 'big', anim: true })}<div class="cap">${kid('bua')} ทาสี 25 ช่อง</div></div>`,
+    say: () => `<h2>แบ่งเป็น 100 ช่อง</h2>
+      <p>ใบบัวแบ่งพื้น 1 แผ่นเป็น 100 ช่องเท่าๆ กัน แล้วทาสี 25 ช่อง</p>
+      <div class="eq">${frac(25, 100)}<span class="op">=</span>${dn(250)}</div>
+      <p class="callout">อ่านว่า <b>ศูนย์จุดสองห้า</b> (ทศนิยม 2 ตำแหน่ง)</p>
+      <p class="hint">หลังจุด อ่านตัวเลขทีละตัว ไม่อ่านว่า "ยี่สิบห้า"</p>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${grid(7, { anim: true })}<div class="cap">${dn(70)}</div></div>
+        <div class="fig">${grid(70, { color: 'var(--green)' })}<div class="cap">${dn(700)}</div></div>
+      </div>`,
+    say: () => `<h2>${dn(70)} กับ ${dn(700)}</h2>
+      <p>ทาสี 7 ช่องจาก 100 ช่อง ได้ ${frac(7, 100)} = ${dn(70)} อ่านว่า ศูนย์จุดศูนย์เจ็ด</p>
+      <p>ทาสี 7 แถบ (70 ช่อง) ได้ ${frac(7, 10)} = ${dn(700)}</p>
+      <p class="callout">เลข <b>0</b> หลังจุด ช่วยให้ 7 อยู่ถูกหลัก ห้ามลืมเขียนนะ</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        ${table(125, 3)}
+        <div class="eq">${frac(125, 1000)}<span class="op">=</span>${dn(125)}</div>
+      </div>`,
+    say: () => `<h2>ทศนิยม 3 ตำแหน่ง</h2>
+      <p>ถ้าแบ่ง 1 แผ่น เป็น 1,000 ส่วน 1 ส่วนคือ ${frac(1, 1000)} = ${dn(1)}</p>
+      <p>${frac(125, 1000)} = ${dn(125)} อ่านว่า <b>ศูนย์จุดหนึ่งสองห้า</b></p>
+      <p class="hint">ตัวเลขหลังจุด 3 ตัว: ส่วนสิบ ส่วนร้อย ส่วนพัน</p>`
+  },
+  {
+    vis: () => `<div class="fig">${grids(1400, { tenths: true, anim: true })}<div class="cap">${dn(1400)}</div></div>`,
+    say: () => `<h2>มากกว่า 1 แผ่น</h2>
+      <p>ทาสีเต็ม 1 แผ่น กับอีก ${frac(4, 10)} แผ่น ได้ ${dn(1400)} อ่านว่า <b>หนึ่งจุดสี่</b></p>
+      <p class="callout">หน้าจุด อ่านแบบจำนวนนับ หลังจุด อ่านทีละตัว</p>
+      <p>${dn(12350)} อ่านว่า <b>สิบสองจุดสามห้า</b></p>`
+  },
+  {
+    vis: () => table(3456, 3),
+    say: () => `<h2>หลักและค่าประจำหลัก</h2>
+      <p>${dn(3456)}</p>
+      <p>3 อยู่หลักหน่วย มีค่า <b>3</b></p>
+      <p>4 อยู่หลักส่วนสิบ มีค่า <b>${fmt(400)}</b></p>
+      <p>5 อยู่หลักส่วนร้อย มีค่า <b>${fmt(50)}</b></p>
+      <p>6 อยู่หลักส่วนพัน มีค่า <b>${fmt(6)}</b></p>`
+  },
+  {
+    vis: () => `<div class="rulebox"><div class="eq">${dn(3456)}<span class="op">=</span>${fade('3', .2)}<span class="op">+</span>${fade(dn(400), .5)}<span class="op">+</span>${fade(dn(50), .8)}<span class="op">+</span>${fade(dn(6), 1.1)}</div></div>`,
+    say: () => `<h2>เขียนในรูปกระจาย</h2>
+      <p>แยกตัวเลขทุกหลักออกมาบวกกัน ตามค่าประจำหลัก</p>
+      <p class="callout">${dn(3456)} = 3 + ${fmt(400)} + ${fmt(50)} + ${fmt(6)}</p>
+      <p class="hint">หลักที่เป็น 0 ไม่ต้องเขียน เช่น ${dn(2050)} = 2 + ${fmt(50)}</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>1 ตำแหน่ง</h3><span>ส่วนสิบ</span><div class="ex">${dn(300)} = ${frac(3, 10)}</div></div>
+        <div class="kind b"><h3>2 ตำแหน่ง</h3><span>ส่วนร้อย</span><div class="ex">${dn(250)} = ${frac(25, 100)}</div></div>
+        <div class="kind c"><h3>3 ตำแหน่ง</h3><span>ส่วนพัน</span><div class="ex">${dn(125)} = ${frac(125, 1000)}</div></div>
+        <div class="kind a"><h3>การอ่าน</h3><span>หน้าจุด อ่านแบบจำนวนนับ หลังจุด อ่านทีละตัว</span></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p>ทศนิยมบอกส่วนที่ไม่เต็ม 1 เหมือนเศษส่วนที่มีตัวส่วนเป็น 10, 100 หรือ 1,000</p>
+      <p>จำนวนตัวเลขหลังจุด คือจำนวน<b>ตำแหน่ง</b>ของทศนิยม</p>
+      <p class="hint">ไปลองทาสีพื้นเองในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+// floor painter: whole squares, tenths and hundredths, each with its own stepper
+const paint = { w: 0, t: 2, h: 5 };
+const paintV = () => paint.w * 1000 + paint.t * 100 + paint.h * 10;
+function paintHTML() {
+  const v = paintV(), p = paint.h ? 2 : paint.t ? 1 : 0;
+  const ctrl = (k, lab, max) => `<div class="ctrl"><span class="lab">${lab}</span><span class="stepper"><button class="btn ghost round" data-act="${k}-" aria-label="ลด${lab}">−</button><span class="val">${paint[k]}</span><button class="btn ghost round" data-act="${k}+" aria-label="เพิ่ม${lab}">+</button></span></div>`;
+  return `
+    <div class="paint-pic">
+      ${grids(v, { anim: false })}
+      <div class="paint-out">
+        <div class="big-dn">${dn(v, p)}</div>
+        <div class="reading">อ่านว่า <b>${read(v, p)}</b></div>
+        ${v % 1000 && v >= 1000 ? `<div class="eqs">${dn(v, p)} = ${expand(v)}</div>` : v && v < 1000 ? `<div class="eqs">${dn(v, p)} = ${asFrac(v, p)}</div>` : ''}
+      </div>
+    </div>
+    <div class="ctrls">
+      ${ctrl('w', 'แผ่นเต็ม (หน่วย)', 3)}
+      ${ctrl('t', 'แถบ (ส่วนสิบ)', 9)}
+      ${ctrl('h', 'ช่อง (ส่วนร้อย)', 9)}
+    </div>`;
+}
+function paintStep(act) {
+  const k = act[0], max = k === 'w' ? 3 : 9;
+  paint[k] = Math.max(0, Math.min(max, paint[k] + (act[1] === '+' ? 1 : -1)));
+}
+
+// match: a reading or a fraction, pick its number out of 3
+let quick = null;
+function newQuick() {
+  const rounds = [0, 1, 2, 3, 4, 5, 6, 7].map(i => {
+    const p = [1, 2, 2, 3][i % 4], v = rnd(p, i < 4 ? 0 : 12);
+    const show = i % 2 ? `<span class="txt" style="font-size:1.4rem">${read(v)}</span>` : (v < 1000 ? asFrac(v) : `<span class="txt" style="font-size:1.4rem">${read(v)}</span>`);
+    const all = opts(v, shiftWrongs(v));
+    return { v, show, opts: shuffle([all.find(o => o.ok), ...all.filter(o => !o.ok).slice(0, 2)]) };
+  });
+  return { rounds: shuffle(rounds), i: 0, got: 0, miss: false, msg: '', msgCls: '', busy: false };
+}
+// the same digits with the point in the wrong place, a zero lost or added, two digits swapped
+function shiftWrongs(v) {
+  const p = places(v), digits = fmt(v).replace('.', '');
+  const at = (s, pp) => { const n = parseInt(s, 10); return n * 10 ** (3 - pp); };
+  const out = [];
+  for (const pp of [p + 1, p - 1, p + 2, p - 2]) if (pp >= 0 && pp <= 3) out.push(at(digits, pp));
+  if (p >= 2) { const f = fmt(v).split('.')[1]; out.push(Math.floor(v / 1000) * 1000 + parseInt([...f].reverse().join(''), 10) * 10 ** (3 - p)); }
+  out.push(v + 10 ** (3 - p), v + 100);
+  return out;
+}
+function quickHTML() {
+  const s = quick;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">ทำครบ 8 ข้อแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} ข้อ</p>
+      <button class="btn" data-act="quick-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const r = s.rounds[s.i];
+  return `<div class="match">
+      <p>ข้อนี้เขียนเป็นทศนิยมได้เท่าไร</p>
+      <div class="fcard" id="fcard">${r.show}</div>
+      <div class="choices">${r.opts.map((o, i) => `<button class="opt" data-pick="${i}">${o.html}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">ข้อที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+function answerQuick(i) {
+  const s = quick;
+  if (s.busy || s.i >= s.rounds.length) return;
+  const r = s.rounds[s.i];
+  if (r.opts[i].ok) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true;
+    s.msg = pick(['เก่งมาก!', 'ถูกต้อง!', 'ใช่เลย!', 'เยี่ยม!']); s.msgCls = 'good';
+    drawQuick();
+    setTimeout(() => {
+      s.i++; s.miss = false; s.busy = false; s.msg = ''; s.msgCls = '';
+      if (s.i >= s.rounds.length) sfx.win();
+      drawQuick();
+    }, 800);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = `${dn(r.v)} อ่านว่า ${read(r.v)} ลองใหม่นะ`; s.msgCls = 'bad';
+    drawQuick();
+    $('#fcard').classList.add('shake');
+  }
+}
+
+function playHTML() {
+  if (!quick) quick = newQuick();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>ทาสีพื้นลานสเก็ต</h2><p>กด + หรือ − ดูว่าทาสีไปเท่าไร เขียนและอ่านอย่างไร</p></div>
+      <div class="paint" id="paint">${paintHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>จับคู่ทศนิยม</h2><p>ดูคำอ่านหรือเศษส่วน แล้วเลือกทศนิยมที่ตรงกัน</p></div>
+      <div id="quick">${quickHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawPaint = () => { const el = $('#paint'); if (el) el.innerHTML = paintHTML(); };
+const drawQuick = () => { const el = $('#quick'); if (el) el.innerHTML = quickHTML(); };
+
+function playClick(e) {
+  const pk = e.target.closest('[data-pick]');
+  if (pk) { answerQuick(+pk.dataset.pick); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  const act = a.dataset.act;
+  if (/^[wth][+-]$/.test(act)) { paintStep(act); sfx.tap(); drawPaint(); return; }
+  if (act === 'quick-again') { quick = newQuick(); drawQuick(); }
+}
+
+/* ---------- 3. quiz ---------- */
+// a painted floor square: how much is painted?
+function qA() {
+  const tenths = Math.random() < .3, n = tenths ? ri(1, 9) : pick([ri(1, 9), ri(11, 99)].filter(x => x % 10));
+  const v = tenths ? n * 100 : n * 10, of = tenths ? 10 : 100;
+  return {
+    ask: 'ส่วนที่ทาสี เขียนเป็นทศนิยมได้เท่าไร',
+    pic: `<div class="fig">${grid(n, { tenths })}</div>`,
+    opts: opts(v, [...shiftWrongs(v), (of - n) * (1000 / of)]),
+    explain: `ทาสี ${n} ${tenths ? 'แถบ จาก 10 แถบ' : 'ช่อง จาก 100 ช่อง'} = ${frac(n, of)} = ${dn(v)}`,
+    review: `ทาสี ${frac(n, of)} = ${dn(v)}`
+  };
+}
+// reading: number → words, or words → number
+function qB() {
+  const p = pick([1, 2, 2, 3]), v = rnd(p, pick([0, 9, 25])), r = read(v);
+  if (Math.random() < .5) {
+    const [w, f] = fmt(v).split('.');
+    const wrong = [...shiftWrongs(v).map(x => read(x)), thaiInt(+w) + 'จุด' + thaiInt(+f), [...f].map(c => DIG[+c]).join('') + 'จุด' + thaiInt(+w)];
+    return {
+      ask: `${dn(v)} อ่านว่าอย่างไร`,
+      pic: '',
+      opts: optsBy(r, wrong, s => txt(s), s => s),
+      explain: `หน้าจุด ${w} อ่านว่า ${thaiInt(+w)} หลังจุดอ่านทีละตัว ${[...f].map(c => DIG[+c]).join(' ')} จึงอ่านว่า ${r}`,
+      review: `${dn(v)} อ่านว่า ${r}`
+    };
+  }
+  return {
+    ask: `"${r}" เขียนเป็นตัวเลขได้อย่างไร`,
+    pic: '',
+    opts: opts(v, shiftWrongs(v)),
+    explain: `หน้าคำว่า "จุด" คือจำนวนเต็ม หลังคำว่า "จุด" เขียนตัวเลขทีละตัว ได้ ${dn(v)}`,
+    review: `${r} = ${dn(v)}`
+  };
+}
+// a digit's place or its value
+function qC() {
+  let v;
+  do { v = rnd(3, 9, 1); } while (new Set(fmt(v).replace('.', '')).size < 4 || /0/.test(fmt(v)));
+  const k = pick([0, 1, 2, 3, 1, 2, 3]), d = digitAt(v, k);
+  const shown = fmt(v).replace('.', '<b>.</b>');
+  if (Math.random() < .5) {
+    return {
+      ask: `ใน <span class="dn">${shown}</span> เลข ${d} มีค่าเท่าไร`,
+      pic: '',
+      opts: opts(valueAt(d, k), [0, 1, 2, 3].filter(j => j !== k).map(j => valueAt(d, j))),
+      explain: `${d} อยู่${PLACE[k]} จึงมีค่า ${fmt(valueAt(d, k))}`,
+      after: table(v, 3, { hi: k }),
+      review: `${d} ใน ${fmt(v)} อยู่${PLACE[k]} มีค่า ${fmt(valueAt(d, k))}`
+    };
+  }
+  const right = PLACE[k];
+  return {
+    ask: `ใน <span class="dn">${shown}</span> เลข ${d} อยู่หลักใด`,
+    pic: '',
+    opts: shuffle([0, 1, 2, 3].map(j => ({ html: txt(PLACE[j]), ok: j === k }))),
+    explain: `นับจากจุดไปทางขวา: ส่วนสิบ ส่วนร้อย ส่วนพัน ส่วนตัวหน้าจุดคือหลักหน่วย เลข ${d} จึงอยู่${right}`,
+    after: table(v, 3, { hi: k }),
+    review: `${d} ใน ${fmt(v)} อยู่${right}`
+  };
+}
+// fractions and expanded form
+function qD() {
+  const r = Math.random();
+  if (r < .35) {   // fraction over 10, 100, 1000 → decimal
+    const p = pick([1, 2, 3]), n = pick([ri(1, 9), ri(11, 99), ri(101, 999)].filter(x => x % 10 && x < 10 ** p)), v = n * 10 ** (3 - p);
+    return {
+      ask: `${frac(n, 10 ** p)} เขียนเป็นทศนิยมได้เท่าไร`,
+      pic: '',
+      opts: opts(v, shiftWrongs(v)),
+      explain: `ตัวส่วน ${10 ** p} มีเลข 0 อยู่ ${p} ตัว จึงเป็นทศนิยม ${p} ตำแหน่ง: ${frac(n, 10 ** p)} = ${dn(v)}`,
+      review: `${frac(n, 10 ** p)} = ${dn(v)}`
+    };
+  }
+  if (r < .65) {   // decimal → fraction
+    const p = pick([1, 2, 3]), v = rnd(p, 0), n = Math.round(v / 10 ** (3 - p));
+    const show = x => frac(x[0], x[1]), key = x => x[0] / x[1];
+    return {
+      ask: `${dn(v)} เขียนเป็นเศษส่วนได้เท่าไร`,
+      pic: '',
+      opts: optsBy([n, 10 ** p], [[n, 10 ** ((p % 3) + 1)], [n, 10 ** (((p + 1) % 3) + 1)], [n, 10], [n, 100], [n, 1000], [n + 1, 10 ** p]], show, key),
+      explain: `ทศนิยม ${p} ตำแหน่ง ตัวส่วนคือ ${10 ** p}: ${dn(v)} = ${frac(n, 10 ** p)}`,
+      review: `${dn(v)} = ${frac(n, 10 ** p)}`
+    };
+  }
+  // expanded form → number; sometimes the tenths or hundredths place is empty, so a 0 has to be written there
+  let v;
+  do { v = rnd(3, 9, 1); } while (/0/.test(fmt(v)));
+  const zero = pick([null, null, 1, 2]);
+  if (zero) v -= digitAt(v, zero) * 10 ** (3 - zero);
+  const parts = expand(v), f = fmt(v, 3).split('.')[1];
+  const wrong = [...shiftWrongs(v)];
+  if (zero) wrong.unshift(Math.floor(v / 1000) * 1000 + parseInt(f.replace('0', ''), 10) * 10);   // the 0 left out
+  return {
+    ask: `${parts} = ?`,
+    pic: '',
+    opts: opts(v, wrong),
+    explain: `ใส่ตัวเลขแต่ละตัวลงในหลักของมัน${zero ? ` ${PLACE[zero]}ไม่มีตัวเลข จึงใส่ 0` : ''} ได้ ${dn(v)}`,
+    after: table(v, 3),
+    review: `${parts} = ${fmt(v)}`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/7.1',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
+});
+})();
+</script>
+</body>
+</html>

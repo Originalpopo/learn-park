@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>โจทย์ปัญหาทศนิยม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<link rel="stylesheet" href="ch7.css">
+<style>
+/* 7.4 only: the last stop of chapter 7, a test of 20 word problems over 7.1-7.3 (no story or play) */
+.qask.word { font-family: var(--body, inherit); font-size: clamp(1.1rem, 2.8vw, 1.3rem); line-height: 1.9; text-align: left; display: block; width: 100%; }
+.qask.word .dn { font-size: 1.15em; }
+.qask.word .topic { display: inline-block; font-size: .8rem; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 0 10px; margin-bottom: 4px; line-height: 1.8; }
+.sent { font-family: var(--display); display: inline-flex; align-items: center; gap: .3em; flex-wrap: wrap; justify-content: center; }
+.sent .op { color: var(--muted); }
+.sent .box { display: inline-block; width: 1.1em; height: 1.1em; border: 3px solid var(--orange); border-radius: 6px; vertical-align: middle; }
+.opts:has(.sent) { grid-template-columns: 1fr; }   /* number-sentence answers are wide: one per row */
+.opts .sent { font-size: 1.5rem; }
+.colwrap { display: flex; justify-content: center; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script src="ch7.js"></script>
+<script>
+(() => {
+const { frac, ri, pick, shuffle } = L;
+const { fmt, dn, places, digitAt, PLACE, valueAt, DIG, thaiInt, read, table, column, rnd, opts, rightAligned } = D7;
+
+const txt = s => `<span class="txt">${s}</span>`;
+const NAMES = ['ขุน', 'ใบบัว', 'ต้นกล้า', 'แก้วตา'];
+const who = () => shuffle(NAMES);
+// a word problem, with a small tag naming the lesson it comes from
+const word = (topic, s) => `<div class="qask word"><span class="topic">${topic}</span><br>${s}</div>`;
+const plain = s => s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+function optsBy(right, wrong, show, key) {
+  const seen = new Set([key(right)]), out = [];
+  for (const w of wrong) { const k = key(w); if (out.length >= 3 || seen.has(k)) continue; seen.add(k); out.push(w); }
+  return shuffle([{ html: show(right), ok: true }, ...out.map(w => ({ html: show(w), ok: false }))]);
+}
+// the same digits with the point in the wrong place
+function shiftWrongs(v) {
+  const p = places(v), n = parseInt(fmt(v).replace('.', ''), 10), out = [];
+  for (const pp of [p + 1, p - 1, p + 2, p - 2]) if (pp >= 0 && pp <= 3) out.push(n * 10 ** (3 - pp));
+  return out.concat(v + 10 ** (3 - Math.max(p, 1)), v + 100);
+}
+const baht = v => dn(v, 2);
+
+/* ---------- 7.1 การอ่าน การเขียนทศนิยม ---------- */
+function q71a() {
+  const [x] = who(), v = ri(110, 160) * 10;   // a height, 1.10 to 1.60 m, read out
+  const r = read(v), [w, f] = fmt(v).split('.');
+  return {
+    ask: word('7.1 การอ่านทศนิยม', `${x}สูง ${dn(v)} เมตร ตัวเลข ${fmt(v)} อ่านว่าอย่างไร`),
+    pic: '',
+    opts: optsBy(r, [thaiInt(+w) + 'จุด' + thaiInt(+f), read(v * 10), read(Math.floor(v / 10)), thaiInt(parseInt(w + f, 10))], txt, s => s),
+    explain: `หน้าจุดอ่านแบบจำนวนนับ หลังจุดอ่านทีละตัว: ${r}`,
+    review: `${fmt(v)} อ่านว่า ${r}`
+  };
+}
+function q71b() {
+  const [x] = who(), n = pick([ri(1, 9), ri(11, 99)].filter(k => k % 10)), v = n * 10;
+  const thing = pick([['ทาสีรั้ว', 'ของรั้ว'], ['ปลูกผัก', 'ของแปลงผัก'], ['ปูหญ้า', 'ของสนาม']]);
+  return {
+    ask: word('7.1 การเขียนทศนิยม', `${x}${thing[0]}ไป ${n} ส่วน จาก 100 ส่วนเท่าๆ กัน${thing[1]} เขียนเป็นทศนิยมได้เท่าไร`),
+    pic: '',
+    opts: opts(v, shiftWrongs(v)),
+    explain: `${n} ส่วนจาก 100 ส่วน = ${frac(n, 100)} = ${dn(v)}`,
+    review: `${frac(n, 100)} = ${fmt(v)}`
+  };
+}
+function q71c() {
+  const [x] = who(), b = ri(5, 99), s = pick([25, 50, 75, 5]), v = b * 1000 + s * 10;
+  return {
+    ask: word('7.1 เงินบาทและสตางค์', `${x}มีเงิน ${b} บาท ${s} สตางค์ เขียนเป็นทศนิยมได้กี่บาท (100 สตางค์ = 1 บาท)`),
+    pic: '',
+    opts: opts(v, [b * 1000 + s * 100, b * 1000 + s, b * 10000 + s * 10, b * 100 + s, b * 1000 + (s % 10) * 100 + Math.floor(s / 10) * 10].filter(w => w !== v), baht),
+    explain: `${s} สตางค์ คือ ${frac(s, 100)} บาท = ${baht(s * 10)} บาท รวมเป็น ${baht(v)} บาท`,
+    review: `${b} บาท ${s} สตางค์ = ${fmt(v, 2)} บาท`
+  };
+}
+function q71d() {
+  let v;
+  do { v = rnd(3, 9, 1); } while (new Set(fmt(v).replace('.', '')).size < 4 || /0/.test(fmt(v)));
+  const k = pick([1, 2, 3]), d = digitAt(v, k), unit = pick([['ถุงข้าวหนัก', 'กิโลกรัม'], ['ราวเหล็กยาว', 'เมตร'], ['ขวดน้ำจุ', 'ลิตร']]);
+  return {
+    ask: word('7.1 ค่าประจำหลัก', `${unit[0]} ${dn(v)} ${unit[1]} เลข ${d} มีค่าเท่าไร`),
+    pic: '',
+    opts: opts(valueAt(d, k), [0, 1, 2, 3].filter(j => j !== k).map(j => valueAt(d, j))),
+    explain: `${d} อยู่${PLACE[k]} จึงมีค่า ${dn(valueAt(d, k))}`,
+    after: table(v, 3, { hi: k }),
+    review: `เลข ${d} ใน ${fmt(v)} มีค่า ${fmt(valueAt(d, k))}`
+  };
+}
+
+/* ---------- 7.2 การเปรียบเทียบและเรียงลำดับ ---------- */
+const SIGN = { '>': '&gt;', '<': '&lt;' };
+// two close numbers of different lengths (the longer is not always the bigger)
+function closePair() {
+  for (;;) {
+    const w = ri(1, 3), a = w * 1000 + ri(1, 9) * 100, b = w * 1000 + rnd(2, 0);
+    if (a !== b && digitAt(b, 1) !== 0) return shuffle([a, b]);
+  }
+}
+function q72a() {
+  const [x, y] = who(), [a, b] = closePair(), t = pick([['สูง', 'สูงกว่า', 'เมตร'], ['กระโดดไกล', 'กระโดดได้ไกลกว่า', 'เมตร'], ['หนัก', 'หนักกว่า', 'กิโลกรัม']]);
+  const P = Math.max(places(a), places(b)), win = a > b ? x : y;
+  return {
+    ask: word('7.2 การเปรียบเทียบ', `${x}${t[0]} ${dn(a)} ${t[2]} ${y}${t[0]} ${dn(b)} ${t[2]} ใคร${t[1]}`),
+    pic: '',
+    opts: [x, y].map(n => ({ html: txt(n), ok: n === win })),
+    explain: `เติม 0 ให้ตำแหน่งเท่ากัน: ${dn(a, P)} กับ ${dn(b, P)} ดูหลักส่วนสิบ${digitAt(a, 1) === digitAt(b, 1) ? 'เท่ากัน ดูหลักส่วนร้อย' : ''} จึงได้ ${dn(Math.max(a, b))} ${SIGN['>']} ${dn(Math.min(a, b))} ${win}${t[1]}`,
+    review: `${fmt(Math.max(a, b))} > ${fmt(Math.min(a, b))} → ${win}`
+  };
+}
+// four children and their results: who did best (or least)
+function four() {
+  for (;;) {
+    const w = ri(1, 4), d = ri(2, 8), vs = new Set();
+    while (vs.size < 4) { const p = pick([1, 2, 2]), f = p === 1 ? pick([d, d + 1, d - 1]) * 100 : (pick([d, d - 1, d + 1]) * 10 + ri(1, 9)) * 10; vs.add(w * 1000 + f); }
+    const list = [...vs];
+    if (new Set(list.map(places)).size === 2) return list;
+  }
+}
+function q72b() {
+  const names = who(), vs = four(), most = Math.random() < .5;
+  const t = pick([['วิ่งได้', 'กิโลเมตร', 'ไกลที่สุด', 'ระยะทางน้อยที่สุด'], ['ไถสเก็ตได้', 'กิโลเมตร', 'ไกลที่สุด', 'ระยะทางน้อยที่สุด'], ['กระโดดได้', 'เมตร', 'ไกลที่สุด', 'ระยะทางน้อยที่สุด']]);
+  const right = vs.indexOf(most ? Math.max(...vs) : Math.min(...vs));
+  return {
+    ask: word('7.2 การเปรียบเทียบ', `${names.map((n, i) => `${n}${t[0]} ${dn(vs[i])} ${t[1]}`).join(' ')}<br>ใคร${t[0].replace('ได้', '')}ได้${most ? t[2] : t[3]}`),
+    pic: '',
+    opts: names.map((n, i) => ({ html: txt(n), ok: i === right })),
+    explain: `เติม 0 ให้เป็น 2 ตำแหน่ง: ${vs.map((v, i) => `${names[i]} ${fmt(v, 2)}`).join(', ')} จึงเป็น${names[right]}`,
+    review: `${names[right]} ${fmt(vs[right])} ${t[1]} (${most ? 'มากที่สุด' : 'น้อยที่สุด'})`
+  };
+}
+function q72c() {
+  const vs = four().slice(0, 3), names = who().slice(0, 3), heavy = Math.random() < .5;
+  const order = [0, 1, 2].sort((i, j) => heavy ? vs[j] - vs[i] : vs[i] - vs[j]);
+  const show = o => txt(o.map(i => names[i]).join(' , '));
+  const key = o => o.join(), perms = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+  // the slip: digits after the point read as a whole number (0.45 bigger than 0.5)
+  const asWhole = v => parseInt(fmt(v).split('.')[1], 10);
+  const slipped = [0, 1, 2].sort((i, j) => heavy ? asWhole(vs[j]) - asWhole(vs[i]) : asWhole(vs[i]) - asWhole(vs[j]));
+  return {
+    ask: word('7.2 การเรียงลำดับ', `กระเป๋าของ${names.map((n, i) => `${n}หนัก ${dn(vs[i])} กิโลกรัม`).join(' ของ')}<br>เรียงจาก${heavy ? 'หนักไปเบา' : 'เบาไปหนัก'}ได้อย่างไร`),
+    pic: '',
+    opts: optsBy(order, [slipped, order.slice().reverse(), ...shuffle(perms)], show, key),
+    explain: `เติม 0 ให้เป็น 2 ตำแหน่ง: ${vs.map((v, i) => `${names[i]} ${fmt(v, 2)}`).join(', ')} แล้วเทียบทีละหลัก`,
+    review: `${order.map(i => `${names[i]} ${fmt(vs[i])}`).join(heavy ? ' > ' : ' < ')}`
+  };
+}
+
+/* ---------- 7.3 การบวกและการลบ ---------- */
+/* a story: { text, a, b, op, unit, money } with a op b = r */
+const KINDS = {
+  '+': [
+    (x, y) => { const a = rnd(pick([1, 2]), 15, 1), b = rnd(pick([1, 2]), 9, 1); return { text: `${x}มีเชือกยาว ${dn(a)} เมตร ${y}มีเชือกยาว ${dn(b)} เมตร เชือกของทั้งสองคนยาวรวมกันกี่เมตร`, a, b, unit: 'เมตร' }; },
+    x => { const a = ri(10, 80) * 1000 + pick([25, 50, 75]) * 10, b = ri(5, 40) * 1000 + pick([25, 50, 75, 0]) * 10; return { text: `${x}ซื้อน้ำผลไม้ราคา ${baht(a)} บาท และขนมราคา ${baht(b)} บาท ต้องจ่ายเงินทั้งหมดกี่บาท`, a, b, unit: 'บาท', money: true }; },
+    x => { const a = rnd(pick([1, 2, 3]), 3), b = rnd(pick([1, 2, 3]), 2); return { text: `${x}ไถสเก็ตตอนเช้า ${dn(a)} กิโลเมตร ตอนเย็นอีก ${dn(b)} กิโลเมตร วันนี้ไถสเก็ตได้กี่กิโลเมตร`, a, b, unit: 'กิโลเมตร' }; },
+    () => { const a = rnd(pick([1, 2, 3]), 5, 1), b = rnd(pick([1, 2, 3]), 3); return { text: `ถุงแป้งหนัก ${dn(a)} กิโลกรัม ถุงน้ำตาลหนัก ${dn(b)} กิโลกรัม รวมหนักกี่กิโลกรัม`, a, b, unit: 'กิโลกรัม' }; }
+  ],
+  '−': [
+    x => { const a = pick([20, 50, 100]) * 1000, b = ri(5, a / 1000 - 2) * 1000 + pick([25, 50, 75]) * 10; return { text: `${x}มีเงิน ${a / 1000} บาท ซื้อของเล่นราคา ${baht(b)} บาท เหลือเงินกี่บาท`, a, b, unit: 'บาท', money: true }; },
+    () => { const a = rnd(pick([1, 2]), 9, 3), b = rnd(pick([1, 2]), 2, 0); return { text: `ราวเหล็กยาว ${dn(a)} เมตร ตัดออกไป ${dn(b)} เมตร เหลือยาวกี่เมตร`, a, b, unit: 'เมตร' }; },
+    (x, y) => { const a = ri(130, 160) * 10, b = ri(110, 129) * 10; return { text: `${x}สูง ${dn(a)} เมตร ${y}สูง ${dn(b)} เมตร ${x}สูงกว่า${y}กี่เมตร`, a, b, unit: 'เมตร' }; },
+    x => { const a = rnd(pick([1, 2]), 2, 1), b = rnd(pick([1, 2, 3]), 0); return { text: `ขวดมีน้ำ ${dn(a)} ลิตร ${x}ดื่มไป ${dn(b)} ลิตร เหลือน้ำกี่ลิตร`, a, b, unit: 'ลิตร' }; }
+  ]
+};
+function story(op) {
+  for (;;) {
+    const [x, y] = who(), s = pick(KINDS[op])(x, y);
+    s.op = op; s.r = op === '+' ? s.a + s.b : s.a - s.b;
+    if (s.r > 0 && s.b > 0 && s.a !== s.b) return s;
+  }
+}
+const show = s => v => s.money ? baht(v) : dn(v);
+function wrongs(s) {
+  const P = Math.max(places(s.a), places(s.b), places(s.r), s.money ? 2 : 0), u = 10 ** (3 - Math.max(P, 1));
+  return [rightAligned(s.a, s.b, s.op), s.op === '+' ? Math.abs(s.a - s.b) : s.a + s.b, s.r + u, s.r - u, s.r + 100, s.r - 100, s.r + 1000, s.r - 1000];
+}
+function how(s) {
+  const P = Math.max(places(s.a), places(s.b), s.money ? 2 : 0), f = show(s);
+  return `${s.op === '+' ? 'รวมกัน ใช้การบวก' : 'หาส่วนที่เหลือหรือส่วนต่าง ใช้การลบ'}: ตั้งจุดให้ตรงกัน ${dn(s.a, P)} ${s.op} ${dn(s.b, P)} = ${f(s.r)} ${s.unit}`;
+}
+function q73(op) {
+  const s = story(op);
+  return {
+    ask: word('7.3 การบวก การลบ', s.text),
+    pic: '',
+    opts: opts(s.r, wrongs(s), show(s)),
+    explain: how(s),
+    after: `<div class="colwrap">${column(s.a, s.b, s.op, { pad: true, ans: true, carry: s.op === '+', pa: s.money ? 2 : undefined, pb: s.money ? 2 : undefined })}</div>`,
+    review: `${plain(s.text)} → ${fmt(s.r, s.money ? 2 : places(s.r))} ${s.unit}`
+  };
+}
+// two steps: money left after buying two things
+function q73two() {
+  const [x] = who(), m = pick([50, 100]) * 1000, a = ri(10, 30) * 1000 + pick([25, 50, 75]) * 10, b = ri(5, 15) * 1000 + pick([25, 50, 75]) * 10, r = m - a - b;
+  const thing = pick([['สมุด', 'ดินสอ'], ['ขนมปัง', 'นม'], ['สติกเกอร์', 'ยางลบ']]);
+  return {
+    ask: word('7.3 โจทย์ 2 ขั้นตอน', `${x}มีเงิน ${m / 1000} บาท ซื้อ${thing[0]}ราคา ${baht(a)} บาท และ${thing[1]}ราคา ${baht(b)} บาท เหลือเงินกี่บาท`),
+    pic: '',
+    opts: opts(r, [a + b, m - a, m - b, r + 1000, r - 1000, r + 100, r + 10, m - a + b].filter(v => v > 0), baht),
+    explain: `จ่ายไป ${baht(a)} + ${baht(b)} = ${baht(a + b)} บาท เหลือ ${m / 1000} − ${baht(a + b)} = ${baht(r)} บาท`,
+    review: `${m / 1000} − (${fmt(a, 2)} + ${fmt(b, 2)}) = ${fmt(r, 2)} บาท`
+  };
+}
+// which number sentence fits the story
+const box = '<span class="box"></span>';
+const sentence = (a, op, b, f) => `<span class="sent">${f(a)}<span class="op">${op}</span>${f(b)}<span class="op">=</span>${box}</span>`;
+function q73s() {
+  const s = story(pick(['+', '−'])), f = v => s.money && v % 1000 === 0 ? dn(v) : show(s)(v);   // 50 บาท stays 50 as in the story
+  const [big, small] = s.a >= s.b ? [s.a, s.b] : [s.b, s.a];
+  const wrong = s.op === '−' ? [[s.a, '+', s.b], [s.b, '−', s.a]] : [[big, '−', small], [small, '−', big]];
+  return {
+    ask: word('7.3 ประโยคสัญลักษณ์', `${s.text}<br><b>ประโยคสัญลักษณ์ข้อใดถูก</b>`),
+    pic: '',
+    opts: shuffle([{ html: sentence(s.a, s.op, s.b, f), ok: true }, ...wrong.map(([a, o, b]) => ({ html: sentence(a, o, b, f), ok: false }))]),
+    explain: `${s.op === '+' ? 'เอามารวมกัน ต้องบวก' : 'หาส่วนที่เหลือหรือส่วนต่าง ต้องเอาตัวมากลบตัวน้อย'}: ${sentence(s.a, s.op, s.b, f)}`,
+    review: `${plain(s.text)} → ${fmt(s.a)} ${s.op} ${fmt(s.b)}`
+  };
+}
+
+// 20 questions in book order: 4 from 7.1, 4 from 7.2, then 12 from 7.3 (4 add, 4 take away, 2 two-step, 2 number sentences)
+L.lesson({
+  id: 'math-p4/7.4',
+  exam: { count: 20, intro: 'โจทย์ปัญหาทบทวนเนื้อหาบทที่ 7 ทศนิยม ทั้งหมด' },
+  quiz: () => [...shuffle([q71a(), q71b(), q71c(), q71d()]), q72a(), q72a(), q72b(), q72c(),
+    ...shuffle([q73('+'), q73('+'), q73('+'), q73('+'), q73('−'), q73('−'), q73('−'), q73('−'), q73two(), q73two(), q73s(), q73s()])]
+});
+})();
+</script>
+</body>
+</html>

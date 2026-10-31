@@ -21,10 +21,10 @@ const COURSES = [{
       { no: '6.8', title: 'โจทย์ปัญหา', file: 'math/p4/6-8.html', exam: true }
     ] },
     { no: 7, title: 'ทศนิยม', color: 'var(--yellow-deep)', topics: [
-      { no: '7.1', title: 'การอ่าน การเขียนทศนิยมไม่เกิน 3 ตำแหน่ง' },
-      { no: '7.2', title: 'การเปรียบเทียบและเรียงลำดับ' },
-      { no: '7.3', title: 'การบวกและการลบทศนิยมไม่เกิน 3 ตำแหน่ง' },
-      { no: '7.4', title: 'โจทย์ปัญหา', exam: true }
+      { no: '7.1', title: 'การอ่าน การเขียนทศนิยมไม่เกิน 3 ตำแหน่ง', file: 'math/p4/7-1.html' },
+      { no: '7.2', title: 'การเปรียบเทียบและเรียงลำดับ', file: 'math/p4/7-2.html' },
+      { no: '7.3', title: 'การบวกและการลบทศนิยมไม่เกิน 3 ตำแหน่ง', file: 'math/p4/7-3.html' },
+      { no: '7.4', title: 'โจทย์ปัญหา', file: 'math/p4/7-4.html', exam: true }
     ] },
     { no: 8, title: 'มุม', color: 'var(--blue)', topics: [
       { no: '8.1', title: 'จุด เส้นตรง รังสี และส่วนของเส้นตรง' },

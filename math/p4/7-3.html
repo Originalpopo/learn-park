@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>การบวกและการลบทศนิยม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<link rel="stylesheet" href="ch7.css">
+<style>
+/* 7.3 only: adding and taking away decimals with the points lined up, zeros filled in; the line-up game and quick sums */
+.wrongcol { position: relative; display: inline-flex; flex-direction: column; align-items: flex-end; font-family: var(--display); font-size: clamp(1.8rem, 5vw, 2.4rem); line-height: 1.3; opacity: .55; }
+.wrongcol .ans { border-top: 3px solid var(--ink); min-width: 3em; text-align: right; }
+.wrongcol::after { content: "✕"; position: absolute; right: -1.2em; top: 30%; color: var(--bad); font-size: 1.1em; }
+.slide { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.slide-sum { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); width: min(100%, 440px); font-family: var(--display); font-size: clamp(1.8rem, 6vw, 2.6rem); line-height: 1.35; background: var(--bg); border-radius: 22px; padding: 10px 6px; }
+.slide-sum span { text-align: center; }
+.slide-sum .pt { color: var(--orange); font-weight: 700; font-size: 1.3em; line-height: 1; }
+.slide-sum .pad { color: var(--orange); }
+.slide-sum .guide { background: var(--yellow-soft); border-radius: 8px; }
+.slide-sum .rule { grid-column: 1 / -1; border-top: 3px solid var(--ink); margin: 4px 6px; }
+.slide-sum .opc { color: var(--muted); }
+.slide-nav { display: flex; gap: 16px; align-items: center; }
+.colwrap { display: flex; justify-content: center; }
+@media (max-width: 440px) {
+  .slide-sum { padding: 8px 2px; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script src="ch7.js"></script>
+<script>
+(() => {
+const { fade, ri, pick, shuffle, sfx, addExp, ava, G, B } = L;
+const { fmt, dn, places, digitAt, column, rnd, opts, rightAligned } = D7;
+const $ = s => document.querySelector(s);
+
+const KIDS = { khun: ['ขุน', G, 'ข'], bua: ['ใบบัว', B, 'บ'] };
+const kid = k => `<span class="who-row">${ava(KIDS[k][2], KIDS[k][1])}<span>${KIDS[k][0]}</span></span>`;
+const OP = { '+': '+', '−': '−' };
+const res = (a, b, op) => op === '+' ? a + b : a - b;
+const sumHTML = (a, b, op) => `${dn(a)}<span class="op">${op}</span>${dn(b)}`;
+
+/* a sum or a difference: o.kind 'same' (same places), 'mixed' (different places), 'whole' (taking from a whole number), 'three' */
+function problem(op, kind = pick(['same', 'mixed', 'mixed', 'three'])) {
+  for (;;) {
+    let a, b;
+    if (kind === 'same') { const p = pick([1, 2]); a = rnd(p, 20); b = rnd(p, 9); }
+    else if (kind === 'mixed') { const p = shuffle([1, 2]); a = rnd(p[0], 20); b = rnd(p[1], 9); }
+    else if (kind === 'whole') { a = ri(2, 20) * 1000; b = rnd(pick([1, 2]), 9); }
+    else { const p = shuffle([3, pick([1, 2, 3])]); a = rnd(p[0], 9); b = rnd(p[1], 9); }
+    if (op === '−' && kind !== 'whole' && a < b) [a, b] = [b, a];
+    if (op === '−' && a - b <= 0) continue;
+    if (op === '+' && kind === 'whole') continue;
+    return { a, b, op, r: res(a, b, op) };
+  }
+}
+// the column worked out, as a sentence: fill zeros, then add or take away as with whole numbers
+function how(p) {
+  const P = Math.max(places(p.a), places(p.b));
+  const fill = places(p.a) !== places(p.b) ? `เติม 0 ให้เป็น ${dn(p.a, P)} ${p.op} ${dn(p.b, P)} ` : '';
+  return `ตั้งให้จุดตรงกัน ${fill}แล้ว${p.op === '+' ? 'บวก' : 'ลบ'}เหมือนจำนวนนับ ได้ ${dn(p.r)}`;
+}
+// digits worked one place at a time with no carrying (adding) or the small digit always taken from the big one (taking away)
+function slip(p) {
+  let v = 0;
+  for (let k = -1; k <= 3; k++) {
+    const x = digitAt(p.a, k), y = digitAt(p.b, k);
+    v += (p.op === '+' ? (x + y) % 10 : Math.abs(x - y)) * 10 ** (3 - k);
+  }
+  return v;
+}
+function wrongs(p) {
+  const P = Math.max(places(p.a), places(p.b), places(p.r)), u = 10 ** (3 - P);
+  return [rightAligned(p.a, p.b, p.op), slip(p), p.r + u, p.r - u, p.r + 100, p.r - 100, p.r + 1000, p.op === '+' ? Math.abs(p.a - p.b) : p.a + p.b];
+}
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => `<div class="rulebox"><div class="colwrap">${column(1250, 600, '+')}</div><span class="arrow-note">จุดตรงกัน หลักเดียวกันตรงกัน</span></div>`,
+    say: () => `<h2>ต่อราวเหล็ก</h2>
+      <p>${kid('khun')} มีราวเหล็กยาว ${dn(1250)} เมตร ต่ออีกท่อน ${dn(600)} เมตร ยาวรวมเท่าไร</p>
+      <p class="callout">ตั้งบวกโดยให้<b>จุดทศนิยมตรงกัน</b></p>
+      <p class="hint">หลักหน่วยตรงหลักหน่วย ส่วนสิบตรงส่วนสิบ</p>`
+  },
+  {
+    vis: () => `<div class="colwrap">${column(1250, 600, '+', { pad: true, ans: true })}</div>`,
+    say: () => `<h2>เติม 0 แล้วบวก</h2>
+      <p>เติม 0 ให้ ${dn(600)} เป็น ${dn(600, 2)} ตำแหน่งจะเท่ากัน</p>
+      <p>บวกทีละหลักจากขวาไปซ้าย เหมือนจำนวนนับ แล้วใส่จุดในคำตอบให้ตรงกับข้างบน</p>
+      <p class="callout">${dn(1250)} + ${dn(600)} = ${dn(1850)} เมตร</p>`
+  },
+  {
+    vis: () => `<div class="pair"><div class="wrongcol"><span>1.25</span><span>+ 0.6</span><span class="ans">1.31</span></div></div>`,
+    say: () => `<h2>ระวัง! อย่าตั้งชิดขวา</h2>
+      <p>ถ้าตั้งให้ตัวเลขชิดขวา 6 จะไปอยู่หลักส่วนร้อย</p>
+      <p>ได้ ${dn(1310)} ซึ่ง<b>ผิด</b> เพราะ ${dn(600)} คือ 6 ส่วนสิบ</p>
+      <p class="callout">ตั้งให้<b>จุด</b>ตรงกันเสมอ</p>`
+  },
+  {
+    vis: () => `<div class="colwrap">${column(750, 480, '+', { ans: true, carry: true })}</div>`,
+    say: () => `<h2>บวกแล้วมีทด</h2>
+      <p>${dn(750)} + ${dn(480)}</p>
+      <p>หลักส่วนร้อย 5 + 8 = 13 เขียน 3 ทด 1</p>
+      <p>หลักส่วนสิบ 7 + 4 + 1 = 12 เขียน 2 ทด 1 ไปหลักหน่วย</p>
+      <p class="callout">${dn(750)} + ${dn(480)} = ${dn(1230)}</p>`
+  },
+  {
+    vis: () => `<div class="colwrap">${column(3500, 1250, '−', { pad: true, ans: true })}</div>`,
+    say: () => `<h2>การลบ</h2>
+      <p>${kid('bua')} มีเชือก ${dn(3500)} เมตร ตัดไปใช้ ${dn(1250)} เมตร เหลือเท่าไร</p>
+      <p>ตั้งจุดให้ตรงกัน เติม 0 ให้ ${dn(3500)} เป็น ${dn(3500, 2)} แล้วลบเหมือนจำนวนนับ</p>
+      <p class="callout">${dn(3500)} − ${dn(1250)} = ${dn(2250)} เมตร</p>`
+  },
+  {
+    vis: () => `<div class="colwrap">${column(5000, 2360, '−', { pad: true, ans: true })}</div>`,
+    say: () => `<h2>ลบออกจากจำนวนนับ</h2>
+      <p>5 − ${dn(2360)}</p>
+      <p>5 คือ ${dn(5000, 2)} ใส่จุดและเติม 0 ให้ตำแหน่งเท่ากันก่อน</p>
+      <p class="callout">${dn(5000, 2)} − ${dn(2360)} = ${dn(2640)}</p>
+      <p class="hint">จำนวนนับ มีจุดซ่อนอยู่ข้างหลังเสมอ</p>`
+  },
+  {
+    vis: () => `<div class="colwrap">${column(1375, 250, '+', { pad: true, ans: true, carry: true })}</div>`,
+    say: () => `<h2>ทศนิยม 3 ตำแหน่ง</h2>
+      <p>${dn(1375)} + ${dn(250)}</p>
+      <p>เติม 0 ให้เป็น ${dn(250, 3)} แล้วบวกทีละหลัก</p>
+      <p class="callout">${dn(1375)} + ${dn(250)} = ${dn(1625)}</p>`
+  },
+  {
+    vis: () => `<div class="colwrap">${column(12500, 7750, '+', { ans: true, carry: true, pa: 2 })}</div>`,
+    say: () => `<h2>เงินบาทและสตางค์</h2>
+      <p>1 บาท = 100 สตางค์ จึงเขียนเงินเป็นทศนิยม 2 ตำแหน่งได้ เช่น ${dn(12500, 2)} บาท คือ 12 บาท 50 สตางค์</p>
+      <p>ซื้อน้ำ ${dn(12500, 2)} บาท กับขนม ${dn(7750)} บาท จ่ายรวม</p>
+      <p class="callout">${dn(12500, 2)} + ${dn(7750)} = ${dn(20250)} บาท</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>1. ตั้งจุดตรงกัน</h3><span>หลักเดียวกันอยู่ตรงกัน</span></div>
+        <div class="kind b"><h3>2. เติม 0</h3><span>ให้ตำแหน่งเท่ากัน</span></div>
+        <div class="kind c"><h3>3. บวกลบ</h3><span>ทีละหลักจากขวา เหมือนจำนวนนับ</span></div>
+        <div class="kind a"><h3>4. ใส่จุด</h3><span>ในคำตอบ ตรงกับจุดข้างบน</span></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p>บวกลบทศนิยม หัวใจคือ <b>จุดตรงกัน</b></p>
+      <p class="hint">ไปลองตั้งให้จุดตรงกันในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+// line-up: the bottom number slides left and right until its point sits under the top one; then the answer shows
+let slide = null;
+function newSlide() {
+  const p = problem(pick(['+', '−']), pick(['mixed', 'mixed', 'three']));
+  let off = 0; while (!off) off = ri(-2, 2);
+  return { p, off, solved: false };
+}
+function slideHTML() {
+  const { p, off, solved } = slide, P = Math.max(places(p.a), places(p.b), places(p.r));
+  const C = 6;   // grid column of the point (1-based, the op sign sits in column 1)
+  const cells = (v, shift, pp, pad) => {
+    const s = fmt(v, pad ? P : pp), i = s.indexOf('.') < 0 ? s.length : s.indexOf('.');
+    const out = {};
+    [...s].forEach((ch, j) => { out[C + j - i + shift] = `<span class="${ch === '.' ? 'pt' : j - i > pp ? 'pad' : ''}" style="grid-column:${C + j - i + shift}">${ch}</span>`; });
+    return Object.values(out).join('');
+  };
+  const guide = `<span class="guide" style="grid-column:${C};grid-row:1 / 3"></span>`;
+  return `<div class="slide">
+      <div class="slide-sum">
+        ${guide}
+        <span style="grid-row:1;grid-column:1"></span>${cells(p.a, 0, places(p.a), solved).replace(/style="/g, 'style="grid-row:1;')}
+        <span class="opc" style="grid-row:2;grid-column:1">${p.op}</span>${cells(p.b, off, places(p.b), solved).replace(/style="/g, 'style="grid-row:2;')}
+        <span class="rule" style="grid-row:3"></span>
+        ${solved ? cells(p.r, 0, places(p.r), true).replace(/style="/g, 'style="grid-row:4;') : '<span style="grid-row:4;grid-column:1">&nbsp;</span>'}
+      </div>
+      ${solved
+        ? `<p class="msg good">จุดตรงกันแล้ว! เติม 0 แล้ว${p.op === '+' ? 'บวก' : 'ลบ'}ได้ ${dn(p.r)}</p><button class="btn" data-act="slide-again">โจทย์ใหม่</button>`
+        : `<div class="slide-nav"><button class="arrow-btn" data-act="slide-l" aria-label="เลื่อนไปทางซ้าย">‹</button><span class="hint">เลื่อนตัวล่างให้จุดตรงกัน</span><button class="arrow-btn" data-act="slide-r" aria-label="เลื่อนไปทางขวา">›</button></div>`}
+    </div>`;
+}
+function slideMove(d) {
+  const s = slide;
+  if (s.solved) return;
+  s.off = Math.max(-2, Math.min(2, s.off + d));
+  if (!s.off) { s.solved = true; sfx.good(); addExp(5); } else sfx.tap();
+}
+
+// quick sums: 8 cards, pick the answer out of 3
+let quick = null;
+function newQuick() {
+  const rounds = ['same', 'mixed', 'mixed', 'three', 'same', 'mixed', 'whole', 'three'].map((k, i) => {
+    const p = problem(k === 'whole' ? '−' : i % 2 ? '−' : '+', k);
+    const all = opts(p.r, wrongs(p));
+    return { p, opts: shuffle([all.find(o => o.ok), ...all.filter(o => !o.ok).slice(0, 2)]) };
+  });
+  return { rounds: shuffle(rounds), i: 0, got: 0, miss: false, hint: false, msg: '', msgCls: '', busy: false };
+}
+function quickHTML() {
+  const s = quick;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">ทำครบ 8 ข้อแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} ข้อ</p>
+      <button class="btn" data-act="quick-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const { p, opts: o } = s.rounds[s.i];
+  return `<div class="match">
+      <div class="fcard" id="fcard">${sumHTML(p.a, p.b, p.op)}<span class="op">=</span><span class="gap">?</span></div>
+      ${s.hint ? `<div class="colwrap">${column(p.a, p.b, p.op, { pad: true })}</div>` : '<button class="link" data-act="hint">ดูการตั้งหลัก</button>'}
+      <div class="choices">${o.map((x, i) => `<button class="opt" data-pick="${i}">${x.html}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">ข้อที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+function answerQuick(i) {
+  const s = quick;
+  if (s.busy || s.i >= s.rounds.length) return;
+  const { p, opts: o } = s.rounds[s.i];
+  if (o[i].ok) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true;
+    s.msg = pick(['เก่งมาก!', 'ถูกต้อง!', 'ใช่เลย!', 'เยี่ยม!']); s.msgCls = 'good';
+    drawQuick();
+    setTimeout(() => {
+      s.i++; s.miss = false; s.hint = false; s.busy = false; s.msg = ''; s.msgCls = '';
+      if (s.i >= s.rounds.length) sfx.win();
+      drawQuick();
+    }, 800);
+  } else {
+    sfx.bad(); s.miss = true; s.hint = true;
+    s.msg = `${how(p)} ลองใหม่นะ`; s.msgCls = 'bad';
+    drawQuick();
+    $('#fcard').classList.add('shake');
+  }
+}
+
+function playHTML() {
+  if (!slide) slide = newSlide();
+  if (!quick) quick = newQuick();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>ตั้งให้จุดตรงกัน</h2><p>กดลูกศรเลื่อนตัวเลขแถวล่าง จนจุดอยู่ในช่องสีเหลืองเหมือนตัวบน</p></div>
+      <div id="slide">${slideHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>คิดเร็ว</h2><p>บวกลบทศนิยม แล้วเลือกคำตอบที่ถูก</p></div>
+      <div id="quick">${quickHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawSlide = () => { const el = $('#slide'); if (el) el.innerHTML = slideHTML(); };
+const drawQuick = () => { const el = $('#quick'); if (el) el.innerHTML = quickHTML(); };
+
+function playClick(e) {
+  const pk = e.target.closest('[data-pick]');
+  if (pk) { answerQuick(+pk.dataset.pick); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  switch (a.dataset.act) {
+    case 'slide-l': slideMove(-1); drawSlide(); break;
+    case 'slide-r': slideMove(1); drawSlide(); break;
+    case 'slide-again': slide = newSlide(); sfx.tap(); drawSlide(); break;
+    case 'hint': quick.hint = true; drawQuick(); break;
+    case 'quick-again': quick = newQuick(); drawQuick(); break;
+  }
+}
+
+/* ---------- 3. quiz ---------- */
+function ask(p, kindNote = '') {
+  return {
+    ask: `${sumHTML(p.a, p.b, p.op)}<span class="op">=</span>?`,
+    pic: '',
+    opts: opts(p.r, wrongs(p)),
+    explain: how(p) + kindNote,
+    after: `<div class="colwrap">${column(p.a, p.b, p.op, { pad: true, ans: true, carry: p.op === '+' })}</div>`,
+    review: `${fmt(p.a)} ${p.op} ${fmt(p.b)} = ${fmt(p.r)}`
+  };
+}
+const qA = () => ask(problem('+'));
+const qB = () => ask(problem('−'));
+const qC = () => Math.random() < .5 ? ask(problem('−', 'whole'), ' (จำนวนนับ ใส่จุดแล้วเติม 0 ได้)') : ask(problem(pick(['+', '−']), 'three'));
+// the missing number: a + ? = c, a − ? = c
+function qD() {
+  const p = problem(pick(['+', '−']), pick(['same', 'mixed']));
+  const right = p.b, P = Math.max(places(p.a), places(p.b));
+  const wrong = [p.a + p.r, right + 10 ** (3 - P), right - 10 ** (3 - P), right + 100, right - 100, right + 1000, rightAligned(p.r, p.a, '−')];
+  return {
+    ask: `${dn(p.a)}<span class="op">${p.op}</span><span class="sign" style="color:var(--orange)">?</span><span class="op">=</span>${dn(p.r)}`,
+    pic: '',
+    opts: opts(right, wrong),
+    explain: p.op === '+' ? `? = ${dn(p.r)} − ${dn(p.a)} = ${dn(right)}` : `? = ${dn(p.a)} − ${dn(p.r)} = ${dn(right)}`,
+    review: `${fmt(p.a)} ${p.op} ${fmt(right)} = ${fmt(p.r)}`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/7.3',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
+});
+})();
+</script>
+</body>
+</html>

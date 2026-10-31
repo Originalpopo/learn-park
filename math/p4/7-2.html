@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="../../shared/img/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/img/icon/icon-32.png">
+<meta name="apple-mobile-web-app-title" content="สนามเด็กเรียน">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF7EC">
+<title>การเปรียบเทียบและเรียงลำดับทศนิยม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../shared/core.css">
+<link rel="stylesheet" href="ch7.css">
+<style>
+/* 7.2 only: comparing decimals place by place (zeros added at the end), > < =, number line, putting decimals in order */
+.signs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; }
+.signs > div { background: var(--bg); border-radius: 18px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.signs b { font-family: var(--display); font-size: 2.4rem; line-height: 1; color: var(--orange); }
+.signs .line { font-size: 1.15rem; gap: 4px; }
+.sign { font-family: var(--display); font-size: 2.4rem; color: var(--orange); line-height: 1; }
+.fcard .gap { min-width: 1.2em; text-align: center; }
+.choices.signs3 { max-width: 420px; }
+.choices.signs3 .opt { font-size: 2.4rem; }
+.pool { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; max-width: 560px; }
+.pool .opt { font-size: 1.7rem; min-height: 90px; }
+.pool .opt.gone { visibility: hidden; }
+.row { display: flex; align-items: center; gap: 8px; min-height: 76px; flex-wrap: wrap; justify-content: center; font-size: 1.6rem; background: var(--bg); border-radius: 20px; padding: 8px 14px; width: 100%; max-width: 560px; }
+.row .lt { font-family: var(--display); color: var(--orange); font-size: 1.3rem; }
+.row .empty { color: var(--muted); font-size: 1rem; }
+@media (max-width: 440px) {
+  .pool { grid-template-columns: 1fr 1fr; }
+  .signs b { font-size: 2rem; }
+  .signs .line { font-size: 1rem; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="../../shared/core.js"></script>
+<script src="ch7.js"></script>
+<script>
+(() => {
+const { fade, ri, pick, shuffle, sfx, addExp, ava, G, B } = L;
+const { fmt, dn, places, digitAt, grid, nline, rnd, opts } = D7;
+const $ = s => document.querySelector(s);
+
+const KIDS = { khun: ['ขุน', G, 'ข'], bua: ['ใบบัว', B, 'บ'] };
+const kid = k => `<span class="who-row">${ava(KIDS[k][2], KIDS[k][1])}<span>${KIDS[k][0]}</span></span>`;
+const SIGN = { '>': '&gt;', '<': '&lt;', '=': '=' };
+const signOf = (a, b) => a > b ? '>' : a < b ? '<' : '=';
+const lineOf = (vs, s, ps) => `<span class="line">${vs.map((v, i) => dn(v, ps ? ps[i] : undefined)).join(`<span class="lt">${SIGN[s]}</span>`)}</span>`;
+
+/* the two numbers in one place-value table, empty places filled with orange zeros, the first place that differs lit up */
+function cmpTable(a, b, pa = places(a), pb = places(b)) {
+  const P = Math.max(pa, pb, 1), cols = [0, ...[1, 2, 3].slice(0, P)];
+  const NAME = { 0: 'หน่วย', 1: 'ส่วนสิบ', 2: 'ส่วนร้อย', 3: 'ส่วนพัน' };
+  const differ = k => k === 0 ? Math.floor(a / 1000) !== Math.floor(b / 1000) : digitAt(a, k) !== digitAt(b, k);
+  const hi = cols.find(differ);
+  const row = (x, px) => `<tr>${cols.map(k => `<td class="${k === hi ? 'hi' : ''}${k === 1 ? ' after' : ''}${k > px ? ' pad' : ''}">${k === 0 ? Math.floor(x / 1000) : digitAt(x, k)}</td>`).join('')}</tr>`;
+  return `<table class="pv"><tr>${cols.map(k => `<th class="${k === hi ? 'hi' : ''}">${NAME[k]}</th>`).join('')}</tr>${row(a, pa)}${row(b, pb)}</table>`;
+}
+// in words: fill the zeros, then the first place that differs decides
+function cmpWhy(a, b, pa = places(a), pb = places(b)) {
+  const P = Math.max(pa, pb);
+  const fill = pa !== pb ? `เติม 0 ให้ตำแหน่งเท่ากัน: ${dn(a, P)} กับ ${dn(b, P)} ` : '';
+  if (a === b) return `${fill}ทุกหลักเท่ากัน จึงได้ ${dn(a, pa)} = ${dn(b, pb)}`;
+  const wa = Math.floor(a / 1000), wb = Math.floor(b / 1000);
+  if (wa !== wb) return `${fill}ดูหลักหน่วยก่อน ${wa} ${SIGN[signOf(wa, wb)]} ${wb} จึงได้ ${dn(a, pa)} ${SIGN[signOf(a, b)]} ${dn(b, pb)}`;
+  const k = [1, 2, 3].find(k => digitAt(a, k) !== digitAt(b, k)), NAME = { 1: 'ส่วนสิบ', 2: 'ส่วนร้อย', 3: 'ส่วนพัน' };
+  return `${fill}หลักหน่วย${k > 1 ? 'และหลักก่อนหน้า' : ''}เท่ากัน ดูหลัก${NAME[k]} ${digitAt(a, k)} ${SIGN[signOf(a, b)]} ${digitAt(b, k)} จึงได้ ${dn(a, pa)} ${SIGN[signOf(a, b)]} ${dn(b, pb)}`;
+}
+
+/* two numbers to compare: [a, pa, b, pb] (p = digits shown after the point, so 0.5 can be shown as 0.50) */
+function pair(kind = pick(['len', 'len', 'same', 'whole', 'eq'])) {
+  for (;;) {
+    let a, b, pa, pb;
+    if (kind === 'eq') { a = rnd(pick([1, 2])); pa = places(a); b = a; pb = pa + pick([1, 1, 2].filter(x => pa + x <= 3)); }
+    else if (kind === 'len') {   // different lengths: the longer one is not always the bigger one
+      const w = ri(0, 5); pa = 1; pb = pick([2, 3]);
+      a = w * 1000 + ri(1, 9) * 100; b = w * 1000 + rnd(pb, 0);
+      if (digitAt(b, 1) === 0 && Math.random() < .5) continue;
+    } else if (kind === 'same') {   // same length, a later place decides
+      const w = ri(0, 9); pa = pb = pick([2, 3]);
+      a = w * 1000 + rnd(pa, 0); b = a - (a % 100) + rnd(pa, 0) % 100;
+    } else {   // the whole part decides, though the other has bigger digits after the point
+      pa = pick([1, 2]); pb = pick([1, 2, 3]);
+      a = rnd(pa, 9, 1); b = (Math.floor(a / 1000) + pick([-1, 1])) * 1000 + rnd(pb, 0);
+      if (b < 0) continue;
+    }
+    if (kind !== 'eq' && (a === b || places(a) !== pa || places(b) !== pb)) continue;
+    return Math.random() < .5 ? [a, pa, b, pb] : [b, pb, a, pa];
+  }
+}
+/* 3 or 4 different numbers close together, so the order takes thought (same whole part, mixed lengths) */
+function tempt(n = 4) {
+  for (;;) {
+    const w = ri(0, 6), d = ri(1, 8), vs = new Set();
+    while (vs.size < n) {
+      const p = pick([1, 2, 3]), lead = pick([d, d, d + 1, d - 1, 0]);
+      const rest = p > 1 ? ri(0, 10 ** (p - 1) - 1) : 0, f = (lead * 10 ** (p - 1) + rest) * 10 ** (3 - p);
+      if (f === 0 || places(f) !== p) continue;
+      vs.add(w * 1000 + f);
+    }
+    const list = [...vs];
+    if (new Set(list.map(places)).size >= 2) return shuffle(list);
+  }
+}
+
+/* ---------- 1. story ---------- */
+const STORY = [
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${grid(60, { color: G, anim: true })}<div class="cap">${kid('khun')} ${dn(600)} กม.</div></div>
+        <div class="fig">${grid(45, { anim: true })}<div class="cap">${kid('bua')} ${dn(450)} กม.</div></div>
+      </div>`,
+    say: () => `<h2>ใครไถสเก็ตได้ไกลกว่า</h2>
+      <p>ขุนไถสเก็ตได้ ${dn(600)} กิโลเมตร ใบบัวได้ ${dn(450)} กิโลเมตร</p>
+      <p>ดูพื้นที่ทาสี: ${dn(600)} คือ 60 ช่อง ${dn(450)} คือ 45 ช่อง</p>
+      <p class="callout">${dn(600)} มากกว่า ${dn(450)} ขุนไปได้ไกลกว่า</p>
+      <p class="hint">ถึง 45 จะดูเหมือนมากกว่า 6 แต่ต้องดูค่าประจำหลักนะ</p>`
+  },
+  {
+    vis: () => `<div class="pair">
+        <div class="fig">${grid(6, { tenths: true, color: G })}<div class="cap">${dn(600)}</div></div>
+        <div class="fig">${grid(60, { color: G, anim: true })}<div class="cap">${dn(600, 2)}</div></div>
+      </div>`,
+    say: () => `<h2>เติม 0 ข้างหลังได้</h2>
+      <p>6 แถบ เท่ากับ 60 ช่อง จึงได้ ${dn(600)} = ${dn(600, 2)}</p>
+      <p class="callout">เติม <b>0</b> ต่อท้ายทศนิยม ค่าไม่เปลี่ยน</p>
+      <p>ทำให้ตำแหน่งเท่ากันก่อน แล้วเทียบง่ายขึ้น: ${dn(600, 2)} กับ ${dn(450)} คือ 60 ช่องกับ 45 ช่อง</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">${cmpTable(2350, 2400)}<div class="line">${dn(2350)}<span class="lt">&lt;</span>${dn(2400)}</div></div>`,
+    say: () => `<h2>เทียบทีละหลัก จากซ้ายไปขวา</h2>
+      <p>${dn(2350)} กับ ${dn(2400)}</p>
+      <p>หลักหน่วยเท่ากัน (2 กับ 2) ดูหลักถัดไป</p>
+      <p>หลักส่วนสิบ 3 น้อยกว่า 4 จึงรู้คำตอบเลย</p>
+      <p class="callout">${dn(2350)} <b>น้อยกว่า</b> ${dn(2400)}</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">${cmpTable(500, 125, 1, 3)}<div class="line">${dn(500)}<span class="lt">&gt;</span>${dn(125)}</div></div>`,
+    say: () => `<h2>ระวัง! ยาวกว่าไม่ได้แปลว่ามากกว่า</h2>
+      <p>${dn(500)} กับ ${dn(125)}</p>
+      <p>เติม 0 ให้เป็น ${dn(500, 3)} กับ ${dn(125)}</p>
+      <p>หลักส่วนสิบ 5 มากกว่า 1</p>
+      <p class="callout">${dn(500)} <b>มากกว่า</b> ${dn(125)}</p>`
+  },
+  {
+    vis: () => `<div class="signs">
+        <div><b>&gt;</b><span>มากกว่า</span>${lineOf([700, 70], '>')}</div>
+        <div><b>&lt;</b><span>น้อยกว่า</span>${lineOf([1250, 1300], '<')}</div>
+        <div><b>=</b><span>เท่ากับ</span>${lineOf([500, 500], '=', [1, 2])}</div>
+      </div>`,
+    say: () => `<h2>เครื่องหมาย &gt; &lt; =</h2>
+      <p>ปากของเครื่องหมาย อ้าหาตัวที่มากกว่าเสมอ</p>
+      <p>${dn(700)} > ${dn(70)} เพราะ 7 อยู่หลักส่วนสิบ กับหลักส่วนร้อย</p>
+      <p class="hint">${dn(500)} = ${dn(500, 2)} เพราะเติม 0 ข้างหลังค่าไม่เปลี่ยน</p>`
+  },
+  {
+    vis: () => nline(0, [{ v: 200, label: 'ก' }, { v: 450, label: 'ข', color: 'var(--blue)' }, { v: 800, label: 'ค', color: 'var(--green)' }], { labels: true }),
+    say: () => `<h2>บนเส้นจำนวน</h2>
+      <p>ช่องละ ${dn(100)} จาก 0 ถึง 1</p>
+      <p>ก คือ ${dn(200)} ข คือ ${dn(450)} (ครึ่งทางระหว่าง ${dn(400)} กับ ${dn(500)}) ค คือ ${dn(800)}</p>
+      <p class="callout">ยิ่งอยู่<b>ทางขวา</b> ยิ่ง<b>มาก</b></p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="line">${dn(300)}<span class="lt">,</span>${dn(250)}<span class="lt">,</span>${dn(305)}</div>
+        <div class="line">${fade(`${dn(300, 3)}<span class="lt">,</span>${dn(250, 3)}<span class="lt">,</span>${dn(305)}`, .3)}</div>
+        <div class="line">${fade(lineOf([250, 300, 305], '<'), .7)}</div>
+      </div>`,
+    say: () => `<h2>เรียงจากน้อยไปมาก</h2>
+      <p>${dn(300)}, ${dn(250)}, ${dn(305)}</p>
+      <p>เติม 0 ให้เป็น 3 ตำแหน่งเท่ากัน แล้วเทียบทีละหลัก</p>
+      <p class="callout">${dn(250)} &lt; ${dn(300)} &lt; ${dn(305)}</p>`
+  },
+  {
+    vis: () => `<div class="rulebox">
+        <div class="line">${dn(2100)}<span class="lt">,</span>${dn(2090)}<span class="lt">,</span>${dn(2150)}</div>
+        <div class="line">${fade(lineOf([2150, 2100, 2090], '>'), .4)}</div>
+      </div>`,
+    say: () => `<h2>เรียงจากมากไปน้อย</h2>
+      <p>ทุกตัวมีหลักหน่วยเป็น 2 เท่ากัน</p>
+      <p>หลักส่วนสิบ: 1, 0, 1 ดังนั้น ${dn(2090)} น้อยที่สุด</p>
+      <p>${dn(2150)} กับ ${dn(2100, 2)} ดูหลักส่วนร้อย 5 > 0</p>
+      <p class="callout">${dn(2150)} &gt; ${dn(2100)} &gt; ${dn(2090)}</p>`
+  },
+  {
+    vis: () => `<div class="kinds">
+        <div class="kind a"><h3>1. เติม 0</h3><span>ทำให้ตำแหน่งเท่ากัน</span><div class="ex">${dn(500)} = ${dn(500, 3)}</div></div>
+        <div class="kind b"><h3>2. เทียบทีละหลัก</h3><span>จากซ้ายไปขวา หลักแรกที่ต่างกันบอกคำตอบ</span></div>
+        <div class="kind c" style="grid-column:1/-1"><h3>3. เรียงลำดับ</h3><span>หาตัวที่น้อยที่สุด (หรือมากที่สุด) ทีละตัว</span></div>
+      </div>`,
+    say: () => `<h2>สรุป</h2>
+      <p>เปรียบเทียบทศนิยม ดู<b>หลักหน่วย</b>ก่อน แล้วดู<b>หลักส่วนสิบ ส่วนร้อย ส่วนพัน</b> ตามลำดับ</p>
+      <p class="hint">ไปลองเล่นในข้อ 2 ได้เลย</p>`
+  }
+];
+
+/* ---------- 2. play ---------- */
+// signs: 8 pairs, pick > < or =
+let signs = null;
+function newSigns() {
+  const kinds = shuffle(['len', 'len', 'len', 'same', 'same', 'whole', 'eq', 'eq']);
+  return { rounds: kinds.map(k => pair(k)), i: 0, got: 0, miss: false, msg: '', msgCls: '', busy: false, shown: null };
+}
+function signsHTML() {
+  const s = signs;
+  if (s.i >= s.rounds.length) {
+    return `<div class="result" style="padding:12px 0">
+      <h3 style="font-size:1.5rem">ทำครบ 8 ข้อแล้ว!</h3>
+      <p>ถูกตั้งแต่ครั้งแรก ${s.got} ข้อ</p>
+      <button class="btn" data-act="signs-again">เล่นอีกรอบ</button>
+    </div>`;
+  }
+  const [a, pa, b, pb] = s.rounds[s.i];
+  return `<div class="match">
+      <div class="fcard" id="scard">${dn(a, pa)}<span class="gap">${s.shown ? SIGN[s.shown] : '?'}</span>${dn(b, pb)}</div>
+      <div class="choices signs3">${['>', '<', '='].map(x => `<button class="opt" data-sign="${x}">${SIGN[x]}</button>`).join('')}</div>
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+      <p class="sort-progress">ข้อที่ ${s.i + 1} จาก ${s.rounds.length}</p>
+    </div>`;
+}
+function answerSign(x) {
+  const s = signs;
+  if (s.busy || s.i >= s.rounds.length) return;
+  const [a, pa, b, pb] = s.rounds[s.i];
+  if (x === signOf(a, b)) {
+    sfx.good();
+    if (!s.miss) { addExp(5); s.got++; }
+    s.busy = true; s.shown = x;
+    s.msg = pick(['เก่งมาก!', 'ถูกต้อง!', 'ใช่เลย!', 'เยี่ยม!']); s.msgCls = 'good';
+    drawSigns();
+    setTimeout(() => {
+      s.i++; s.miss = false; s.busy = false; s.shown = null; s.msg = ''; s.msgCls = '';
+      if (s.i >= s.rounds.length) sfx.win();
+      drawSigns();
+    }, 900);
+  } else {
+    sfx.bad(); s.miss = true;
+    s.msg = `${cmpWhy(a, b, pa, pb)} ลองใหม่นะ`; s.msgCls = 'bad';
+    drawSigns();
+    $('#scard').classList.add('shake');
+  }
+}
+
+// sort: tap the numbers from the smallest to the biggest
+let sort = null;
+const newSort = () => ({ nums: tempt(4), done: [], msg: '', msgCls: '', miss: false, bad: -1 });
+function sortHTML() {
+  const s = sort, left = s.nums.filter(v => !s.done.includes(v)), fin = !left.length;
+  return `<div class="match">
+      <p>${fin ? 'เรียงครบแล้ว เก่งมาก!' : 'แตะตัวที่<b>น้อยที่สุด</b>ก่อน แล้วตัวถัดไปเรื่อยๆ'}</p>
+      <div class="row">${s.done.length ? s.done.map(v => dn(v)).join('<span class="lt">&lt;</span>') : '<span class="empty">ยังไม่ได้เลือก</span>'}</div>
+      ${fin ? '<button class="btn" data-act="sort-again">เล่นอีกรอบ (ชุดใหม่)</button>' : `<div class="pool">${s.nums.map((v, i) => `<button class="opt${s.done.includes(v) ? ' gone' : ''}${s.bad === i ? ' shake' : ''}" data-sort="${i}">${dn(v)}</button>`).join('')}</div>`}
+      <p class="msg ${s.msgCls}">${s.msg}</p>
+    </div>`;
+}
+function answerSort(i) {
+  const s = sort, v = s.nums[i];
+  if (s.done.includes(v)) return;
+  const left = s.nums.filter(x => !s.done.includes(x)), min = Math.min(...left);
+  if (v === min) {
+    s.done.push(v); s.bad = -1; sfx.good();
+    s.msg = ''; s.msgCls = '';
+    if (s.done.length === s.nums.length) { sfx.win(); if (!s.miss) addExp(10); }
+  } else {
+    sfx.bad(); s.miss = true; s.bad = i;
+    s.msg = `${cmpWhy(min, v)} จึงต้องเลือก ${dn(min)} ก่อน`; s.msgCls = 'bad';
+  }
+  drawSort();
+}
+
+function playHTML() {
+  if (!signs) signs = newSigns();
+  if (!sort) sort = newSort();
+  return `
+    <section class="card">
+      <div class="section-head"><h2>เติมเครื่องหมาย</h2><p>เลือก &gt; &lt; หรือ = ให้ถูก</p></div>
+      <div id="signs">${signsHTML()}</div>
+    </section>
+    <section class="card" style="margin-top:18px">
+      <div class="section-head"><h2>เรียงจากน้อยไปมาก</h2><p>เติม 0 ในใจให้ตำแหน่งเท่ากัน แล้วเทียบทีละหลัก</p></div>
+      <div id="sort">${sortHTML()}</div>
+    </section>`;
+}
+// Both may fire after the child has switched tabs, so skip when not on screen.
+const drawSigns = () => { const el = $('#signs'); if (el) el.innerHTML = signsHTML(); };
+const drawSort = () => { const el = $('#sort'); if (el) el.innerHTML = sortHTML(); };
+
+function playClick(e) {
+  const sg = e.target.closest('[data-sign]');
+  if (sg) { answerSign(sg.dataset.sign); return; }
+  const so = e.target.closest('[data-sort]');
+  if (so) { answerSort(+so.dataset.sort); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  if (a.dataset.act === 'signs-again') { signs = newSigns(); drawSigns(); }
+  if (a.dataset.act === 'sort-again') { sort = newSort(); drawSort(); }
+}
+
+/* ---------- 3. quiz ---------- */
+// > < =
+function qA() {
+  const [a, pa, b, pb] = pair(), s = signOf(a, b);
+  return {
+    ask: `<span class="ask-sub">เติมเครื่องหมายใดใน ◯</span>${dn(a, pa)}<span class="sign">◯</span>${dn(b, pb)}`,
+    pic: '',
+    opts: ['>', '<', '='].map(x => ({ html: SIGN[x], ok: x === s })),
+    explain: cmpWhy(a, b, pa, pb),
+    after: cmpTable(a, b, pa, pb),
+    review: `${fmt(a, pa)} ${SIGN[s]} ${fmt(b, pb)}`
+  };
+}
+// the biggest or the smallest of four
+function qB() {
+  const vs = tempt(4), big = Math.random() < .5, right = big ? Math.max(...vs) : Math.min(...vs);
+  const sorted = vs.slice().sort((x, y) => x - y);
+  return {
+    ask: `จำนวนใด${big ? 'มากที่สุด' : 'น้อยที่สุด'}`,
+    pic: '',
+    opts: vs.map(v => ({ html: dn(v), ok: v === right })),
+    explain: `เติม 0 ให้เป็น 3 ตำแหน่ง แล้วเทียบทีละหลัก: ${sorted.map(v => fmt(v, 3)).join(' &lt; ')} จึงได้ ${dn(right)} ${big ? 'มากที่สุด' : 'น้อยที่สุด'}`,
+    review: sorted.map(v => fmt(v)).join(' &lt; ')
+  };
+}
+// put 4 numbers in order
+function qC() {
+  const vs = tempt(4), up = Math.random() < .5, s = up ? '<' : '>';
+  const right = vs.slice().sort((x, y) => up ? x - y : y - x);
+  // wrong orders: digits after the point read as whole numbers (the "longer is bigger" slip), backwards, two swapped
+  const asWhole = v => parseInt(fmt(v).split('.')[1] || '0', 10);
+  const slip = vs.slice().sort((x, y) => up ? asWhole(x) - asWhole(y) : asWhole(y) - asWhole(x));
+  const swap = (a, i) => { const b = a.slice(); [b[i], b[i + 1]] = [b[i + 1], b[i]]; return b; };
+  const key = a => a.join(','), seen = new Set([key(right)]), wrong = [];
+  for (const w of [slip, right.slice().reverse(), swap(right, 1), swap(right, 0), swap(right, 2), swap(slip, 0)]) {
+    if (wrong.length >= 3 || seen.has(key(w))) continue;
+    seen.add(key(w)); wrong.push(w);
+  }
+  return {
+    ask: `ข้อใดเรียงจาก${up ? 'น้อยไปมาก' : 'มากไปน้อย'}ได้ถูกต้อง`,
+    pic: '',
+    opts: shuffle([{ html: lineOf(right, s), ok: true }, ...wrong.map(w => ({ html: lineOf(w, s), ok: false }))]),
+    explain: `เติม 0 ให้เป็น 3 ตำแหน่ง: ${right.map(v => fmt(v, 3)).join(', ')} แล้วเทียบทีละหลัก`,
+    review: right.map(v => fmt(v)).join(` ${SIGN[s]} `)
+  };
+}
+// a point on the number line, or a number equal to another (zeros at the end)
+function qD() {
+  if (Math.random() < .6) {
+    const from = ri(0, 2) * 1000, half = Math.random() < .4;
+    const v = from + (half ? pick([1, 3, 5, 7, 9, 11, 13, 15, 17, 19]) * 50 : ri(1, 9) * 100);
+    const wrong = [v + 100, v - 100, v + 50, v - 50, from + (v - from) / 10, v + 200].filter(x => x > from && x < from + 1000);
+    return {
+      ask: 'จุด ก แทนจำนวนใด',
+      pic: `<div class="fig" style="width:100%">${nline(from, [{ v, label: 'ก' }])}</div>`,
+      opts: opts(v, wrong),
+      explain: `จาก ${fmt(from)} ถึง ${fmt(from + 1000)} แบ่งเป็น 10 ช่อง ช่องละ ${dn(100)} ${half ? `จุด ก อยู่ครึ่งช่องระหว่าง ${dn(v - 50)} กับ ${dn(v + 50)} จึงเป็น ${dn(v)}` : `นับไป ${(v - from) / 100} ช่อง ได้ ${dn(v)}`}`,
+      after: nline(from, [{ v, label: 'ก' }], { labels: true }),
+      review: `จุด ก = ${fmt(v)}`
+    };
+  }
+  const v = rnd(pick([1, 1, 2]), 9), p = places(v), shown = p + (p === 1 ? pick([1, 2]) : 1);
+  const digits = fmt(v).split('.'), w = +digits[0], f = digits[1];
+  // 0 slipped in right after the point (0.5 → 0.05), moved point, the digits shifted
+  const wrong = [w * 1000 + parseInt(f, 10) * 10 ** (2 - p), w * 1000 + parseInt(f, 10) * 10 ** (1 - p), Math.round(v * 10), Math.floor(v / 10)].filter(x => Number.isInteger(x) && x !== v);
+  return {
+    ask: `ข้อใดมีค่าเท่ากับ ${dn(v)}`,
+    pic: '',
+    opts: opts(v, wrong, x => x === v ? dn(v, shown) : dn(x)),
+    explain: `เติม 0 ต่อท้ายทศนิยม ค่าไม่เปลี่ยน: ${dn(v)} = ${dn(v, shown)}`,
+    review: `${fmt(v)} = ${fmt(v, shown)}`
+  };
+}
+
+L.lesson({
+  id: 'math-p4/7.2',
+  story: STORY,
+  play: { render: playHTML, onClick: playClick },
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
+});
+})();
+</script>
+</body>
+</html>

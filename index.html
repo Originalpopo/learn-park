@@ -111,6 +111,8 @@
 .park .badge .mini svg { width: 17px; height: 17px; fill: #fff; stroke: #C9BFA6; stroke-width: 1.5; }
 .park .badge .mini svg.on { fill: var(--yellow); stroke: var(--yellow-deep); }
 .park .badge.next .mini, .park .badge.next b { animation: bob 1.8s ease-in-out infinite; }   /* the next lesson's stars and number bob together */
+/* a chapter's last stop (the โจทย์ปัญหา test) has a yellow number with dark text; grey/dashed states still win */
+.park .badge:not(.soon):not(.todo) b.exam, .park .pop .no.exam:not(.todo) { color: var(--ink); }
 /* not built yet: a faded number in a dashed outline (a lock would suggest the lesson exists) */
 .park .badge.todo b, .park .pop .no.todo { background: rgba(255, 255, 255, .7) !important; color: #B4ADC4; border: 2px dashed #B4ADC4; box-shadow: none; }
 /* the child's skater waits beside the stop to play next, rolling back and forth */
@@ -319,7 +321,7 @@ function drawWorld({ c, ch, zone, park }) {
         <img src="${PARK(`${zone}-${i + 1}`)}" alt=""></button>`;
     badges += `<button class="badge ${st === 'soon' ? 'todo' : grey ? 'soon' : st}" data-i="${i}" style="${pct(L.l + L.w / 2, L.t + 1)}" tabindex="-1" aria-hidden="true">
         ${t.file ? `<span class="mini">${[0, 1, 2].map(k => star(k < best(id))).join('')}</span>` : ''}
-        <b style="background:${ch.color}">${st === 'locked' ? LOCK : ''}${t.no}</b></button>`;
+        <b class="${t.exam ? 'exam' : ''}" style="background:${t.exam ? 'var(--yellow)' : ch.color}">${st === 'locked' ? LOCK : ''}${t.no}</b></button>`;
     // the child's skater stands on the floor spot just in front of the stop to play next
     if (st === 'next') ride = `<span class="ride" data-i="${i}" style="${pct(L.gx, L.gy)};width:max(34px, ${(lay.tile * 1.5).toFixed(2)}%)"><span class="hop"><img src="${heroImg()}" alt=""></span></span>`;
   });
@@ -340,7 +342,7 @@ function openPop(w, i) {
   const pop = w.park.querySelector('.pop');
   const x = Math.min(78, Math.max(22, L.l + L.w / 2));   // keep the card inside the park
   pop.style.left = x + '%';
-  pop.innerHTML = `<b class="no${t.file ? '' : ' todo'}" style="background:${w.ch.color}">${t.no}</b><div class="tt">${t.title}</div>
+  pop.innerHTML = `<b class="no${t.file ? '' : ' todo'}${t.exam ? ' exam' : ''}" style="background:${t.exam ? 'var(--yellow)' : w.ch.color}">${t.no}</b><div class="tt">${t.title}</div>
     ${!t.file ? `<div class="soon">เนื้อหายังไม่พร้อม เร็วๆ นี้</div>`
       : !isOpen(id) ? `<div class="soon">${LOCK} ผ่านด่าน ${findLesson(prevId(id)).topic.no} ให้ได้ 1 ดาวก่อนนะ</div>`
       : `<div class="ms">${[0, 1, 2].map(k => star(k < s)).join('')}</div><a class="btn" href="${t.file}">เล่นด่านนี้</a>`}`;

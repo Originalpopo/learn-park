@@ -17,59 +17,21 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Mitr:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="../../shared/core.css">
 <style>
-/* 6.8 only: word problems with adding and taking away fractions: the solving steps, add/take-away words, the step-by-step solver */
-.rulebox { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
-.arrow-note { font-size: 1rem; background: var(--yellow-soft); border-radius: 12px; padding: 4px 12px; text-align: center; }
-.kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
-.kind { border-radius: 22px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
-.kind h3 { font-size: 1.15rem; }
-.kind.a { background: #E6F4EA; }
-.kind.b { background: #FDEBDD; }
-.kind .words { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-.kind .words span { background: rgba(255, 255, 255, .8); border-radius: 999px; padding: 2px 10px; font-size: .95rem; }
-.pair { display: flex; gap: 18px; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
-.steps { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 380px; }
-.steps > div { display: flex; align-items: center; gap: 12px; background: var(--bg); border-radius: 18px; padding: 10px 14px; text-align: left; }
-.steps b.n { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--yellow); display: grid; place-items: center; font-family: var(--display); font-weight: 500; }
+/* 6.8 only: the last stop of chapter 6, a test of 20 word problems over 6.1-6.7 (no story or play) */
+.qask.word { font-family: var(--body, inherit); font-size: clamp(1.1rem, 2.8vw, 1.3rem); line-height: 1.9; text-align: left; display: block; width: 100%; }
+.qask.word .frac { font-size: 1.2em; vertical-align: middle; }
+.qask.word .topic { display: inline-block; font-size: .8rem; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 0 10px; margin-bottom: 4px; line-height: 1.8; }
+.mixed { display: inline-flex; align-items: center; vertical-align: middle; font-family: var(--display); font-weight: 500; }
+.mixed .w { font-size: 1.75em; line-height: 1; margin-right: .04em; }
+.num { font-family: var(--display); font-size: 1.75em; line-height: 1; }
 .sent { font-family: var(--display); display: inline-flex; align-items: center; gap: .3em; flex-wrap: wrap; justify-content: center; }
 .sent .op { color: var(--muted); }
 .sent .box { display: inline-block; width: 1.1em; height: 1.1em; border: 3px solid var(--orange); border-radius: 6px; vertical-align: middle; }
-.bars { display: flex; flex-direction: column; gap: 8px; align-items: center; width: 100%; }
-.bar { width: min(100%, 320px); height: auto; display: block; }
-.prob { background: var(--bg); border-radius: 18px; padding: 14px 16px; font-size: 1.1rem; line-height: 1.9; }
-.prob .frac { vertical-align: middle; }
-
-.solver { display: flex; flex-direction: column; gap: 14px; }
-.track { display: flex; gap: 8px; flex-wrap: wrap; }
-.track span { border-radius: 999px; padding: 4px 12px; background: var(--bg); color: var(--muted); font-size: .9rem; }
-.track span.on { background: var(--yellow); color: var(--ink); }
-.track span.done { background: var(--good-soft); color: var(--good); }
-.choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; }
-.choices.two { grid-template-columns: 1fr 1fr; max-width: 420px; }
-.choices.one { grid-template-columns: 1fr; max-width: 420px; }
-.choices .opt { font-size: 1.5rem; min-height: 80px; }
-.choices.one .opt { font-size: 1.4rem; min-height: 70px; }
-.done-line { font-size: 1.1rem; }
-.match { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.fcard { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 16px 30px; box-shadow: 0 6px 0 var(--line); font-family: var(--display); font-size: 1.8rem; text-align: center; }
-.fcard.shake, .shake { animation: shake .4s; }
-@keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
-.msg { min-height: 1.6em; text-align: center; font-size: 1.05rem; }
-.msg.bad { color: var(--bad); }
-.msg.good { color: var(--good); }
-.sort-progress { text-align: center; color: var(--muted); font-size: .95rem; }
-.num { font-family: var(--display); font-size: 1.75em; line-height: 1; }
 .opts:has(.sent) { grid-template-columns: 1fr; }   /* number-sentence answers are wide: one per row */
 .opts .sent { font-size: 1.5rem; }
-.qask.word { font-family: var(--body, inherit); font-size: clamp(1.1rem, 2.8vw, 1.3rem); line-height: 1.9; text-align: left; display: block; width: 100%; }
-.qask.word .frac { font-size: 1.2em; vertical-align: middle; }
-.qask.word b { font-family: var(--display); font-weight: 500; }
-
-@media (max-width: 440px) {
-  .kinds { grid-template-columns: 1fr; }
-  .choices { grid-template-columns: 1fr 1fr; }
-  .choices .opt { font-size: 1.3rem; }
-}
+.opts .txt { font-size: 1.25rem; line-height: 1.4; }
+.opts:has(.txt) .opt { min-height: 72px; }
+.pair { display: flex; gap: 14px; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -78,44 +40,211 @@
 <script src="../../shared/core.js"></script>
 <script>
 (() => {
-const { frac, fade, pie, piesSeg, ri, pick, shuffle, sfx, addExp, G, B, O } = L;
-const $ = s => document.querySelector(s);
+const { frac, piesSeg, ri, pick, shuffle, G, B } = L;
 
 const gcd = (a, b) => b ? gcd(b, a % b) : a;
 const low = ([n, d]) => { const g = gcd(n, d); return [n / g, d / g]; };
 const f = x => x[1] === 1 ? `${x[0]}` : frac(x[0], x[1]);
 const fx = x => x[1] === 1 ? `<span class="num">${x[0]}</span>` : frac(x[0], x[1]);
-const mix = (w, n, d) => `<span class="mixed" style="display:inline-flex;align-items:center;font-family:var(--display)"><span style="font-size:1.75em;line-height:1">${w}</span>${frac(n, d)}</span>`;
-const ATE = 'var(--bad-soft)';
-const cakes = (d, parts, o = {}) => piesSeg(d, parts.map(([n, c]) => [n, c === 'ate' ? ATE : c]), o);
-/* a strip cut into d equal parts (a bottle of water, a ribbon, a road): parts [[count, color], ...] */
-function bar(d, parts) {
-  const W = 300, H = 46, w = W / d, fills = [];
-  parts.forEach(([n, c]) => { for (let i = 0; i < n; i++) fills.push(c === 'ate' ? ATE : c); });
-  let s = '';
-  for (let i = 0; i < d; i++) s += `<rect x="${(i * w + 1).toFixed(1)}" y="1" width="${(w - 2).toFixed(1)}" height="${H - 2}" rx="6" fill="${fills[i] || 'var(--empty)'}" stroke="var(--ink)" stroke-width="2"/>`;
-  return `<svg class="bar" viewBox="0 0 ${W} ${H}" aria-hidden="true">${s}</svg>`;
-}
+const num = x => `<span class="num">${x}</span>`;
+const txt = s => `<span class="txt">${s}</span>`;
+const mix = (w, n, d) => n ? `<span class="mixed"><span class="w">${w}</span>${frac(n, d)}</span>` : num(w);
+const cakes = (d, parts, o = {}) => piesSeg(d, parts, o);
 const box = '<span class="box"></span>';
 const sentence = (a, op, b) => `<span class="sent">${f(a)}<span class="op">${op}</span>${f(b)}<span class="op">=</span>${box}</span>`;
-
-/* ---------- word problems ----------
-   Each kind writes the story around two fractions a and b; 'add' kinds join, 'take' kinds take away or compare. */
 const NAMES = ['ขุน', 'ใบบัว', 'ต้นกล้า', 'แก้วตา'];
-const KINDS = [
-  { op: '+', unit: 'ถาด', text: (a, b, [x, y]) => `${x}กินพิซซ่า ${f(a)} ถาด ${y}กินอีก ${f(b)} ถาด ทั้งสองคน<b>กินพิซซ่ารวมกัน</b>กี่ถาด` },
-  { op: '+', unit: 'กิโลกรัม', text: (a, b) => `แม่ใช้แป้ง ${f(a)} กิโลกรัม ทำขนมปัง และใช้อีก ${f(b)} กิโลกรัม ทำคุกกี้ แม่<b>ใช้แป้งทั้งหมด</b>กี่กิโลกรัม` },
-  { op: '+', unit: 'กิโลเมตร', text: (a, b, [x]) => `${x}วิ่ง ${f(a)} กิโลเมตร แล้วเดินต่ออีก ${f(b)} กิโลเมตร ${x}<b>ไปได้ทั้งหมด</b>กี่กิโลเมตร` },
-  { op: '+', unit: 'ลิตร', text: (a, b) => `ในขวดมีน้ำ ${f(a)} ลิตร ${pick(['แม่', 'พ่อ'])}<b>เติมน้ำเพิ่มอีก</b> ${f(b)} ลิตร ตอนนี้ในขวดมีน้ำกี่ลิตร` },
-  { op: '+', unit: 'เมตร', text: (a, b, [x]) => `${x}มีเชือกสีแดงยาว ${f(a)} เมตร และเชือกสีฟ้ายาว ${f(b)} เมตร ${x}<b>มีเชือกรวมกัน</b>กี่เมตร` },
-  { op: '−', unit: 'ก้อน', text: (a, b, [x]) => `มีเค้ก ${f(a)} ก้อน ${x}<b>กินไป</b> ${f(b)} ก้อน <b>เหลือ</b>เค้กกี่ก้อน` },
-  { op: '−', unit: 'ลิตร', text: (a, b, [x]) => `มีนม ${f(a)} ลิตร ${x}<b>ดื่มไป</b> ${f(b)} ลิตร <b>เหลือ</b>นมกี่ลิตร` },
-  { op: '−', unit: 'เมตร', text: (a, b, [x, y]) => `${x}มีริบบิ้นยาว ${f(a)} เมตร ${y}มีริบบิ้นยาว ${f(b)} เมตร ${x}มีริบบิ้น<b>ยาวกว่า</b>${y}กี่เมตร` },
-  { op: '−', unit: 'กิโลเมตร', text: (a, b) => `ถนนยาว ${f(a)} กิโลเมตร ทาสีไปแล้ว ${f(b)} กิโลเมตร <b>ยังไม่ได้ทาสีอีก</b>กี่กิโลเมตร` },
-  { op: '−', unit: 'กิโลกรัม', text: (a, b, [x]) => `${x}ซื้อส้ม ${f(a)} กิโลกรัม <b>แบ่งให้</b>เพื่อน ${f(b)} กิโลกรัม ${x}<b>เหลือ</b>ส้มกี่กิโลกรัม` }
-];
+const who = () => shuffle(NAMES);
+// a word problem, with a small tag naming the lesson it comes from
+const word = (topic, s) => `<div class="qask word"><span class="topic">${topic}</span><br>${s}</div>`;
+const plain = s => s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+// the right answer plus up to 3 wrong ones whose values differ from it and from each other
+function opts(right, wrong, show, val = x => x[0] / x[1]) {
+  const seen = new Set([val(right)]), out = [];
+  for (const w of wrong) {
+    const v = val(w);
+    if (out.length >= 3 || seen.has(v)) continue;
+    seen.add(v); out.push(w);
+  }
+  return shuffle([{ html: show(right), ok: true }, ...out.map(w => ({ html: show(w), ok: false }))]);
+}
+const okFrac = ([n, d]) => n > 0 && d > 1;
 
-/* two fractions whose bottoms are equal, or one a multiple of the other (as in 6.7); for '−' a is the bigger one.
+/* ---------- 6.1 เศษส่วนแท้ เศษเกิน ---------- */
+function q61a() {
+  const d = ri(3, 8), cakesN = pick([1, 2]), n = cakesN === 1 ? ri(1, d - 1) : ri(d + 1, 2 * d - 1), [x] = who();
+  const wrong = [[d, n], [n + 1, d], [n - 1, d], [n, d * cakesN], [d - n > 0 ? d - n : n - d, d], [n + 2, d], [n, d + 1], [n + 3, d]].filter(okFrac);
+  return {
+    ask: word('6.1 เศษส่วนแท้ เศษเกิน', `แม่มีเค้ก ${cakesN} ก้อน ตัดก้อนละ ${d} ชิ้นเท่าๆ กัน ${x}ได้เค้กไป ${n} ชิ้น ${x}ได้เค้กไปกี่ก้อน`),
+    pic: '',
+    opts: opts([n, d], wrong, f),
+    explain: `ได้ ${n} ชิ้น จากก้อนที่ตัดก้อนละ ${d} ชิ้น จึงเป็น ${frac(n, d)} ก้อน (ตัวส่วนคือจำนวนชิ้นใน 1 ก้อน)`,
+    after: `<div class="pair">${cakes(d, [[n, G]], { cls: 'sm' })}</div>`,
+    review: `ได้ ${n} ชิ้น ก้อนละ ${d} ชิ้น = ${frac(n, d)} ก้อน`
+  };
+}
+function q61b() {
+  const d = ri(2, 9), r = Math.random(), n = r < .45 ? ri(1, d - 1) : r < .6 ? d : ri(d + 1, 2 * d), [x] = who(), imp = n >= d;
+  return {
+    ask: word('6.1 เศษส่วนแท้ เศษเกิน', `${x}ดื่มน้ำส้ม ${frac(n, d)} แก้ว ข้อใดถูกต้อง`),
+    pic: '',
+    opts: [{ html: txt('ดื่มไม่ถึง 1 แก้ว (เศษส่วนแท้)'), ok: !imp }, { html: txt('ดื่มตั้งแต่ 1 แก้วขึ้นไป (เศษเกิน)'), ok: imp }],
+    explain: imp ? `ตัวเศษ ${n} ${n === d ? 'เท่ากับ' : 'มากกว่า'}ตัวส่วน ${d} จึงเป็นเศษเกิน คือ 1 แก้วขึ้นไป` : `ตัวเศษ ${n} น้อยกว่าตัวส่วน ${d} จึงเป็นเศษส่วนแท้ คือยังไม่ถึง 1 แก้ว`,
+    review: `${frac(n, d)} แก้ว → ${imp ? 'เศษเกิน' : 'เศษส่วนแท้'}`
+  };
+}
+/* ---------- 6.2 จำนวนคละ ---------- */
+function q62a() {
+  const d = ri(2, 8), w = ri(1, 3), r = ri(1, d - 1), n = w * d + r;
+  const show = x => mix(...x), val = x => x[0] + x[1] / x[2];
+  const wrong = [[w + 1, r, d], [w, Math.min(r + 1, d - 1), d], [r, w, d], [w, r, n], [w - 1, r, d], [w + 1, d - r, d], [w, r, d + 1], [w + 2, r, d]].filter(x => x[0] > 0 && x[1] > 0 && x[1] < x[2]);
+  return {
+    ask: word('6.2 จำนวนคละ', `มีพิซซ่าเหลือ ${frac(n, d)} ถาด เขียนเป็นจำนวนคละได้กี่ถาด`),
+    pic: '',
+    opts: opts([w, r, d], wrong, show, val),
+    explain: `${n} ÷ ${d} = ${w} เศษ ${r} ได้เต็ม ${w} ถาด กับอีก ${frac(r, d)} ถาด คือ ${mix(w, r, d)}`,
+    after: `<div class="pair">${cakes(d, [[n, G]], { cls: 'sm' })}</div>`,
+    review: `${frac(n, d)} = ${mix(w, r, d)}`
+  };
+}
+function q62b() {
+  const d = ri(2, 8), w = ri(1, 3), r = ri(1, d - 1), n = w * d + r;
+  const wrong = [[w + r, d], [w * r + d, d], [n + 1, d], [n - 1, d], [w * d, d], [n, d + 1], [n + 2, d], [n, d + 2]].filter(okFrac);
+  return {
+    ask: word('6.2 จำนวนคละ', `แม่ซื้อขนมปัง ${mix(w, r, d)} ก้อน ขนมปังแต่ละก้อนหั่นเป็น ${d} แผ่น เขียนเป็นเศษเกินได้เท่าไร`),
+    pic: '',
+    opts: opts([n, d], wrong, f),
+    explain: `เต็ม ${w} ก้อน ได้ ${w} × ${d} = ${w * d} แผ่น รวมอีก ${r} แผ่น เป็น ${n} แผ่น จึงเป็น ${frac(n, d)} ก้อน`,
+    review: `${mix(w, r, d)} = ${frac(n, d)}`
+  };
+}
+/* ---------- 6.3 เศษส่วนที่เท่ากับจำนวนนับ ---------- */
+function q63() {
+  const d = ri(2, 8), k = ri(1, 4), n = k * d;
+  const wrong = [k + 1, k - 1, n, d, k + 2, k + 3, n + 1, d + k].filter(x => x > 0);
+  return {
+    ask: word('6.3 เศษส่วนที่เท่ากับจำนวนนับ', `ร้านตัดพิซซ่าถาดละ ${d} ชิ้น วันนี้ขายไป ${n} ชิ้น คิดเป็นพิซซ่ากี่ถาด`),
+    pic: '',
+    opts: opts(k, wrong, num, x => x),
+    explain: `${frac(n, d)} ถาด: ${n} ÷ ${d} = ${k} จึงเป็น ${k} ถาดเต็ม`,
+    after: `<div class="pair">${cakes(d, [[n, G]], { cls: 'sm' })}</div>`,
+    review: `${frac(n, d)} = ${k} ถาด`
+  };
+}
+/* ---------- 6.4 เศษส่วนที่เท่ากัน ---------- */
+function eqSet() {
+  let n, d;
+  do { d = pick([2, 3, 4, 5, 6]); n = ri(1, d - 1); } while (gcd(n, d) !== 1);
+  const k = d >= 5 ? ri(2, 3) : ri(2, 4);
+  return { n, d, k, N: n * k, D: d * k };
+}
+function q64a() {
+  const m = eqSet(), [x, y] = who();
+  const wrong = [m.n, m.N + 1, m.N - 1, m.n + (m.D - m.d), m.D - m.N, m.N + 2].filter(v => v > 0);
+  return {
+    ask: word('6.4 เศษส่วนที่เท่ากัน', `${x}กินเค้ก ${frac(m.n, m.d)} ก้อน ${y}มีเค้กขนาดเท่ากันที่ตัดเป็น ${m.D} ชิ้น ${y}ต้องกินกี่ชิ้น จึงจะได้เค้กเท่ากับ${x}`),
+    pic: '',
+    opts: opts(m.N, wrong, num, v => v),
+    explain: `${m.d} × ${m.k} = ${m.D} ตัวเศษก็ต้องคูณ ${m.k}: ${m.n} × ${m.k} = ${m.N} จึงได้ ${frac(m.n, m.d)} = ${frac(m.N, m.D)}`,
+    after: `<div class="pair">${cakes(m.d, [[m.n, G]], { cls: 'sm' })}${cakes(m.D, [[m.N, B]], { cls: 'sm' })}</div>`,
+    review: `${frac(m.n, m.d)} = ${frac(m.N, m.D)} ต้องกิน ${m.N} ชิ้น`
+  };
+}
+function q64b() {
+  const m = eqSet(), [x, y] = who();
+  const wrong = [[m.n + m.k - 1, m.d + m.k - 1], [m.N, m.d], [m.n, m.D], [m.N + 1, m.D], [m.N - 1, m.D], [m.n + 1, m.d + 1]].filter(([a, b]) => a > 0 && b > 1 && a < b);
+  return {
+    ask: word('6.4 เศษส่วนที่เท่ากัน', `${x}ทาสีรั้วไป ${frac(m.n, m.d)} ของรั้ว ${y}ทาสีรั้วอีกแผงที่ยาวเท่ากันได้เท่ากับ${x}พอดี ${y}อาจทาสีไปเท่าไร`),
+    pic: '',
+    opts: opts([m.N, m.D], wrong, f),
+    explain: `คูณทั้งบนและล่างด้วย ${m.k}: ${frac(m.n, m.d)} = ${frac(m.N, m.D)}`,
+    review: `${frac(m.n, m.d)} = ${frac(m.N, m.D)}`
+  };
+}
+/* ---------- 6.5 เศษส่วนอย่างต่ำ ---------- */
+function steps(n, d) {
+  const out = [[n, d]];
+  for (;;) { let k = 2; while (k <= Math.min(n, d) && (n % k || d % k)) k++; if (k > Math.min(n, d)) return out; n /= k; d /= k; out.push([n, d]); }
+}
+function q65() {
+  let n, d, k;
+  do { d = ri(2, 7); n = ri(1, d - 1); k = pick([2, 3, 4, 5, 6]); } while (gcd(n, d) !== 1 || d * k > 30);
+  const N = n * k, D = d * k, mid = steps(N, D).slice(1, -1), [x] = who();
+  const kind = pick(['class', 'fruit']);
+  const s = kind === 'class'
+    ? `ห้องของ${x}มีนักเรียน ${D} คน เป็นนักเรียนหญิง ${N} คน นักเรียนหญิงคิดเป็นเศษส่วนอย่างต่ำเท่าไรของนักเรียนทั้งห้อง`
+    : `${x}มีส้ม ${D} ผล ให้เพื่อนไป ${N} ผล ส้มที่ให้ไปคิดเป็นเศษส่วนอย่างต่ำเท่าไรของส้มทั้งหมด`;
+  // wrong: stopped too early (not lowest), the big one itself, the other part, only one part divided
+  const wrong = [...mid, [N, D], [D - N, D], low([D - N, D]), [n, D], [N, d], [n + 1, d]].filter(okFrac);
+  return {
+    ask: word('6.5 เศษส่วนอย่างต่ำ', s),
+    pic: '',
+    opts: shuffle([{ html: f([n, d]), ok: true }, ...wrong.filter((w, i, a) => a.findIndex(v => v.join() === w.join()) === i && !(w[0] * d === w[1] * n && gcd(...w) === 1)).slice(0, 3).map(w => ({ html: f(w), ok: false }))]),
+    explain: `${N} จาก ${D} คือ ${frac(N, D)} หารทั้งบนและล่างจนหารต่อไม่ได้: ${steps(N, D).map(f).join(' = ')}`,
+    review: `${frac(N, D)} = ${frac(n, d)}`
+  };
+}
+/* ---------- 6.6 การเปรียบเทียบและเรียงลำดับ ---------- */
+const cmp = (a, b) => Math.sign(a[0] * b[1] - b[0] * a[1]);
+function pair(kind) {
+  if (kind === 'sameD') { const d = ri(3, 10); let a, b; do { a = ri(1, d - 1); b = ri(1, d - 1); } while (a === b); return [[a, d], [b, d]]; }
+  if (kind === 'sameN') { const n = ri(1, 3); let c, d; do { c = ri(n + 1, 10); d = ri(n + 1, 10); } while (c === d); return [[n, c], [n, d]]; }
+  let d, k, a, b;
+  do { d = ri(2, 6); k = ri(2, d <= 3 ? 4 : 2); a = ri(1, d - 1); b = kind === 'eq' ? a * k : ri(1, d * k - 1); } while (d * k > 12 || (kind !== 'eq' && b === a * k));
+  const p = [[a, d], [b, d * k]];
+  return Math.random() < .5 ? p : p.reverse();
+}
+function why(a, b) {
+  const s = cmp(a, b), W = { 1: 'มากกว่า', '-1': 'น้อยกว่า', 0: 'เท่ากับ' }, S = { 1: '&gt;', '-1': '&lt;', 0: '=' };
+  if (a[1] === b[1]) return `ตัวส่วนเท่ากัน ดูตัวเศษ: ${f(a)} ${S[s]} ${f(b)}`;
+  if (a[0] === b[0]) return `ตัวเศษเท่ากัน ตัวส่วนน้อยกว่าชิ้นใหญ่กว่า: ${f(a)} ${S[s]} ${f(b)}`;
+  const L = Math.max(a[1], b[1]), A = [a[0] * L / a[1], L], Bv = [b[0] * L / b[1], L];
+  return `ทำตัวส่วนเป็น ${L}: ${f(A)} ${S[s]} ${f(Bv)} จึงได้ ${f(a)} ${W[s]} ${f(b)}`;
+}
+function q66a() {
+  const [a, b] = pair(pick(['sameD', 'sameN', 'mult', 'mult', 'eq'])), [x, y] = who(), s = cmp(a, b);
+  const k = pick([['ดื่มนม', 'ลิตร', 'ดื่มนมมากกว่า', 'ดื่มเท่ากัน'], ['วิ่งได้', 'กิโลเมตร', 'วิ่งได้ไกลกว่า', 'วิ่งได้ไกลเท่ากัน'], ['กินพิซซ่า', 'ถาด', 'กินพิซซ่ามากกว่า', 'กินเท่ากัน']]);
+  return {
+    ask: word('6.6 การเปรียบเทียบ', `${x}${k[0]} ${f(a)} ${k[1]} ${y}${k[0]} ${f(b)} ${k[1]} ใคร${k[2]}`),
+    pic: '',
+    opts: [{ html: txt(x), ok: s > 0 }, { html: txt(y), ok: s < 0 }, { html: txt(k[3]), ok: s === 0 }],
+    explain: why(a, b),
+    review: `${f(a)} กับ ${f(b)}: ${s > 0 ? x : s < 0 ? y : k[3]}`
+  };
+}
+const FAMILY = { 6: [2, 3, 6], 8: [2, 4, 8], 10: [2, 5, 10], 12: [2, 3, 4, 6, 12] };
+function family(count) {
+  for (;;) {
+    const L = pick([6, 8, 10, 12]), out = [], seen = new Set();
+    for (let t = 0; out.length < count && t < 50; t++) { const d = pick(FAMILY[L]), n = ri(1, d - 1), v = n * L / d; if (seen.has(v)) continue; seen.add(v); out.push([n, d]); }
+    const ds = new Set(out.map(x => x[1])), big = Math.max(...ds);
+    if (out.length === count && ds.size >= 2 && [...ds].every(d => big % d === 0)) return out;
+  }
+}
+function q66b() {
+  const xs = family(3), names = who().slice(0, 3), most = Math.random() < .5, L = Math.max(...xs.map(x => x[1]));
+  const best = xs.reduce((m, x) => (most ? cmp(x, m) > 0 : cmp(x, m) < 0) ? x : m);
+  return {
+    ask: word('6.6 การเรียงลำดับ', `${names.map((n, i) => `${n}เดินได้ ${f(xs[i])} กิโลเมตร`).join(' ')} ใครเดินได้${most ? 'ไกลที่สุด' : 'น้อยที่สุด'}`),
+    pic: '',
+    opts: names.map((n, i) => ({ html: txt(n), ok: xs[i] === best })),
+    explain: `ทำตัวส่วนเป็น ${L}: ${xs.map((x, i) => `${names[i]} ${f([x[0] * L / x[1], L])}`).join(' ')} จึงเป็น${names[xs.indexOf(best)]}`,
+    review: `${xs.map(f).join(' ')} → ${most ? 'ไกลที่สุด' : 'น้อยที่สุด'}คือ ${f(best)}`
+  };
+}
+/* ---------- 6.7 การบวก การลบ ---------- */
+const KINDS = [
+  { op: '+', unit: 'ถาด', text: (a, b, [x, y]) => `${x}กินพิซซ่า ${f(a)} ถาด ${y}กินอีก ${f(b)} ถาด ทั้งสองคนกินพิซซ่ารวมกันกี่ถาด` },
+  { op: '+', unit: 'กิโลกรัม', text: (a, b) => `แม่ใช้แป้ง ${f(a)} กิโลกรัม ทำขนมปัง และใช้อีก ${f(b)} กิโลกรัม ทำคุกกี้ แม่ใช้แป้งทั้งหมดกี่กิโลกรัม` },
+  { op: '+', unit: 'กิโลเมตร', text: (a, b, [x]) => `${x}วิ่ง ${f(a)} กิโลเมตร แล้วเดินต่ออีก ${f(b)} กิโลเมตร ${x}ไปได้ทั้งหมดกี่กิโลเมตร` },
+  { op: '+', unit: 'ลิตร', text: (a, b) => `ในขวดมีน้ำ ${f(a)} ลิตร แม่เติมน้ำเพิ่มอีก ${f(b)} ลิตร ตอนนี้ในขวดมีน้ำกี่ลิตร` },
+  { op: '+', unit: 'เมตร', text: (a, b, [x]) => `${x}มีเชือกสีแดงยาว ${f(a)} เมตร และเชือกสีฟ้ายาว ${f(b)} เมตร ${x}มีเชือกรวมกันกี่เมตร` },
+  { op: '−', unit: 'ก้อน', text: (a, b, [x]) => `มีเค้ก ${f(a)} ก้อน ${x}กินไป ${f(b)} ก้อน เหลือเค้กกี่ก้อน` },
+  { op: '−', unit: 'ลิตร', text: (a, b, [x]) => `มีนม ${f(a)} ลิตร ${x}ดื่มไป ${f(b)} ลิตร เหลือนมกี่ลิตร` },
+  { op: '−', unit: 'เมตร', text: (a, b, [x, y]) => `${x}มีริบบิ้นยาว ${f(a)} เมตร ${y}มีริบบิ้นยาว ${f(b)} เมตร ${x}มีริบบิ้นยาวกว่า${y}กี่เมตร` },
+  { op: '−', unit: 'กิโลเมตร', text: (a, b) => `ถนนยาว ${f(a)} กิโลเมตร ทาสีไปแล้ว ${f(b)} กิโลเมตร ยังไม่ได้ทาสีอีกกี่กิโลเมตร` },
+  { op: '−', unit: 'กิโลกรัม', text: (a, b, [x]) => `${x}ซื้อส้ม ${f(a)} กิโลกรัม แบ่งให้เพื่อน ${f(b)} กิโลกรัม ${x}เหลือส้มกี่กิโลกรัม` }
+];
+/* two fractions whose bottoms are equal, or one a multiple of the other; for '−' a is the bigger one.
    Returns { a, b, op, L, A, Bv, r }: A and Bv are a and b over the common bottom L, r the answer over L. */
 function nums(op, same = Math.random() < .5) {
   for (;;) {
@@ -129,11 +258,11 @@ function nums(op, same = Math.random() < .5) {
       if (b[0] % k === 0) continue;
       if (Math.random() < .5) [a, b] = [b, a];
     }
-    const L = Math.max(a[1], b[1]), A = [a[0] * L / a[1], L], Bv = [b[0] * L / b[1], L];
+    const L = Math.max(a[1], b[1]), A = a[0] * L / a[1], Bv = b[0] * L / b[1];
     if (op === '−') {
-      if (A[0] === Bv[0]) continue;
-      if (A[0] < Bv[0]) { if (a[1] === 1) continue; return make(op, b, a); }
-    } else if (A[0] + Bv[0] > 1.5 * L || A[0] === Bv[0]) continue;   // equal parts would make two of the sentence answers look the same
+      if (A === Bv) continue;
+      if (A < Bv) { if (a[1] === 1) continue; return make(op, b, a); }
+    } else if (A + Bv > 1.5 * L || A === Bv) continue;   // equal parts would make two of the sentence answers look the same
     return make(op, a, b);
   }
 }
@@ -141,315 +270,57 @@ function make(op, a, b) {
   const L = Math.max(a[1], b[1]), A = [a[0] * L / a[1], L], Bv = [b[0] * L / b[1], L];
   return { a, b, op, L, A, Bv, r: [op === '+' ? A[0] + Bv[0] : A[0] - Bv[0], L] };
 }
-function wordProblem(o = {}) {
-  const kind = o.kind || pick(KINDS.filter(k => !o.op || k.op === o.op));
-  const p = nums(kind.op, o.same);
-  const who = shuffle(NAMES);
-  return { ...p, kind, unit: kind.unit, text: kind.text(p.a, p.b, who) };
+function wordProblem(op) {
+  const kind = pick(KINDS.filter(k => k.op === op)), p = nums(op);
+  return { ...p, unit: kind.unit, text: kind.text(p.a, p.b, who()) };
 }
-// the worked answer: (bring to the same bottom) → add/take the tops → lowest terms, with the unit
 function how(p) {
   const r = low(p.r);
   const whole = p.a[1] === 1 ? `1 = ${frac(p.L, p.L)} ` : '';
   const conv = p.a[1] !== p.L && p.a[1] !== 1 ? `ทำ ${f(p.a)} = ${f(p.A)} ` : p.b[1] !== p.L ? `ทำ ${f(p.b)} = ${f(p.Bv)} ` : '';
-  return `${sentence(p.a, p.op, p.b).replace(box, '?')} : ${whole}${conv}${p.op === '+' ? 'บวก' : 'ลบ'}ตัวเศษ ${p.A[0]} ${p.op} ${p.Bv[0]} = ${p.r[0]} ได้ ${f(p.r)}`
+  return `${f(p.a)} ${p.op} ${f(p.b)} : ${whole}${conv}${p.op === '+' ? 'บวก' : 'ลบ'}ตัวเศษ ${p.A[0]} ${p.op} ${p.Bv[0]} = ${p.r[0]} ได้ ${f(p.r)}`
     + (r[1] !== p.L ? ` = ${f(r)}` : '')
     + (r[0] > r[1] && r[1] > 1 ? ` = ${mix(Math.floor(r[0] / r[1]), r[0] % r[1], r[1])}` : '')
     + ` ${p.unit}`;
 }
-// believable wrong answers (all different values from the right one), in lowest terms
 function wrongs(p) {
-  const r = p.r, val = x => x[0] / x[1], right = val(r);
-  const add = (x, y) => p.op === '+' ? x + y : x - y;
-  const c = [
+  const r = p.r, add = (x, y) => p.op === '+' ? x + y : x - y;
+  return [
     [add(p.a[0], p.b[0]), add(p.a[1], p.b[1])],
-    [p.op === '+' ? Math.abs(p.A[0] - p.Bv[0]) : p.A[0] + p.Bv[0], p.L],   // the other operation
+    [p.op === '+' ? Math.abs(p.A[0] - p.Bv[0]) : p.A[0] + p.Bv[0], p.L],
     [add(p.a[0], p.b[0]), p.L],
     [r[0] + 1, r[1]], [r[0] - 1, r[1]], [r[0] + 2, r[1]], [r[0], r[1] + 1], [r[0] + 3, r[1]]
-  ];
-  const seen = new Set([right]), out = [];
-  for (const x of c) {
-    if (!(x[0] > 0 && x[1] > 1)) continue;
-    const y = low(x), v = val(y);
-    if (seen.has(v)) continue;
-    seen.add(v); out.push(y);
-  }
-  return out;
+  ].filter(okFrac).map(low);
 }
-
-/* ---------- 1. story ---------- */
-const STORY = [
-  {
-    vis: () => `<div class="fig">${cakes(8, [[2, G], [3, B]], { cls: 'big', anim: 'filled', step: .15 })}<div class="cap">พิซซ่า 1 ถาด ตัด 8 ชิ้น</div></div>`,
-    say: () => `<h2>โจทย์ปัญหาคืออะไร</h2>
-      <div class="prob">แก้วตากินพิซซ่า ${frac(2, 8)} ถาด ต้นกล้ากินอีก ${frac(3, 8)} ถาด ทั้งสองคนกินพิซซ่ารวมกันกี่ถาด</div>
-      <p>โจทย์ปัญหาคือเรื่องราวที่มีตัวเลข และมีคำถามให้เราหาคำตอบ</p>`
-  },
-  {
-    vis: () => `<div class="steps">
-        <div><b class="n">1</b><span>โจทย์ <b>ถาม</b> อะไร</span></div>
-        <div><b class="n">2</b><span>โจทย์ <b>บอก</b> อะไรมาบ้าง</span></div>
-        <div><b class="n">3</b><span>ต้อง <b>บวก</b> หรือ <b>ลบ</b></span></div>
-        <div><b class="n">4</b><span>เขียน <b>ประโยคสัญลักษณ์</b> แล้วคิด</span></div>
-        <div><b class="n">5</b><span><b>ตอบ</b> ให้ครบ พร้อมหน่วย</span></div>
-      </div>`,
-    say: () => `<h2>5 ขั้นแก้โจทย์</h2>
-      <p>อ่านโจทย์ให้จบก่อน แล้วค่อยๆ ทำทีละขั้น</p>
-      <p>ถาม: กินพิซซ่า <b>รวมกัน</b> กี่ถาด</p>
-      <p>บอก: แก้วตากิน ${frac(2, 8)} ถาด ต้นกล้ากิน ${frac(3, 8)} ถาด</p>`
-  },
-  {
-    vis: () => `<div class="rulebox">
-        <div class="eq">${sentence([2, 8], '+', [3, 8])}</div>
-        <span class="arrow-note">${box.replace('class="box"', 'class="box" style="width:.9em;height:.9em"')} แทนคำตอบที่ยังไม่รู้</span>
-        <div class="eq">${fade(`${frac(2, 8)}<span class="op">+</span>${frac(3, 8)}<span class="op">=</span>${frac(5, 8)}`, .5)}</div>
-      </div>`,
-    say: () => `<h2>เขียนประโยคสัญลักษณ์</h2>
-      <p>คำว่า <b>รวมกัน</b> บอกว่าต้อง <b>บวก</b></p>
-      <p>ใช้ ${box.replace('class="box"', 'class="box" style="width:.9em;height:.9em"')} แทนสิ่งที่โจทย์ถาม แล้วคิดหาคำตอบ</p>
-      <p class="callout">ตอบ: ทั้งสองคนกินพิซซ่ารวมกัน <b>${frac(5, 8)} ถาด</b></p>`
-  },
-  {
-    vis: () => `<div class="kinds">
-        <div class="kind a"><h3>คำที่บอกให้ บวก</h3><div class="words"><span>รวมกัน</span><span>ทั้งหมด</span><span>เพิ่มอีก</span><span>เติมอีก</span><span>ได้มาอีก</span></div></div>
-        <div class="kind b"><h3>คำที่บอกให้ ลบ</h3><div class="words"><span>เหลือ</span><span>กินไป</span><span>ใช้ไป</span><span>แบ่งให้</span><span>มากกว่ากันเท่าไร</span><span>ยาวกว่ากันเท่าไร</span></div></div>
-      </div>`,
-    say: () => `<h2>คำช่วยบอกวิธีคิด</h2>
-      <p>ถ้าเอาของ <b>มารวมกัน</b> หรือ <b>เพิ่มขึ้น</b> ให้ <b>บวก</b></p>
-      <p>ถ้าของ <b>หายไป ถูกใช้ไป</b> หรือถามว่า <b>ต่างกันเท่าไร</b> ให้ <b>ลบ</b></p>
-      <p class="hint">อ่านเรื่องให้เข้าใจด้วยนะ อย่าดูแค่คำ</p>`
-  },
-  {
-    vis: () => `<div class="bars">${bar(10, [[4, G], [3, 'ate']])}<div class="cap">เหลือ ${frac(4, 10)} ลิตร (สีชมพู คือที่ดื่มไป)</div></div>`,
-    say: () => `<h2>ตัวอย่าง: ลบ</h2>
-      <div class="prob">มีนม ${frac(7, 10)} ลิตร ใบบัวดื่มไป ${frac(3, 10)} ลิตร เหลือนมกี่ลิตร</div>
-      <p><b>ดื่มไป</b> และ <b>เหลือ</b> บอกว่าต้อง <b>ลบ</b></p>
-      <div class="eq">${frac(7, 10)}<span class="op">−</span>${frac(3, 10)}<span class="op">=</span>${frac(4, 10)}<span class="op">=</span>${frac(2, 5)}</div>
-      <p class="callout">ตอบ: เหลือนม <b>${frac(2, 5)} ลิตร</b></p>`
-  },
-  {
-    vis: () => `<div class="bars">${bar(4, [[2, G], [1, B]])}<div class="cap">วิ่ง ${frac(1, 2)} = ${frac(2, 4)} เดิน ${frac(1, 4)}</div></div>`,
-    say: () => `<h2>ตัวส่วนไม่เท่ากัน</h2>
-      <div class="prob">ขุนวิ่ง ${frac(1, 2)} กิโลเมตร แล้วเดินต่ออีก ${frac(1, 4)} กิโลเมตร ขุนไปได้ทั้งหมดกี่กิโลเมตร</div>
-      <p><b>ทั้งหมด</b> ต้องบวก ทำ ${frac(1, 2)} = ${frac(2, 4)} ก่อน</p>
-      <div class="eq">${frac(2, 4)}<span class="op">+</span>${frac(1, 4)}<span class="op">=</span>${frac(3, 4)}</div>
-      <p class="callout">ตอบ: ขุนไปได้ทั้งหมด <b>${frac(3, 4)} กิโลเมตร</b></p>`
-  },
-  {
-    vis: () => `<div class="bars">${bar(6, [[5, G]])}${bar(6, [[2, B]])}<div class="cap">ยาวกว่ากัน 3 ช่อง</div></div>`,
-    say: () => `<h2>มากกว่ากันเท่าไร</h2>
-      <div class="prob">ขุนมีริบบิ้นยาว ${frac(5, 6)} เมตร ใบบัวมีริบบิ้นยาว ${frac(1, 3)} เมตร ขุนมีริบบิ้นยาวกว่าใบบัวกี่เมตร</div>
-      <p>ถามว่า <b>ยาวกว่ากันเท่าไร</b> ให้เอาตัวมาก <b>ลบ</b> ตัวน้อย</p>
-      <div class="eq">${frac(5, 6)}<span class="op">−</span>${frac(2, 6)}<span class="op">=</span>${frac(3, 6)}<span class="op">=</span>${frac(1, 2)}</div>
-      <p class="callout">ตอบ: ยาวกว่า <b>${frac(1, 2)} เมตร</b></p>`
-  },
-  {
-    vis: () => `<div class="fig">${cakes(8, [[5, G], [3, 'ate']], { anim: 'filled', step: .1 })}<div class="cap">เหลือ ${frac(5, 8)} ก้อน</div></div>`,
-    say: () => `<h2>เริ่มจาก 1 เต็ม</h2>
-      <div class="prob">มีเค้ก 1 ก้อน แบ่งให้น้อง ${frac(3, 8)} ก้อน เหลือเค้กกี่ก้อน</div>
-      <p>1 ก้อน = ${frac(8, 8)} ก้อน</p>
-      <div class="eq">1<span class="op">−</span>${frac(3, 8)}<span class="op">=</span>${frac(8, 8)}<span class="op">−</span>${frac(3, 8)}<span class="op">=</span>${frac(5, 8)}</div>
-      <p class="callout">ตอบ: เหลือเค้ก <b>${frac(5, 8)} ก้อน</b></p>`
-  },
-  {
-    vis: () => `<div class="steps">
-        <div><b class="n">1</b><span>ถามอะไร</span></div>
-        <div><b class="n">2</b><span>บอกอะไร</span></div>
-        <div><b class="n">3</b><span>บวก หรือ ลบ</span></div>
-        <div><b class="n">4</b><span>ประโยคสัญลักษณ์ แล้วคิด</span></div>
-        <div><b class="n">5</b><span>ตอบพร้อมหน่วย</span></div>
-      </div>`,
-    say: () => `<h2>สรุป</h2>
-      <p>อ่านโจทย์ แล้วทำทีละขั้นตาม 5 ขั้น</p>
-      <p>คิดเศษส่วนแบบด่าน 6.7: ตัวส่วนต้องเท่ากัน แล้วทำคำตอบเป็นอย่างต่ำ</p>
-      <p class="hint">ตอบทุกครั้งต้องมี <b>หน่วย</b> เช่น ถาด ลิตร เมตร</p>
-      <p class="hint">ไปลองแก้โจทย์ทีละขั้นในข้อ 2 ได้เลย</p>`
-  }
-];
-
-/* ---------- 2. play ---------- */
-// step-by-step solver: 6 problems, each in three taps: add or take away → the number sentence → the answer
-let sol = null;
-function newSolver() {
-  const ops = shuffle(['+', '+', '+', '−', '−', '−']);
-  const kinds = { '+': shuffle(KINDS.filter(k => k.op === '+')), '−': shuffle(KINDS.filter(k => k.op === '−')) };
-  const probs = ops.map((op, i) => wordProblem({ kind: kinds[op].pop(), same: i < 3 }));
-  return { probs, i: 0, step: 0, got: 0, miss: false, msg: '', msgCls: '', busy: false, opts: null };
-}
-function sentOpts(p) {
-  const other = p.op === '+' ? '−' : '+';
-  const [big, small] = p.op === '−' ? [p.a, p.b] : (p.A[0] >= p.Bv[0] ? [p.a, p.b] : [p.b, p.a]);
-  const list = [{ html: sentence(p.a, p.op, p.b), ok: true }, { html: sentence(big, other, small), ok: false }];
-  list.push(p.op === '−' ? { html: sentence(p.b, '−', p.a), ok: false } : { html: sentence(small, '−', big), ok: false });
-  return shuffle(list);
-}
-function solverHTML() {
-  const s = sol;
-  if (s.i >= s.probs.length) {
-    return `<div class="result" style="padding:12px 0">
-      <h3 style="font-size:1.5rem">แก้ครบ 6 ข้อแล้ว!</h3>
-      <p>ถูกทุกขั้นตั้งแต่ครั้งแรก ${s.got} ข้อ</p>
-      <button class="btn" data-act="sol-again">เล่นอีกรอบ</button>
-    </div>`;
-  }
-  const p = s.probs[s.i], names = ['บวกหรือลบ', 'ประโยคสัญลักษณ์', 'คำตอบ'];
-  if (!s.opts) {
-    s.opts = s.step === 0 ? [{ html: 'บวก +', ok: p.op === '+' }, { html: 'ลบ −', ok: p.op === '−' }]
-      : s.step === 1 ? sentOpts(p)
-      : shuffle([{ html: fx(low(p.r)), ok: true }, ...wrongs(p).slice(0, 2).map(x => ({ html: fx(x), ok: false }))]);
-  }
-  const ask = ['ต้อง <b>บวก</b> หรือ <b>ลบ</b>', 'ประโยคสัญลักษณ์ข้อใดถูก', `คำตอบคือกี่${p.unit} (เศษส่วนอย่างต่ำ)`][s.step];
-  const cls = s.step === 0 ? 'two' : s.step === 1 ? 'one' : '';
-  return `<div class="solver">
-      <div class="track">${names.map((n, k) => `<span class="${k < s.step ? 'done' : k === s.step ? 'on' : ''}">${k + 1}. ${n}</span>`).join('')}</div>
-      <div class="prob" id="prob">${p.text}</div>
-      ${s.step > 1 ? `<p class="done-line">${sentence(p.a, p.op, p.b)}</p>` : ''}
-      <p>${ask}</p>
-      <div class="choices ${cls}">${s.opts.map((o, k) => `<button class="opt" data-sol="${k}">${o.html}</button>`).join('')}</div>
-      <p class="msg ${s.msgCls}">${s.msg}</p>
-      <p class="sort-progress">ข้อที่ ${s.i + 1} จาก ${s.probs.length}</p>
-    </div>`;
-}
-function answerSolver(k) {
-  const s = sol;
-  if (s.busy || s.i >= s.probs.length) return;
-  const p = s.probs[s.i];
-  if (s.opts[k].ok) {
-    sfx.good(); s.busy = true;
-    s.msg = s.step === 2 ? `ถูกต้อง! ตอบ ${fx(low(p.r))} ${p.unit}` : pick(['ใช่เลย!', 'ถูกต้อง!', 'เก่งมาก!']); s.msgCls = 'good';
-    drawSolver();
-    setTimeout(() => {
-      s.busy = false; s.msg = ''; s.msgCls = ''; s.opts = null;
-      if (s.step < 2) s.step++;
-      else {
-        if (!s.miss) { s.got++; addExp(5); }
-        s.i++; s.step = 0; s.miss = false;
-        if (s.i >= s.probs.length) sfx.win();
-      }
-      drawSolver();
-    }, s.step === 2 ? 1300 : 700);
-  } else {
-    sfx.bad(); s.miss = true;
-    s.msg = s.step === 0 ? (p.op === '+' ? 'เรื่องนี้เอาของมารวมกัน ต้องบวกนะ' : 'เรื่องนี้ของหายไป หรือถามว่าต่างกันเท่าไร ต้องลบนะ')
-      : s.step === 1 ? `ต้อง${p.op === '+' ? 'บวก' : 'เอาตัวมากลบตัวน้อย'} ลองดูใหม่นะ`
-      : `${how(p)} ลองใหม่นะ`;
-    s.msgCls = 'bad';
-    drawSolver();
-    $('#prob').classList.add('shake');
-  }
-}
-
-// word sort: 8 word cards, each one says add or take away
-const WORDS = [['รวมกัน', '+'], ['ทั้งหมด', '+'], ['เพิ่มอีก', '+'], ['เติมอีก', '+'], ['ได้มาอีก', '+'], ['ซื้อมาเพิ่ม', '+'],
-  ['เหลือ', '−'], ['กินไป', '−'], ['ใช้ไป', '−'], ['แบ่งให้เพื่อน', '−'], ['มากกว่ากันเท่าไร', '−'], ['ยาวกว่ากันเท่าไร', '−']];
-let ws = null;
-function newWords() {
-  const add = shuffle(WORDS.filter(w => w[1] === '+')).slice(0, 4), take = shuffle(WORDS.filter(w => w[1] === '−')).slice(0, 4);
-  return { cards: shuffle([...add, ...take]), i: 0, got: 0, miss: false, msg: '', msgCls: '', busy: false };
-}
-function wordsHTML() {
-  const s = ws;
-  if (s.i >= s.cards.length) {
-    return `<div class="result" style="padding:12px 0">
-      <h3 style="font-size:1.5rem">แยกครบ 8 คำแล้ว!</h3>
-      <p>ถูกตั้งแต่ครั้งแรก ${s.got} คำ</p>
-      <button class="btn" data-act="words-again">เล่นอีกรอบ</button>
-    </div>`;
-  }
-  const [w] = s.cards[s.i];
-  return `<div class="match">
-      <p>คำนี้บอกให้บวก หรือ ลบ</p>
-      <div class="fcard" id="wcard">${w}</div>
-      <div class="choices two"><button class="opt" data-word="+">บวก +</button><button class="opt" data-word="−">ลบ −</button></div>
-      <p class="msg ${s.msgCls}">${s.msg}</p>
-      <p class="sort-progress">คำที่ ${s.i + 1} จาก ${s.cards.length}</p>
-    </div>`;
-}
-function answerWords(op) {
-  const s = ws;
-  if (s.busy || s.i >= s.cards.length) return;
-  const [w, right] = s.cards[s.i];
-  if (op === right) {
-    sfx.good();
-    if (!s.miss) { addExp(5); s.got++; }
-    s.busy = true; s.msg = pick(['ใช่เลย!', 'ถูกต้อง!', 'เก่งมาก!']); s.msgCls = 'good';
-    drawWords();
-    setTimeout(() => { s.i++; s.miss = false; s.busy = false; s.msg = ''; s.msgCls = ''; if (s.i >= s.cards.length) sfx.win(); drawWords(); }, 700);
-  } else {
-    sfx.bad(); s.miss = true;
-    s.msg = right === '+' ? `"${w}" คือเอาของมารวมกันหรือเพิ่มขึ้น ต้องบวก` : `"${w}" คือของหายไปหรือหาส่วนต่าง ต้องลบ`;
-    s.msgCls = 'bad';
-    drawWords();
-    $('#wcard').classList.add('shake');
-  }
-}
-
-function playHTML() {
-  if (!sol) sol = newSolver();
-  if (!ws) ws = newWords();
-  return `
-    <section class="card">
-      <div class="section-head"><h2>แก้โจทย์ทีละขั้น</h2><p>อ่านโจทย์ แล้วเลือกทีละขั้น: บวกหรือลบ → ประโยคสัญลักษณ์ → คำตอบ</p></div>
-      <div id="sol">${solverHTML()}</div>
-    </section>
-    <section class="card" style="margin-top:18px">
-      <div class="section-head"><h2>คำนี้บวกหรือลบ</h2><p>ดูคำในโจทย์ แล้วเลือกว่าบอกให้บวกหรือลบ</p></div>
-      <div id="words">${wordsHTML()}</div>
-    </section>`;
-}
-// Both may fire after the child has switched tabs, so skip when not on screen.
-const drawSolver = () => { const el = $('#sol'); if (el) el.innerHTML = solverHTML(); };
-const drawWords = () => { const el = $('#words'); if (el) el.innerHTML = wordsHTML(); };
-
-function playClick(e) {
-  const so = e.target.closest('[data-sol]');
-  if (so) { answerSolver(+so.dataset.sol); return; }
-  const wd = e.target.closest('[data-word]');
-  if (wd) { answerWords(wd.dataset.word); return; }
-  const a = e.target.closest('[data-act]');
-  if (!a) return;
-  switch (a.dataset.act) {
-    case 'sol-again': sol = newSolver(); drawSolver(); break;
-    case 'words-again': ws = newWords(); drawWords(); break;
-  }
-}
-
-/* ---------- 3. quiz ---------- */
-const word = p => `<div class="qask word">${p.text}</div>`;
-const ansOpts = p => shuffle([{ html: fx(low(p.r)), ok: true }, ...wrongs(p).slice(0, 3).map(x => ({ html: fx(x), ok: false }))]);
-const review = p => `${p.text.replace(/<\/?b>/g, '')} → ${f(low(p.r))} ${p.unit}`;
-// joining story, same or different bottoms
-function qA() {
-  const p = wordProblem({ op: '+' });
-  return { ask: word(p), pic: '', opts: ansOpts(p), explain: how(p), review: review(p) };
-}
-// taking-away story
-function qB() {
-  const p = wordProblem({ op: '−' });
-  return { ask: word(p), pic: '', opts: ansOpts(p), explain: how(p), review: review(p) };
-}
-// which number sentence fits the story
-function qC() {
-  const p = wordProblem();
+function q67(op) {
+  const p = wordProblem(op), r = low(p.r);
   return {
-    ask: `${word(p)}<div style="width:100%;margin-top:6px">ประโยคสัญลักษณ์ข้อใดถูก</div>`,
+    ask: word('6.7 การบวก การลบ', p.text),
     pic: '',
-    opts: sentOpts(p),
-    explain: `${p.op === '+' ? 'เรื่องนี้เอามารวมกัน ต้องบวก' : 'เรื่องนี้หาส่วนที่เหลือหรือส่วนต่าง ต้องเอาตัวมากลบตัวน้อย'}: ${sentence(p.a, p.op, p.b)}`,
-    review: `${p.text.replace(/<\/?b>/g, '')} → ${sentence(p.a, p.op, p.b)}`
+    opts: opts(r, wrongs(p), fx),
+    explain: how(p),
+    review: `${plain(p.text)} → ${f(r)} ${p.unit}`
   };
 }
-// different bottoms, either way
-function qD() {
-  const p = wordProblem({ same: false });
-  return { ask: word(p), pic: '', opts: ansOpts(p), explain: how(p), review: review(p) };
+function q67s() {
+  const p = wordProblem(pick(['+', '−'])), other = p.op === '+' ? '−' : '+';
+  const [big, small] = p.op === '−' ? [p.a, p.b] : (p.A[0] >= p.Bv[0] ? [p.a, p.b] : [p.b, p.a]);
+  return {
+    ask: word('6.7 ประโยคสัญลักษณ์', `${p.text}<br><b>ประโยคสัญลักษณ์ข้อใดถูก</b>`),
+    pic: '',
+    opts: shuffle([{ html: sentence(p.a, p.op, p.b), ok: true }, { html: sentence(big, other, small), ok: false },
+      p.op === '−' ? { html: sentence(p.b, '−', p.a), ok: false } : { html: sentence(small, '−', big), ok: false }]),
+    explain: `${p.op === '+' ? 'เอามารวมกัน ต้องบวก' : 'หาส่วนที่เหลือหรือส่วนต่าง ต้องเอาตัวมากลบตัวน้อย'}: ${sentence(p.a, p.op, p.b)}`,
+    review: `${plain(p.text)} → ${f(p.a)} ${p.op} ${f(p.b)}`
+  };
 }
 
+// 20 questions in book order: 2 + 2 + 1 + 2 + 2 + 3 from 6.1-6.6, then 8 from 6.7 (3 add, 3 take away, 2 number sentences)
 L.lesson({
   id: 'math-p4/6.8',
-  story: STORY,
-  play: { render: playHTML, onClick: playClick },
-  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
+  exam: { count: 20, intro: 'โจทย์ปัญหาทบทวนเนื้อหาบทที่ 6 ทั้งหมด ตั้งแต่ 6.1 ถึง 6.7' },
+  quiz: () => [q61a(), q61b(), q62a(), q62b(), q63(), q64a(), q64b(), q65(), q65(), q66a(), q66a(), q66b(),
+    ...shuffle([q67('+'), q67('+'), q67('+'), q67('−'), q67('−'), q67('−'), q67s(), q67s()])]
 });
 })();
 </script>

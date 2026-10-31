@@ -6,6 +6,7 @@ const $ = s => document.querySelector(s);
 
 /* ---------- lesson list (follows the textbook) ---------- */
 // A topic with `file` is ready; the rest show "เร็วๆ นี้" on the home page.
+// `exam` marks a chapter's last stop: โจทย์ปัญหา over the whole chapter (quiz only), drawn with a yellow number on the map.
 const COURSES = [{
   id: 'math-p4', subject: 'คณิตศาสตร์', grade: 'ป.4', term: 'เทอม 2',
   chapters: [
@@ -17,13 +18,13 @@ const COURSES = [{
       { no: '6.5', title: 'เศษส่วนอย่างต่ำ', file: 'math/p4/6-5.html' },
       { no: '6.6', title: 'การเปรียบเทียบและเรียงลำดับ', file: 'math/p4/6-6.html' },
       { no: '6.7', title: 'การบวก การลบ', file: 'math/p4/6-7.html' },
-      { no: '6.8', title: 'โจทย์ปัญหา', file: 'math/p4/6-8.html' }
+      { no: '6.8', title: 'โจทย์ปัญหา', file: 'math/p4/6-8.html', exam: true }
     ] },
     { no: 7, title: 'ทศนิยม', color: 'var(--yellow-deep)', topics: [
       { no: '7.1', title: 'การอ่าน การเขียนทศนิยมไม่เกิน 3 ตำแหน่ง' },
       { no: '7.2', title: 'การเปรียบเทียบและเรียงลำดับ' },
       { no: '7.3', title: 'การบวกและการลบทศนิยมไม่เกิน 3 ตำแหน่ง' },
-      { no: '7.4', title: 'โจทย์ปัญหา' }
+      { no: '7.4', title: 'โจทย์ปัญหา', exam: true }
     ] },
     { no: 8, title: 'มุม', color: 'var(--blue)', topics: [
       { no: '8.1', title: 'จุด เส้นตรง รังสี และส่วนของเส้นตรง' },
@@ -106,8 +107,9 @@ const pick = a => a[Math.floor(Math.random() * a.length)];
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const G = 'var(--green)', B = 'var(--blue)', O = 'var(--orange)', Y = 'var(--yellow)';
 const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
-// 10 questions: all right = 3 stars, 8+ = 2, 5+ = 1 (opens the next lesson)
-const starsFor = score => score >= 10 ? 3 : score >= 8 ? 2 : score >= 5 ? 1 : 0;
+// all right = 3 stars, 80%+ = 2, half or more = 1 (opens the next lesson); e.g. 10 questions: 10 / 8 / 5, 20: 20 / 16 / 10
+const passMark = total => Math.ceil(total / 2);
+const starsFor = (score, total = 10) => score >= total ? 3 : score >= Math.ceil(total * .8) ? 2 : score >= passMark(total) ? 1 : 0;
 
 function frac(n, d, o = {}) {
   return `<span class="frac ${o.cls || ''}"${o.color ? ` style="color:${o.color}"` : ''}><b${o.nc ? ` style="color:${o.nc}"` : ''}>${n}</b><i>${d}</i></span>`;
@@ -180,7 +182,9 @@ function wireChips() {
 
 /* ---------- lesson shell ----------
    L.lesson({ id, home, story: [{vis, say}], play: {render, onClick}, quiz: () => [question] })
-   question: { ask, pic, opts: [{html, ok}], explain, after?, review } */
+   question: { ask, pic, opts: [{html, ok}], explain, after?, review }
+   A chapter's last stop (topic.exam, the โจทย์ปัญหา test over the whole chapter) has no story or play:
+   L.lesson({ id, exam: { intro }, quiz }) shows a start card, then the questions. */
 function lesson(cfg) {
   const { course, chapter, topic } = findLesson(cfg.id);
   const app = $('#app'), home = cfg.home || '../../index.html', root = home.replace(/index.html$/, '');
@@ -203,17 +207,32 @@ function lesson(cfg) {
     wireChips();
     return;
   }
+  const exam = !!cfg.exam;
   app.innerHTML = `${header}
-    <nav class="tabs" role="tablist">
+    ${exam ? '' : `<nav class="tabs" role="tablist">
       <button class="tab" role="tab" data-tab="story" aria-selected="true"><span class="n">1</span>เนื้อหา</button>
       <button class="tab" role="tab" data-tab="play" aria-selected="false"><span class="n">2</span>ลองเล่น</button>
       <button class="tab" role="tab" data-tab="quiz" aria-selected="false"><span class="n">3</span>ตอบคำถาม</button>
-    </nav>
+    </nav>`}
     <main id="view"></main>`;
   wireChips();
   const view = $('#view');
   const STORY = cfg.story;
-  let tab = 'story', st = 0, quiz = null;
+  let tab = exam ? 'quiz' : 'story', st = 0, quiz = null, started = !exam;
+
+  // the exam's start card: what it covers, how many questions, what it takes to pass
+  function renderStart() {
+    const n = cfg.exam.count, nx = nextId(cfg.id) && findLesson(nextId(cfg.id));
+    view.innerHTML = `
+      <section class="card result exam-start">
+        <img src="${root}shared/img/glowing-star.png" alt="" width="84" height="84">
+        <h2>ด่านสุดท้ายของบทที่ ${chapter.no}</h2>
+        <p>${cfg.exam.intro}</p>
+        <div class="exam-facts"><span><b>${n}</b> ข้อ</span><span>ถูก <b>${passMark(n)}</b> ข้อขึ้นไป ผ่านด่าน</span></div>
+        ${nx ? `<p class="hint">ผ่านแล้วจะเปิดด่าน ${nx.topic.no} ${nx.topic.title}</p>` : ''}
+        <button class="btn" data-act="start-exam">เริ่มทำ</button>
+      </section>`;
+  }
 
   function renderStory() {
     const s = STORY[st], last = st === STORY.length - 1;
@@ -234,27 +253,28 @@ function lesson(cfg) {
   function nextStep() {
     const nid = nextId(cfg.id), nx = nid && findLesson(nid);
     if (!nx) return '';
-    if (best(cfg.id) < PASS) return `<p class="callout">ตอบถูกอย่างน้อย 5 ข้อ (1 ดาว) เพื่อเปิดด่าน ${nx.topic.no} นะ</p>`;
+    if (best(cfg.id) < PASS) return `<p class="callout">ตอบถูกอย่างน้อย ${passMark(quiz.qs.length)} ข้อ (1 ดาว) เพื่อเปิดด่าน ${nx.topic.no} นะ</p>`;
     if (!nx.topic.file) return `<p class="hint">ด่าน ${nx.topic.no} กำลังสร้าง เร็วๆ นี้</p>`;
     return `<a class="btn" href="${home}${quiz.unlockedNow ? '?unlocked=' + encodeURIComponent(nid) : ''}#map">ไปด่านถัดไป ${nx.topic.no}</a>`;
   }
   function renderQuiz() {
+    if (!started) { renderStart(); return; }
     if (!quiz) quiz = newQuiz();
     const z = quiz;
     if (z.done) {
-      const stars = starsFor(z.score);
+      const stars = starsFor(z.score, z.qs.length);
       const wrong = z.qs.filter((_, i) => !z.marks[i]);
       view.innerHTML = `
         <section class="card result">
           <div class="stars">${[0, 1, 2].map(i => STAR.replace('<svg', `<svg class="${i < stars ? 'on' : ''}" style="--d:${.2 + i * .25}s"`)).join('')}</div>
           <h2 style="font-size:2rem">ถูก ${z.score} จาก ${z.qs.length} ข้อ</h2>
-          <p>${stars === 3 ? 'เก่งมาก ได้เต็มเลย!' : stars === 2 ? 'เก่งมาก อีกนิดเดียวก็เต็มแล้ว' : stars === 1 ? 'ผ่านแล้ว! ลองเล่นอีกรอบเพื่อเก็บดาวเพิ่มได้นะ' : 'ไม่เป็นไร ลองดูเนื้อหาอีกรอบแล้วมาเล่นใหม่นะ'}</p>
+          <p>${stars === 3 ? 'เก่งมาก ได้เต็มเลย!' : stars === 2 ? 'เก่งมาก อีกนิดเดียวก็เต็มแล้ว' : stars === 1 ? 'ผ่านแล้ว! ลองเล่นอีกรอบเพื่อเก็บดาวเพิ่มได้นะ' : exam ? `ไม่เป็นไร ลองทบทวนบทเรียนในบทที่ ${chapter.no} แล้วมาทำใหม่นะ` : 'ไม่เป็นไร ลองดูเนื้อหาอีกรอบแล้วมาเล่นใหม่นะ'}</p>
           <p class="hint">ดาวมากที่สุดที่เคยได้: ${best(cfg.id)} ดวง</p>
           ${nextStep()}
           ${wrong.length ? `<div class="review"><h3>ข้อที่ยังพลาด</h3><ul>${wrong.map(q => `<li>${q.review}</li>`).join('')}</ul></div>` : ''}
           <div class="row-btns">
-            <button class="btn ${best(cfg.id) >= PASS && nextId(cfg.id) ? 'ghost' : ''}" data-act="quiz-again">เล่นอีกรอบ (โจทย์ใหม่)</button>
-            <button class="btn ghost" data-act="tostory">ดูเนื้อหาอีกครั้ง</button>
+            <button class="btn ${best(cfg.id) >= PASS && nextId(cfg.id) ? 'ghost' : ''}" data-act="quiz-again">${exam ? 'ทำอีกรอบ' : 'เล่นอีกรอบ'} (โจทย์ใหม่)</button>
+            ${exam ? '' : '<button class="btn ghost" data-act="tostory">ดูเนื้อหาอีกครั้ง</button>'}
           </div>
         </section>`;
       return;
@@ -269,7 +289,7 @@ function lesson(cfg) {
     }
     view.innerHTML = `
       <section class="card">
-        <div class="qtop"><span class="step-no">ข้อ ${z.i + 1} จาก ${z.qs.length}</span><div class="qdots">${dots}</div><span class="step-no">ถูก ${z.score} ข้อ</span></div>
+        <div class="qtop"><span class="step-no">ข้อ ${z.i + 1} จาก ${z.qs.length}</span><div class="qdots${z.qs.length > 12 ? ' many' : ''}">${dots}</div><span class="step-no">ถูก ${z.score} ข้อ</span></div>
         <div class="qask">${q.ask}</div>
         ${q.pic ? `<div class="qpic">${q.pic}</div>` : ''}
         <div class="opts n${q.opts.length}">${q.opts.map((o, i) => {
@@ -294,7 +314,7 @@ function lesson(cfg) {
     z.picked = null;
     if (z.i === z.qs.length - 1) {
       z.done = true;
-      const stars = starsFor(z.score);
+      const stars = starsFor(z.score, z.qs.length);
       z.unlockedNow = best(cfg.id) < PASS && stars >= PASS;
       setBest(cfg.id, stars);
       if (stars) sfx.win();
@@ -316,7 +336,7 @@ function lesson(cfg) {
     window.scrollTo({ top: 0 });
   }
 
-  $('.tabs').addEventListener('click', e => {
+  if (!exam) $('.tabs').addEventListener('click', e => {
     const b = e.target.closest('.tab'); if (b) { sfx.tap(); setTab(b.dataset.tab); }
   });
   view.addEventListener('click', e => {
@@ -333,7 +353,8 @@ function lesson(cfg) {
       case 'toplay-back': sfx.tap(); st = STORY.length - 1; setTab('story'); return;
       case 'tostory': st = 0; setTab('story'); return;
       case 'qnext': sfx.tap(); nextQuiz(); return;
-      case 'quiz-again': quiz = newQuiz(); renderQuiz(); return;
+      case 'quiz-again': quiz = newQuiz(); renderQuiz(); window.scrollTo({ top: 0 }); return;
+      case 'start-exam': sfx.tap(); started = true; renderQuiz(); window.scrollTo({ top: 0 }); return;
     }
     if (tab === 'play' && cfg.play.onClick) cfg.play.onClick(e);
   });

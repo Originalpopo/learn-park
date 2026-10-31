@@ -42,10 +42,11 @@ There is only a light look; no dark mode.
 - Fonts: Mitr for headings, numbers and buttons (`--display`); Anuphan for body text (`--body`).
 
 ## Lessons
-- Copy the newest lesson (`math/p4/6-3.html`) and keep the same shape:
+- Copy the newest lesson (`math/p4/6-7.html`) and keep the same shape:
   - **เนื้อหา:** about 9 tap-through steps with animated pictures. The cake story continues across chapter 6.
   - **ลองเล่น:** a hands-on builder, a matching game, then the bottom bar to the quiz.
-  - **ตอบคำถาม:** 8 random questions with 4 options each, and stars (4 right = 1 star, 6 = 2, 8 = 3).
+  - **ตอบคำถาม:** 10 random questions with 4 options each, and stars (5 right = 1 star, 8 = 2, 10 = 3).
+- **Every chapter ends with a โจทย์ปัญหา stop** (`exam: true` in COURSES, e.g. 6.8, 7.4): no เนื้อหา or ลองเล่น, just a start card and 20 word problems over the whole chapter in book order, each tagged with the lesson it comes from. Stars: half right = 1 (opens the next chapter), 80% = 2, all = 3. Build it with `L.lesson({ id, exam: { count, intro }, quiz })` (see `math/p4/6-8.html`).
 - Lessons open in book order. The next one unlocks at 1 star, with the unlock show on the map.
 - Before release, bulk-test the quiz: options are all different, exactly one is right, and every right answer is worked out.
 
@@ -55,6 +56,7 @@ A round pencil button sits at the bottom right on every screen size: iPad, phone
 ## Map
 - Built lesson, not reached yet: grey stop with a lock badge.
 - Lesson not built yet: grey stop with a faded number in a dashed outline. No lock.
+- A chapter's last stop (the โจทย์ปัญหา test) has a **yellow** number pill with dark text; the other stops use the chapter colour. Grey and dashed states still win over yellow.
 - Every built lesson shows its best result as 3 small stars above its number: filled ones are earned, empty ones are still to win. Lessons not built yet have no stars.
 - The newest lesson to play has its stars and number bobbing up and down together, and the skater waits beside it. There is no "เริ่มตรงนี้" label.
 - Cards close when the page scrolls or its width changes.

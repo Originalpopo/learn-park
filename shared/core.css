@@ -230,3 +230,12 @@ html.scratching, html.scratching body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* exam stop (a chapter's last stop, โจทย์ปัญหา): start card, and smaller question dots for its 20 questions */
+.exam-start img { display: block; margin: 0 auto; }
+.exam-facts { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.exam-facts span { background: var(--yellow-soft); border-radius: 999px; padding: 6px 16px; }
+.exam-facts b { font-family: var(--display); font-weight: 500; font-size: 1.2rem; }
+.qdots { flex-wrap: wrap; }
+.qdots.many { gap: 4px; }
+.qdots.many .qdot { width: 12px; height: 12px; }

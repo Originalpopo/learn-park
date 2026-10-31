@@ -73,7 +73,7 @@ function setBest(id, stars) {
 }
 
 /* ---------- lessons open one at a time, in book order ---------- */
-// A lesson opens once the one before it has at least PASS stars (4 of 8 right), so the child learns in order.
+// A lesson opens once the one before it has at least PASS stars (5 of 10 right), so the child learns in order.
 const ORDER = COURSES.flatMap(c => c.chapters.flatMap(ch => ch.topics.map(t => lessonId(c, t))));
 const PASS = 1;
 const isOpen = id => { const i = ORDER.indexOf(id); return i <= 0 || best(ORDER[i - 1]) >= PASS; };
@@ -106,7 +106,8 @@ const pick = a => a[Math.floor(Math.random() * a.length)];
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const G = 'var(--green)', B = 'var(--blue)', O = 'var(--orange)', Y = 'var(--yellow)';
 const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
-const starsFor = score => score >= 8 ? 3 : score >= 6 ? 2 : score >= 4 ? 1 : 0;
+// 10 questions: all right = 3 stars, 8+ = 2, 5+ = 1 (opens the next lesson)
+const starsFor = score => score >= 10 ? 3 : score >= 8 ? 2 : score >= 5 ? 1 : 0;
 
 function frac(n, d, o = {}) {
   return `<span class="frac ${o.cls || ''}"${o.color ? ` style="color:${o.color}"` : ''}><b${o.nc ? ` style="color:${o.nc}"` : ''}>${n}</b><i>${d}</i></span>`;
@@ -233,7 +234,7 @@ function lesson(cfg) {
   function nextStep() {
     const nid = nextId(cfg.id), nx = nid && findLesson(nid);
     if (!nx) return '';
-    if (best(cfg.id) < PASS) return `<p class="callout">ตอบถูกอย่างน้อย 4 ข้อ (1 ดาว) เพื่อเปิดด่าน ${nx.topic.no} นะ</p>`;
+    if (best(cfg.id) < PASS) return `<p class="callout">ตอบถูกอย่างน้อย 5 ข้อ (1 ดาว) เพื่อเปิดด่าน ${nx.topic.no} นะ</p>`;
     if (!nx.topic.file) return `<p class="hint">ด่าน ${nx.topic.no} กำลังสร้าง เร็วๆ นี้</p>`;
     return `<a class="btn" href="${home}${quiz.unlockedNow ? '?unlocked=' + encodeURIComponent(nid) : ''}#map">ไปด่านถัดไป ${nx.topic.no}</a>`;
   }

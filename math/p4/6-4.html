@@ -384,7 +384,7 @@ L.lesson({
   id: 'math-p4/6.4',
   story: STORY,
   play: { render: playHTML, onClick: playClick },
-  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD()])
+  quiz: () => shuffle([qA(), qA(), qB(), qB(), qC(), qC(), qD(), qD(), ...shuffle([qA, qB, qC, qD]).slice(0, 2).map(q => q())])
 });
 })();
 </script>

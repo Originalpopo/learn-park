@@ -127,6 +127,11 @@
 .park .burst { position: absolute; width: 24px; height: 24px; margin: -40px 0 0 -12px; pointer-events: none; animation: burst .9s ease-out forwards; }
 @keyframes burst { from { transform: translate(0, 0) scale(.3); opacity: 1; } to { transform: translate(var(--x), var(--y)) scale(1); opacity: 0; } }
 .park .ride { position: absolute; transform: translate(-50%, -88%); pointer-events: none; z-index: 1; transition: opacity .5s; }
+/* tapping an open stop: he skates over to it (rideTo sets the time from the distance), then jumps once */
+.park .ride.go { transition: left var(--t) ease-in-out, top var(--t) ease-in-out, opacity .5s; }
+.park .ride.flip img { scale: -1 1; }   /* the board points down-left; turn him round to skate to the right */
+.park .ride .hop { display: block; }
+.park .ride .hop.jump { animation: jump .6s cubic-bezier(.3, 1.5, .5, 1); }
 .park .ride img { width: 100%; height: auto; display: block; filter: drop-shadow(0 5px 3px rgba(43, 38, 32, .25)); animation: roll 2.8s ease-in-out infinite; }
 @keyframes roll { 50% { transform: translateX(-12%) rotate(-3deg); } }
 /* the card that opens over a tapped stop */
@@ -283,7 +288,7 @@ function drawWorld({ c, ch, zone, park }) {
         ${t.file ? `<span class="mini">${[0, 1, 2].map(k => star(k < best(id))).join('')}</span>` : ''}
         <b style="background:${ch.color}">${st === 'locked' ? LOCK : ''}${t.no}</b></button>`;
     // the child's skater stands on the floor spot just in front of the stop to play next
-    if (st === 'next') ride = `<span class="ride" style="${pct(L.gx, L.gy)};width:max(34px, ${(lay.tile * 1.5).toFixed(2)}%)"><img src="${heroImg()}" alt=""></span>`;
+    if (st === 'next') ride = `<span class="ride" data-i="${i}" style="${pct(L.gx, L.gy)};width:max(34px, ${(lay.tile * 1.5).toFixed(2)}%)"><span class="hop"><img src="${heroImg()}" alt=""></span></span>`;
   });
   park.style.aspectRatio = lay.aspect;
   park.innerHTML = `<img class="base" src="${PARK(zone + '-base')}" alt="">
@@ -322,8 +327,39 @@ worlds.forEach(w => w.park.addEventListener('click', e => {
   const hit = e.target.closest('[data-i]');
   if (e.target.closest('.pop')) return;
   closePops();
-  if (hit) { sfx.tap(); openPop(w, +hit.dataset.i); }
+  if (hit) { sfx.tap(); openPop(w, +hit.dataset.i); rideTo(w, +hit.dataset.i); }
 }));
+
+/* the skater follows the child's pick: on tapping an open stop he skates over to its floor spot, then jumps once.
+   He is only drawn in the zone of the lesson to play next, so a tap in another zone moves him over there first. */
+let rideTimer = 0;
+function rideTo(w, i) {
+  const t = w.ch.topics[i];
+  if (!t.file || !isOpen(lessonId(w.c, t))) return;
+  const ride = document.querySelector('.park .ride');
+  if (!ride) return;
+  const lay = window.PARK_LAYOUT[w.zone], L = lay.stops[i], over = w.park.querySelector('.over');
+  const hop = ride.querySelector('.hop'), jump = () => { hop.classList.remove('jump'); void hop.offsetWidth; hop.classList.add('jump'); };
+  clearTimeout(rideTimer);
+  if (ride.parentNode !== over) {   // another zone: he appears at the stop (no path between zones)
+    ride.classList.remove('go', 'flip');
+    ride.style.left = L.gx + '%'; ride.style.top = L.gy + '%';
+    over.prepend(ride);
+  } else if (+ride.dataset.i !== i) {
+    const x0 = parseFloat(ride.style.left), y0 = parseFloat(ride.style.top);
+    const dist = Math.hypot(L.gx - x0, (L.gy - y0) / lay.aspect);   // both in % of the park's width
+    const ms = Math.round(Math.min(1400, 350 + dist * 22));
+    ride.style.setProperty('--t', ms + 'ms');
+    ride.classList.add('go');
+    ride.classList.toggle('flip', L.gx > x0);
+    ride.style.left = L.gx + '%'; ride.style.top = L.gy + '%';
+    ride.dataset.i = i;
+    rideTimer = setTimeout(jump, ms);
+    return;
+  }
+  ride.dataset.i = i;
+  jump();
+}
 document.addEventListener('click', e => { if (!e.target.closest('.park')) closePops(); });
 // the card's spot is measured when it opens, so a turned iPad or a resized window closes it rather than leave it misplaced
 let lastW = innerWidth;   // width only: Safari fires resize when its toolbar hides while scrolling

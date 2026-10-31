@@ -460,6 +460,11 @@ function scratchPad() {
   cv.addEventListener('pointercancel', lift);
   // keep the page still under the layer (mouse wheel, trackpad scroll); a trackpad pinch still zooms
   layer.addEventListener('wheel', e => { if (!e.ctrlKey) e.preventDefault(); }, { passive: false });
+  // no word picking while writing (a fast double tap of the pencil is Safari's select-a-word gesture)
+  const writing = () => !layer.hidden;
+  document.addEventListener('selectstart', e => { if (writing()) e.preventDefault(); });
+  layer.addEventListener('dblclick', e => e.preventDefault());
+  cv.addEventListener('pointerdown', () => getSelection()?.removeAllRanges());
 
   layer.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;

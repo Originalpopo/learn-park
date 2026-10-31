@@ -194,6 +194,8 @@ mark { background: linear-gradient(transparent 45%, var(--yellow) 45%); color: i
 .scratch[hidden], .scratch-open[hidden], .scratch-menu[hidden] { display: none; }
 .scratch canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
 html.scratching, html.scratching body { overflow: hidden; }
+/* iPad: a quick double tap or long press of the pencil would select the page's words under the layer */
+html.scratching body * { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .scratch-bar, .scratch-menu { position: absolute; left: 50%; transform: translateX(-50%); background: #26231F; color: #fff; border-radius: 18px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .25); touch-action: manipulation; }
 .scratch-bar { bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 2px; padding: 6px; }

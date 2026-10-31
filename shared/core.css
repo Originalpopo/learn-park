@@ -211,7 +211,7 @@ html.scratching body * { user-select: none; -webkit-user-select: none; -webkit-t
 .scratch .tool .ink.ring { background: #26231F; }   /* the eraser's size: a ring, like its sizes in the menu */
 .scratch .sep { width: 1px; height: 26px; background: rgba(255, 255, 255, .2); margin: 0 4px; }
 .scratch-menu { bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 72px); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-.scratch-menu .row { display: flex; gap: 8px; justify-content: center; }
+.scratch-menu .scratch-row { display: flex; gap: 8px; justify-content: center; }   /* not .row: lessons 6.6 and 7.2 style their own .row */
 .scratch .swatch, .scratch .size { width: 44px; height: 44px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; }
 .scratch .swatch { background: var(--c); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .25); }
 .scratch .swatch.on { box-shadow: 0 0 0 3px #26231F, 0 0 0 5px #fff; }

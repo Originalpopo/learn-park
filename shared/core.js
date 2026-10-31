@@ -409,8 +409,8 @@ function scratchPad() {
   // the little panel above the bar: colours and sizes for the pen, sizes only for the eraser (dots drawn to scale, capped)
   function showMenu(tool) {
     st.menuFor = tool;
-    menu.innerHTML = `${tool === 'pen' ? `<div class="row">${PENS.map(([c, n], i) => `<button class="swatch" data-pen="${i}" style="--c:${c}" aria-label="ปากกาสี${n}"></button>`).join('')}</div>` : ''}
-      <div class="row">${SIZES[tool].map((s, i) => { const d = Math.min(s + 4, 30); return `<button class="size" data-size="${i}" aria-label="ขนาด ${i + 1}"><i class="${tool}" style="width:${d}px;height:${d}px"></i></button>`; }).join('')}</div>`;
+    menu.innerHTML = `${tool === 'pen' ? `<div class="scratch-row">${PENS.map(([c, n], i) => `<button class="swatch" data-pen="${i}" style="--c:${c}" aria-label="ปากกาสี${n}"></button>`).join('')}</div>` : ''}
+      <div class="scratch-row">${SIZES[tool].map((s, i) => { const d = Math.min(s + 4, 30); return `<button class="size" data-size="${i}" aria-label="ขนาด ${i + 1}"><i class="${tool}" style="width:${d}px;height:${d}px"></i></button>`; }).join('')}</div>`;
     menu.hidden = false;
   }
   const hideMenu = () => { menu.hidden = true; st.menuFor = null; };

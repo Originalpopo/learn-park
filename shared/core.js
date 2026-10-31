@@ -412,9 +412,14 @@ function scratchPad() {
   }
   const hideMenu = () => { menu.hidden = true; st.menuFor = null; };
 
+  // sizes come from the canvas box, not innerWidth: on iPad innerWidth shrinks while pinch-zoomed, which put the ink in the wrong place.
+  // Zoomed in, the canvas gets more pixels so the ink stays sharp (capped to what Safari allows for one canvas)
+  let W = 0, H = 0;
   function fit() {
-    const r = devicePixelRatio || 1;
-    cv.width = Math.round(innerWidth * r); cv.height = Math.round(innerHeight * r);
+    W = cv.clientWidth; H = cv.clientHeight;
+    const zoom = (window.visualViewport && visualViewport.scale) || 1;
+    const r = Math.min((devicePixelRatio || 1) * Math.max(1, zoom), Math.sqrt(16e6 / (W * H)));
+    cv.width = Math.round(W * r); cv.height = Math.round(H * r);
     cx.setTransform(r, 0, 0, r, 0, 0);
     redraw();
   }
@@ -428,7 +433,7 @@ function scratchPad() {
     if (p.length === 1) cx.lineTo(p[0][0] + .01, p[0][1]);   // a tap leaves a dot
     cx.stroke();
   }
-  function redraw() { cx.clearRect(0, 0, innerWidth, innerHeight); st.strokes.forEach(s => line(s, 0)); }
+  function redraw() { cx.clearRect(0, 0, W, H); st.strokes.forEach(s => line(s, 0)); }
   function paint() {
     layer.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === st.tool));
     layer.querySelectorAll('[data-pen]').forEach(b => b.classList.toggle('on', +b.dataset.pen === st.pen));
@@ -436,7 +441,7 @@ function scratchPad() {
     layer.querySelectorAll('[data-menu]').forEach(b => b.classList.toggle('on', b.dataset.menu === st.menuFor));
     layer.querySelector('.pen .ink').style.background = PENS[st.pen][0];
   }
-  const at = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * innerWidth / r.width, (e.clientY - r.top) * innerHeight / r.height]; };
+  const at = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; };
 
   // one finger writes; a second finger means a pinch, so the stroke just started is dropped and nothing draws until all lift
   cv.addEventListener('pointerdown', e => {
@@ -487,6 +492,12 @@ function scratchPad() {
     fit(); paint();
   });
   addEventListener('resize', () => { if (!layer.hidden) fit(); });
+  // after a pinch ends, sharpen the ink for the new zoom (not mid-stroke, refitting is a full redraw)
+  let zoomT = 0;
+  window.visualViewport?.addEventListener('resize', () => {
+    clearTimeout(zoomT);
+    zoomT = setTimeout(() => { if (!layer.hidden && !st.cur) fit(); }, 200);
+  });
 }
 
 return {
